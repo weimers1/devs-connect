@@ -3,7 +3,7 @@ import 'dotenv/config.js';
 import cors from 'cors';
 
 const PORT = process.env.PORT || '8080';
-const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:' + PORT;
+const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:5173';
 console.log(PORT);
 console.log(URL_CLIENT);
 
@@ -14,9 +14,10 @@ app.listen(PORT, () => {
 
 // configure cors
 const corsOptions = {
-    origin: URL_CLIENT,
+    origin: ['http://localhost:5173', 'http://localhost:3000'],
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type'],
+    credentials: true
 };
 app.use(cors(corsOptions));
 
