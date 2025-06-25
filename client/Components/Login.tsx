@@ -1,6 +1,6 @@
 import { StytchLogin } from "@stytch/react";
 import { Products } from "@stytch/vanilla-js";
-import {navbar} from "./navbar.jsx";
+
 
 // Login Page That Uses Magic Link
 const stytchConfig = {

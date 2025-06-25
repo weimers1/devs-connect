@@ -13,7 +13,7 @@ function App() {
   return (
       
     <BrowserRouter>
-          {<Navbar />}
+           {location.pathname !== "/" &&  <Navbar />}
        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
          <Routes>
          <Route path='/' element={<Login />} />

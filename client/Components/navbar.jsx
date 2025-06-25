@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { assets } from '../assets/assets';
 import { Link } from 'react-router-dom';
 
+
 const Navbar = () => {
     {/* Mobile Responsive Feature */}
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
