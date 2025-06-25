@@ -20,10 +20,12 @@ const stytchStyle = {
     borderColor: "white",
   },
   colors: {
-    primary: "navy",
+    primary: "#1447e6",
   },
   buttons: {
-    backgroundColor: "white",
+    primary: {
+      backgroundColor: "#1447e6",
+    }
   },
 };
 
