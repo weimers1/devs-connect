@@ -23,7 +23,7 @@ const stytchStyle = {
   colors: {
     primary: "navy",
     Text: "shadow-xl"
-    primary: "#1447e6",
+    
   },
 
 };

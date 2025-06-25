@@ -11,7 +11,7 @@ const Navbar = () => {
     <nav className="bg-white border-b border-gray-200 relative">
       <div className="flex items-center justify-between h-20 px-2 sm:px-6 lg:px-8">
         {/* Logo */}
-        <img src={assets.Icon} className="w-18 h-18" alt="home" />
+        <img src={assets.Logo} className="w-14 h-15" alt="home" />
         
         {/* Desktop Search Bar */}
         <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">

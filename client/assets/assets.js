@@ -11,6 +11,7 @@ import Home from "../assets/images/Nav-Home.png";
 import Profile from "../assets/images/Nav-Profile.png";
 import Message from "../assets/images/Nav-Messages.png";
 import Communities  from "../assets/images/Nav-Communities.png";
+import Logo from "../assets/images/Logo.png";
 
 export const assets = {
     // Coding,
@@ -25,7 +26,8 @@ export const assets = {
     Home,
     Profile,
     Message,
-    Communities
+    Communities,
+    Logo
 
 
 
