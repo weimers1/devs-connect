@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { assets } from '../assets/assets';
 import { Link } from 'react-router-dom';
+import { Icon } from '@iconify/react';
 
 const Navbar: React.FC = () => {
     {
@@ -8,8 +9,39 @@ const Navbar: React.FC = () => {
     }
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    const pages = [
+        {
+            route: '/',
+            src: assets.Home,
+            title: 'Home',
+            alt: 'home',
+            icon: 'mdi:home-outline',
+        },
+        {
+            route: '/communities',
+            src: assets.Communities,
+            title: 'Communities',
+            alt: 'Communities',
+            icon: 'mdi:account-group-outline',
+        },
+        {
+            route: '/messages',
+            src: assets.Messages,
+            title: 'Messages',
+            alt: 'Messages',
+            icon: 'mdi:message-reply-text-outline',
+        },
+        {
+            route: '/profile',
+            src: assets.Profile,
+            title: 'Profile',
+            alt: 'Profile',
+            icon: 'mdi:account-circle-outline',
+        },
+    ];
+
     return (
-        <nav className="bg-white border-b border-gray-200 relative">
+        <nav className="bg-transparent relative">
             <div className="flex items-center justify-between h-20 px-2 sm:px-6 lg:px-8">
                 {/* Logo */}
                 <img
@@ -28,61 +60,26 @@ const Navbar: React.FC = () => {
                 </div>
 
                 {/* Desktop Navigation Links */}
-                <div className="hidden md:flex space-x-4">
-                    <Link
-                        className="hover:bg-gray-50 rounded-lg px-3 transition-colors duration-200"
-                        to="/home"
-                    >
-                        <img
-                            src={assets.Home}
-                            className="w-9 h-9 ml-1 mt-4"
-                            alt="home"
-                        />
-                        <span className="text-black font-medium">Home</span>
-                    </Link>
-
-                    <Link
-                        className="hover:bg-gray-50 rounded-lg px-3 transition-colors duration-200"
-                        to="/communities"
-                    >
-                        <img
-                            src={assets.Communities}
-                            className="w-9 h-9 ml-8 mt-4"
-                            alt="communities"
-                        />
-                        <span className="text-black font-medium ml-1">
-                            Communities
-                        </span>
-                    </Link>
-
-                    <Link
-                        className="hover:bg-gray-50 rounded-lg px-3 transition-colors duration-200"
-                        to="/messages"
-                    >
-                        <img
-                            src={assets.Message}
-                            className="w-10 h-10 ml-5 mt-3"
-                            alt="messages"
-                        />
-                        <span className="text-black font-medium ml-1">
-                            Messages
-                        </span>
-                    </Link>
-
-                    {/* For Now Just Hard Coded But in the future we will fetch the user profile from the API */}
-                    <Link
-                        className="hover:bg-gray-50 rounded-lg px-3 transition-colors duration-200"
-                        to="/profile"
-                    >
-                        <img
-                            src={assets.Profile}
-                            className="w-11 h-11 rounded-full ml-1 mt-2"
-                            alt="profile"
-                        />
-                        <span className="text-black font-medium ml-1">
-                            Profile
-                        </span>
-                    </Link>
+                <div className="hidden md:flex">
+                    {pages.map((page, i) => {
+                        return (
+                            <Link
+                                className="hover:bg-white text-white hover:text-blue-900 rounded-lg mx-5 p-3"
+                                to={page.route}
+                                key={`link-${i}`}
+                            >
+                                <div className="grid place-items-center">
+                                    <Icon
+                                        icon={page.icon}
+                                        className="w-5 h-5"
+                                    />
+                                    <span className="font-medium">
+                                        {page.title}
+                                    </span>
+                                </div>
+                            </Link>
+                        );
+                    })}
                 </div>
 
                 {/* Mobile Menu Button */}
@@ -90,21 +87,7 @@ const Navbar: React.FC = () => {
                     <button
                         className="p-2 rounded-md text-gray-600 hover:bg-gray-100"
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    >
-                        <svg
-                            className="h-6 w-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M4 6h16M4 12h16M4 18h16"
-                            />
-                        </svg>
-                    </button>
+                    ></button>
                 </div>
             </div>
 
