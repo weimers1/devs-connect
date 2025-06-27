@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
 import Login from '../Components/Login';
 import AuthCallBack from '../Components/AuthCallBack';
 import Home from '../Components/Home';
@@ -8,7 +7,7 @@ import Messages from '../Components/Messages';
 import Communities from '../Components/Communities/Communities';
 
 //Routing To Direct to home page.
-function App() {
+const App = () => {
     return (
         <BrowserRouter>
             <Routes>
@@ -39,6 +38,6 @@ function App() {
             </Routes>
         </BrowserRouter>
     );
-}
+};
 
 export default App;
