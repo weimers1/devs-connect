@@ -1,6 +1,10 @@
-import React from 'react'
+import { Icon } from '@iconify/react/dist/iconify.js';
+import React, { useState } from 'react'
 
 function CommunityExplore() {
+  
+
+ 
   const communities = [
     { name: "Tech Innovators", members: "2.4k", category: "Technology", color: "bg-gradient-to-r from-blue-500 to-purple-600", trending: true },
     { name: "Design Masters", members: "1.8k", category: "Design", color: "bg-gradient-to-r from-pink-500 to-rose-500", trending: false },
@@ -79,8 +83,10 @@ function CommunityExplore() {
           Load More Communities
         </button>
       </div>
-    </div>
-  )
+        
+                  </div>
+   
+    )
 }
 
 export default CommunityExplore

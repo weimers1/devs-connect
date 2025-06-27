@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { assets } from '../../assets/assets'
 import Layout from '../Layout'
@@ -7,6 +7,7 @@ import CommunityExplore from "../Communities/CommunityExplore"
 
 
 function Communities() {
+
   return (
     <> 
 
@@ -22,6 +23,7 @@ function Communities() {
 </div>
 
 </Layout>
+  
 
       </>
   )

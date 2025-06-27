@@ -1,6 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 function Sidebar() {
+ 
+  const [isMobileOpen, setIsMobileMenuOpen] = useState(false);
+  
+ 
   const connections = [
     { 
       name: "Sarah Johnson", 
@@ -47,8 +51,9 @@ function Sidebar() {
 
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200">
+         {/*@TODO create a separate component for Each Of The Cards */}
       {/* Your Network Section */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="p-4 border-b border-gray-100 hidden md:block">
         <h3 className="font-semibold text-gray-900 flex items-center">
           <span className="mr-2">👥</span>
           Fellow Collaborators 
@@ -56,7 +61,7 @@ function Sidebar() {
         <p className="text-sm text-gray-600 mt-1">Manage your professional network</p>
       </div>
       
-      <div className="p-4 border-b border-gray-100">
+      <div className="p-4 border-b border-gray-100 hidden md:block">
         <div className="space-y-4">
           {connections.map((connection, index) => (
             <div key={index} className="flex items-start space-x-3 hover:bg-gray-50 p-2 rounded-lg transition-colors">
@@ -91,13 +96,14 @@ function Sidebar() {
           ))}
         </div>
         
-        <button className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium">
+        <button className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium hidden ">
           See all connections
         </button>
       </div>
 
       {/* People You May Know Section */}
-      <div className="p-4 border-b border-gray-100">
+        {/*@TODO create a separate component for Each Of The Cards */}
+      <div className="p-4 border-b border-gray-100 hidden md:block">
         <h3 className="font-semibold text-gray-900 flex items-center mb-4">
           <span className="mr-2">🤝</span>
           People you may know
@@ -135,13 +141,13 @@ function Sidebar() {
           ))}
         </div>
         
-        <button className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium">
+        <button className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium md:block">
           See all suggestions
         </button>
       </div>
-
+     {/*@TODO create a separate component for Each Of The Cards */}
       {/* Quick Stats */}
-      <div className="p-4">
+      <div className="p-4 hidden md:block"> {/* Hides the Quick States Upon Switch To Mobile*/}
         <h3 className="font-semibold text-gray-900 mb-3">Network Stats</h3>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
@@ -158,8 +164,23 @@ function Sidebar() {
           </div>
         </div>
       </div>
+               
+       <div className="hidden md:block">
+        <button className="w-full text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium ">
+          See all suggestions
+        </button>
+      </div>
+
+    
+      
+
     </div>
-  )
+  
+       
+
+      
+
+)
 }
 
 export default Sidebar

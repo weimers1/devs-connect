@@ -41,7 +41,8 @@ const Navbar: React.FC = () => {
     ];
 
     return (
-        <nav className="bg-transparent relative">
+       <>
+       <nav className="bg-transparent relative">
             <div className="flex grid grid-cols-2 md:grid-cols-3 px-8 pt-5">
                 {/* Logo */}
                 <Link to="/">
@@ -83,53 +84,25 @@ const Navbar: React.FC = () => {
                         );
                     })}
                 </div>
-
-                {/* Mobile Menu Button */}
-                <div className="flex md:hidden">
-                    <button
-                        className="hover:bg-white text-white hover:text-blue-900"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    >
-                        <Icon
-                            icon="mdi:menu"
-                            className="w-8 h-8"
-                        />
-                    </button>
-                </div>
-            </div>
-
-            {/* Mobile Menu Dropdown */}
-            {isMobileMenuOpen && (
-                <div className="md:hidden absolute top-full left-0 right-0 z-50">
-                    {/* Mobile Search */}
-                    <div className="pt-2 px-3">
-                        <input
-                            type="text"
-                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                            placeholder="Search...."
-                        />
-                    </div>
-
-                    <div className="px-4 py-2 space-y-2">
-                        {pages.map((page, i) => {
-                            return (
-                                <Link
-                                    key={`mobile-link-${i}`}
-                                    className="flex py-2 text-white"
-                                    to={page.route}
-                                >
-                                    <Icon
-                                        icon={page.icon}
-                                        className="w-6 h-6"
-                                    />
-                                    <span className="ps-2">{page.title}</span>
-                                </Link>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
+                </div>          
         </nav>
+     {/* Mobile Nav Dropdown */}
+           
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+      <div className="flex justify-around py-2">
+        {pages.map((page, i) => (
+          <Link
+            key={i}
+            to={page.route}
+            className="flex flex-col items-center py-2 px-3"
+          >
+            <Icon icon={page.icon} className="w-6 h-6" />
+            <span className="text-xs mt-1">{page.title}</span>
+          </Link>
+        ))}
+      </div>
+    </nav>
+     </>
     );
 };
 
