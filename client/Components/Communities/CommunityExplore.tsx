@@ -31,7 +31,7 @@ const CommunityExplore = () => {
     ];
 
     return (
-        <div className="bg-white rounded-xl lg:rounded-2xl shadow-xl p-6 mt-10 border border-gray-100 bg-transparent">
+        <div className="bg-white rounded-xl lg:rounded-2xl shadow-xl p-6 mt-10 mx-5 lg:mx-0 border border-gray-100 bg-transparent">
             {/* Header with gradient */}
             <div className="mb-6 md:mb-8 text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-">
