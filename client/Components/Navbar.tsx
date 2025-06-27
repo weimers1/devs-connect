@@ -42,27 +42,29 @@ const Navbar: React.FC = () => {
 
     return (
         <nav className="bg-transparent relative">
-            <div className="flex grid grid-cols-2 md:grid-cols-3 px-8 pt-5">
+            <div className="flex grid grid-cols-2 xl:grid-cols-3 px-8 pt-5">
                 {/* Logo */}
-                <Link to="/">
-                    <img
-                        src={assets.Logo}
-                        className="w-14 h-15"
-                        alt="logo"
-                    />
-                </Link>
+                <div className="w-15">
+                    <Link to="/">
+                        <img
+                            src={assets.Logo}
+                            className="h-15"
+                            alt="logo"
+                        />
+                    </Link>
+                </div>
 
                 {/* Desktop Search Bar */}
-                <div className="hidden md:block">
+                <div className="hidden xl:block">
                     <input
                         type="text"
-                        className="border-2 border-gray-300 bg-white h-10 w-100 px-5 mt-3 pr-16 rounded-lg text-sm focus:outline-none"
+                        className="border-2 border-gray-300 bg-white h-10 w-9/10 px-5 mt-3 pr-16 rounded-lg text-sm focus:outline-none"
                         placeholder="Search...."
                     />
                 </div>
 
                 {/* Desktop Navigation Links */}
-                <div className="hidden md:flex">
+                <div className="hidden xl:w-2/3 xl:flex">
                     {pages.map((page, i) => {
                         return (
                             <Link
@@ -85,9 +87,9 @@ const Navbar: React.FC = () => {
                 </div>
 
                 {/* Mobile Menu Button */}
-                <div className="flex md:hidden">
+                <div className="flex justify-self-end xl:hidden">
                     <button
-                        className="hover:bg-white text-white hover:text-blue-900"
+                        className="hover:bg-white rounded p-3 cursor-pointer text-white hover:text-blue-900"
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     >
                         <Icon
@@ -100,7 +102,7 @@ const Navbar: React.FC = () => {
 
             {/* Mobile Menu Dropdown */}
             {isMobileMenuOpen && (
-                <div className="md:hidden absolute top-full left-0 right-0 z-50">
+                <div className="xl:hidden absolute top-full left-0 right-0 z-50">
                     {/* Mobile Search */}
                     <div className="pt-2 px-3">
                         <input
@@ -115,7 +117,7 @@ const Navbar: React.FC = () => {
                             return (
                                 <Link
                                     key={`mobile-link-${i}`}
-                                    className="flex py-2 text-white"
+                                    className="flex py-2 text-white hover:bg-white rounded p-3 hover:text-blue-900"
                                     to={page.route}
                                 >
                                     <Icon

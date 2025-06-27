@@ -1,15 +1,12 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from '../Components/Login';
 import AuthCallBack from '../Components/AuthCallBack';
 import Home from '../Components/Home';
-import Navbar from '../Components/Navbar';
 import Profile from '../Components/Profile';
 import Messages from '../Components/Messages';
-import Communities from '../Components/Communities';
 
 //Routing To Direct to home page.
-function App() {
+const App = () => {
     return (
         <BrowserRouter>
             {/* <div className="flex flex-column justify-content-center align-items-center"> */}
@@ -34,14 +31,10 @@ function App() {
                     path="/messages"
                     element={<Messages />}
                 />
-                <Route
-                    path="/communities"
-                    element={<Communities />}
-                />
             </Routes>
             {/* </div> */}
         </BrowserRouter>
     );
-}
+};
 
 export default App;
