@@ -1,14 +1,11 @@
-import Layout from "./Layout";
-
 const Messages = () => {
     return (
-      <Layout> 
-        <h1 className="text-center  text-4xl font-bold text-white">
+        <div className="h-screen w-screen bg-linear-to-tr from-blue-700 to-slate-950">
+            <h1 className="text-center  text-4xl font-bold text-white">
                 {' '}
                 Messages Page
             </h1>
-       
-        </Layout>
+        </div>
     );
 };
 
