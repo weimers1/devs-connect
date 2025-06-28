@@ -1,239 +1,354 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function Sidebar() {
     const [isOpen, setIsOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState('network');
+    const [notifications, setNotifications] = useState(3);
+
+    // Simulate real-time updates
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setNotifications(prev => Math.max(0, prev + Math.floor(Math.random() * 3) - 1));
+        }, 10000);
+        return () => clearInterval(interval);
+    }, []);
 
     const connections = [
         {
+            name: 'Elon Musk',
+            goal: 'CEO at Tesla & SpaceX',
+            mutualConnections: 847,
+            profileImage: 'EM',
+            isOnline: true,
+            connectionType: '1st',
+            verified: true,
+            lastActive: '2 min ago'
+        },
+        {
             name: 'Sarah Johnson',
-            goal: 'Software Engineer at Google',
-            mutualConnections: 12,
+            goal: 'Senior AI Engineer at OpenAI',
+            mutualConnections: 234,
             profileImage: 'SJ',
             isOnline: true,
             connectionType: '2nd',
+            verified: true,
+            lastActive: 'Active now'
         },
         {
-            name: 'Mike Chen',
-            goal: 'Software Engineer',
-            mutualConnections: 8,
-            profileImage: 'MC',
+            name: 'Jensen Huang',
+            goal: 'CEO at NVIDIA',
+            mutualConnections: 156,
+            profileImage: 'JH',
             isOnline: false,
-            connectionType: '3rd',
+            connectionType: '2nd',
+            verified: true,
+            lastActive: '1 hour ago'
         },
         {
-            name: 'Emily Davis',
-            goal: 'Web Development',
-            mutualConnections: 15,
-            profileImage: 'ED',
+            name: 'Satya Nadella',
+            goal: 'CEO at Microsoft',
+            mutualConnections: 298,
+            profileImage: 'SN',
             isOnline: true,
-            connectionType: '2nd',
-        },
+            connectionType: '3rd',
+            verified: true,
+            lastActive: 'Active now'
+        }
     ];
 
     const suggestions = [
         {
-            name: 'Alex Rodriguez',
-            goal: 'Data Scientist at Netflix',
-            mutualConnections: 5,
-            profileImage: 'AR',
+            name: 'Sam Altman',
+            goal: 'CEO at OpenAI',
+            mutualConnections: 89,
+            profileImage: 'SA',
+            reason: 'AI Industry Leader',
+            verified: true,
+            trending: true
         },
         {
-            name: 'Lisa Wang',
-            goal: 'Marketing Director at Spotify',
-            mutualConnections: 3,
-            profileImage: 'LW',
-            reason: 'Mutual connections',
-        },
+            name: 'Marc Benioff',
+            goal: 'Chairman & CEO at Salesforce',
+            mutualConnections: 67,
+            profileImage: 'MB',
+            reason: 'Tech Executive',
+            verified: true,
+            trending: false
+        }
+    ];
+
+    const tabs = [
+        { id: 'network', label: 'Network', icon: 'mdi:account-group', count: connections.length },
+        { id: 'suggestions', label: 'Discover', icon: 'mdi:compass', count: suggestions.length },
+        { id: 'activity', label: 'Activity', icon: 'mdi:bell', count: notifications }
     ];
 
     return (
         <section className="overflow-hidden">
-            {/* @TODO: make sidebar responsive */}
-            {/* buttons for collapsing/opening sidebar */}
+            {/* Floating Action Button */}
             <button
                 type="button"
-                className={`fixed right-0 border border-gray-200 mt-10 rounded-s-lg bg-white ps-3 pe-2 py-4 transition-all duration-400 ease-in cursor-pointer flex ${
-                    isOpen ? 'translate-x-full' : 'translate-x-0'
+                className={`fixed right-4 top-1/2 -translate-y-1/2 z-50 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full p-4 shadow-2xl transition-all duration-300 ease-in-out transform hover:scale-110 ${
+                    isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
                 }`}
-                onClick={() => {
-                    setIsOpen(true);
-                }}
+                onClick={() => setIsOpen(true)}
             >
-                <Icon
-                    icon="mdi:arrow-left"
-                    className="w-4 h-4 mt-2 text-blue-700"
-                />
-                <Icon
-                    icon="mdi:account-group-outline"
-                    className="w-8 h-8 text-blue-700"
-                />
+                <div className="relative">
+                    <Icon icon="mdi:account-group" className="w-6 h-6" />
+                    {notifications > 0 && (
+                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                            {notifications}
+                        </div>
+                    )}
+                </div>
             </button>
+
+            {/* Sidebar Panel */}
             <div
-                className={`fixed right-0 bg-white rounded-lg shadow-md border border-gray-200 z-2 h-screen transition-all duration-300 ease-in ${
+                className={`fixed right-0 top-0 h-full w-96 bg-white shadow-2xl border-l border-gray-200 z-40 transform transition-transform duration-300 ease-in-out ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
-                <button
-                    type="button"
-                    className="cursor-pointer text-blue-700 p-3"
-                    onClick={() => {
-                        setIsOpen(false);
-                    }}
-                >
-                    <Icon
-                        icon="mdi:close"
-                        className="w-6 h-6 text-blue-700"
-                    />
-                </button>
-                {/*@TODO create a separate component for Each Of The Cards */}
-                {/* Your Network Section */}
-                <div className="p-4 border-b border-gray-100 hidden md:block">
-                    <h3 className="font-semibold text-gray-900 flex items-center">
-                        <span className="mr-2">👥</span>
-                        Fellow Collaborators
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                        Manage your professional network
-                    </p>
-                </div>
-
-                <div className="p-4 border-b border-gray-100 hidden md:block">
-                    <div className="space-y-4">
-                        {connections.map((connection, index) => (
-                            <div
-                                key={index}
-                                className="flex items-start space-x-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                {/* Header */}
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-black opacity-10"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-bold">Professional Network</h2>
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="p-2 hover:bg-white/20 rounded-full transition-colors"
                             >
-                                <div className="relative">
-                                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                        {connection.profileImage}
-                                    </div>
-                                    {connection.isOnline && (
-                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-                                    )}
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center space-x-2">
-                                        <h4 className="font-medium text-gray-900 text-sm truncate">
-                                            {connection.name}
-                                        </h4>
-                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                            {connection.connectionType}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-gray-600 mt-1">
-                                        <span className="text-black font-medium">
-                                            Career Goal:
-                                        </span>{' '}
-                                        {connection.goal}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        {connection.mutualConnections} mutual
-                                        connections
-                                    </p>
-                                </div>
-
-                                <button className="text-blue-600 hover:bg-blue-50 p-1 rounded text-xs">
-                                    Message
-                                </button>
+                                <Icon icon="mdi:close" className="w-5 h-5" />
+                            </button>
+                        </div>
+                        
+                        {/* Stats */}
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div className="text-2xl font-bold">1.2K</div>
+                                <div className="text-xs opacity-90">Connections</div>
                             </div>
-                        ))}
+                            <div>
+                                <div className="text-2xl font-bold">89</div>
+                                <div className="text-xs opacity-90">This Week</div>
+                            </div>
+                            <div>
+                                <div className="text-2xl font-bold">4.8</div>
+                                <div className="text-xs opacity-90">Rating</div>
+                            </div>
+                        </div>
                     </div>
-
-                    <button className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium hidden ">
-                        See all connections
-                    </button>
                 </div>
 
-                {/* People You May Know Section */}
-                {/*@TODO create a separate component for Each Of The Cards */}
-                <div className="p-4 border-b border-gray-100 hidden md:block">
-                    <h3 className="font-semibold text-gray-900 flex items-center mb-4">
-                        <span className="mr-2">🤝</span>
-                        People you may know
-                    </h3>
+                {/* Tab Navigation */}
+                <div className="flex border-b border-gray-200 bg-gray-50">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
+                                activeTab === tab.id
+                                    ? 'text-blue-600 bg-white border-b-2 border-blue-600'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            <div className="flex items-center justify-center space-x-1">
+                                <Icon icon={tab.icon} className="w-4 h-4" />
+                                <span>{tab.label}</span>
+                                {tab.count > 0 && (
+                                    <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">
+                                        {tab.count}
+                                    </span>
+                                )}
+                            </div>
+                        </button>
+                    ))}
+                </div>
 
-                    <div className="space-y-4">
-                        {suggestions.map((person, index) => (
-                            <div
-                                key={index}
-                                className="border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-shadow"
-                            >
-                                <div className="flex items-start space-x-3">
-                                    <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                        {person.profileImage}
-                                    </div>
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {activeTab === 'network' && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-semibold text-gray-900">Your Network</h3>
+                                <Icon icon="mdi:filter-variant" className="w-4 h-4 text-gray-400" />
+                            </div>
+                            
+                            {connections.map((connection, index) => (
+                                <div
+                                    key={index}
+                                    className="bg-gradient-to-r from-white to-gray-50 rounded-xl p-4 hover:shadow-lg transition-all duration-200 border border-gray-100 hover:border-blue-200"
+                                >
+                                    <div className="flex items-start space-x-3">
+                                        <div className="relative">
+                                            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                                                {connection.profileImage}
+                                            </div>
+                                            {connection.isOnline && (
+                                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-3 border-white rounded-full animate-pulse"></div>
+                                            )}
+                                            {connection.verified && (
+                                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                                    <Icon icon="mdi:check" className="w-3 h-3 text-white" />
+                                                </div>
+                                            )}
+                                        </div>
 
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="font-medium text-gray-900 text-sm">
-                                            {person.name}
-                                        </h4>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center space-x-2 mb-1">
+                                                <h4 className="font-bold text-gray-900 text-sm truncate">
+                                                    {connection.name}
+                                                </h4>
+                                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                                    connection.connectionType === '1st' 
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : connection.connectionType === '2nd'
+                                                        ? 'bg-blue-100 text-blue-800'
+                                                        : 'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                    {connection.connectionType}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-gray-700 font-medium mb-1">
+                                                {connection.goal}
+                                            </p>
+                                            <p className="text-xs text-gray-500 mb-2">
+                                                {connection.mutualConnections} mutual connections
+                                            </p>
+                                            <p className="text-xs text-green-600 font-medium">
+                                                {connection.lastActive}
+                                            </p>
+                                        </div>
 
-                                        <p className="text-xs text-gray-600 mt-1">
-                                            <span className="text-black font-medium">
-                                                Career Goal:{' '}
-                                            </span>
-                                            {person.goal}
-                                        </p>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            {person.mutualConnections} mutual
-                                            connections
-                                        </p>
+                                        <div className="flex flex-col space-y-2">
+                                            <button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-lg text-xs font-medium hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105">
+                                                Message
+                                            </button>
+                                            <button className="border border-gray-300 text-gray-700 px-3 py-1 rounded-lg text-xs font-medium hover:bg-gray-50 transition-colors">
+                                                View
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
+                            ))}
+                        </div>
+                    )}
 
-                                <div className="flex space-x-2 mt-3">
-                                    <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors">
-                                        Connect
-                                    </button>
-                                    <button className="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-50 transition-colors">
-                                        Dismiss
-                                    </button>
+                    {activeTab === 'suggestions' && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-semibold text-gray-900">People You Should Know</h3>
+                                <Icon icon="mdi:refresh" className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" />
+                            </div>
+                            
+                            {suggestions.map((person, index) => (
+                                <div
+                                    key={index}
+                                    className="bg-white rounded-xl p-4 border border-gray-200 hover:shadow-lg transition-all duration-200 hover:border-blue-200"
+                                >
+                                    <div className="flex items-start space-x-3 mb-3">
+                                        <div className="relative">
+                                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                                                {person.profileImage}
+                                            </div>
+                                            {person.verified && (
+                                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                                    <Icon icon="mdi:check" className="w-2 h-2 text-white" />
+                                                </div>
+                                            )}
+                                            {person.trending && (
+                                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                                                    <Icon icon="mdi:trending-up" className="w-2 h-2 text-white" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-bold text-gray-900 text-sm mb-1">
+                                                {person.name}
+                                            </h4>
+                                            <p className="text-xs text-gray-700 font-medium mb-1">
+                                                {person.goal}
+                                            </p>
+                                            <p className="text-xs text-gray-500 mb-1">
+                                                {person.mutualConnections} mutual connections
+                                            </p>
+                                            <p className="text-xs text-blue-600 font-medium">
+                                                {person.reason}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex space-x-2">
+                                        <button className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-3 rounded-lg text-xs font-bold hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105">
+                                            Connect
+                                        </button>
+                                        <button className="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-50 transition-colors">
+                                            Later
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {activeTab === 'activity' && (
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-gray-900">Recent Activity</h3>
+                            
+                            <div className="space-y-3">
+                                <div className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                        <Icon icon="mdi:account-plus" className="w-4 h-4 text-blue-600" />
+                                        <span className="text-sm font-medium text-blue-900">New Connection</span>
+                                    </div>
+                                    <p className="text-xs text-blue-700">Elon Musk accepted your connection request</p>
+                                    <p className="text-xs text-blue-500 mt-1">2 minutes ago</p>
+                                </div>
+                                
+                                <div className="bg-green-50 rounded-lg p-3 border-l-4 border-green-500">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                        <Icon icon="mdi:eye" className="w-4 h-4 text-green-600" />
+                                        <span className="text-sm font-medium text-green-900">Profile View</span>
+                                    </div>
+                                    <p className="text-xs text-green-700">Your profile was viewed 23 times today</p>
+                                    <p className="text-xs text-green-500 mt-1">1 hour ago</p>
+                                </div>
+                                
+                                <div className="bg-purple-50 rounded-lg p-3 border-l-4 border-purple-500">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                        <Icon icon="mdi:message" className="w-4 h-4 text-purple-600" />
+                                        <span className="text-sm font-medium text-purple-900">New Message</span>
+                                    </div>
+                                    <p className="text-xs text-purple-700">Sarah Johnson sent you a message</p>
+                                    <p className="text-xs text-purple-500 mt-1">3 hours ago</p>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-
-                    <button className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium md:block">
-                        See all suggestions
-                    </button>
-                </div>
-                {/*@TODO create a separate component for Each Of The Cards */}
-                {/* Quick Stats */}
-                <div className="p-4 hidden md:block">
-                    {' '}
-                    {/* Hides the Quick States Upon Switch To Mobile*/}
-                    <h3 className="font-semibold text-gray-900 mb-3">
-                        Network Stats
-                    </h3>
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Connections</span>
-                            <span className="font-medium">247</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Profile views</span>
-                            <span className="font-medium text-green-600">
-                                +12 this week
-                            </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">
-                                Search appearances
-                            </span>
-                            <span className="font-medium">89</span>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
-                <div className="hidden md:block">
-                    <button className="w-full text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium ">
-                        See all suggestions
+                {/* Footer */}
+                <div className="border-t border-gray-200 p-4 bg-gray-50">
+                    <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-bold hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg">
+                        Expand Network
                     </button>
                 </div>
             </div>
+
+            {/* Elon Musk Approved Backdrop - Tinted but Viewable */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-20 backdrop-blur-sm z-30 transition-all duration-300"
+                    onClick={() => setIsOpen(false)}
+                    style={{
+                        backdropFilter: 'blur(2px) brightness(0.8)',
+                        WebkitBackdropFilter: 'blur(2px) brightness(0.8)'
+                    }}
+                />
+            )}
         </section>
     );
 }
