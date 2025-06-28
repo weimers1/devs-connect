@@ -1,3 +1,6 @@
+import { Icon } from '@iconify/react/dist/iconify.js';
+import Tag from '../../Components/Decal/Tag';
+
 const CommunityExplore = () => {
     const communities = [
         {
@@ -5,38 +8,75 @@ const CommunityExplore = () => {
             members: '2.4k',
             category: 'Technology',
             color: 'bg-gradient-to-r from-blue-500 to-purple-600',
-            trending: true,
+            tags: [
+                {
+                    icon: 'mdi:flame',
+                    text: 'Trending',
+                    bgClass: 'bg-gradient-to-r from-orange-400 to-red-500',
+                    textColor: 'text-white',
+                    isFlashing: true,
+                },
+            ],
         },
         {
             name: 'Design Masters',
             members: '1.8k',
             category: 'Design',
             color: 'bg-gradient-to-r from-red-500 to-yellow-500',
-            trending: false,
+            tags: [
+                {
+                    icon: 'mdi:flame',
+                    text: 'Trending',
+                    bgClass: 'bg-gradient-to-r from-orange-400 to-red-500',
+                    textColor: 'text-white',
+                    isFlashing: true,
+                },
+                {
+                    icon: 'mdi:alert-decagram',
+                    text: 'New',
+                    bgClass: 'bg-gradient-to-r from-lime-300 to-green-500',
+                    textColor: 'text-white',
+                    isFlashing: false,
+                },
+            ],
         },
         {
             name: 'Startup Hub',
             members: '3.2k',
             category: 'Business',
             color: 'bg-gradient-to-r from-green-500 to-emerald-600',
-            trending: true,
+            tags: [
+                {
+                    icon: 'mdi:alert-decagram',
+                    text: 'New',
+                    bgClass: 'bg-gradient-to-r from-lime-300 to-green-500',
+                    textColor: 'text-white',
+                    isFlashing: false,
+                },
+            ],
         },
         {
             name: 'Code Warriors',
             members: '4.1k',
             category: 'Programming',
             color: 'bg-gradient-to-r from-indigo-500 to-blue-600',
-            trending: false,
+            tags: [],
         },
     ];
 
     return (
         <div className="bg-white rounded-xl lg:rounded-2xl shadow-xl p-6 mt-10 mx-5 lg:mx-0 border border-gray-100 bg-transparent">
             {/* Header with gradient */}
-            <div className="mb-6 md:mb-8 text-center">
-                <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-">
-                    🌟 Explore Communities
-                </h2>
+            <div className="mb-6 md:mb-8">
+                <div className="flex justify-center text-blue-800">
+                    <Icon
+                        icon="mdi:compass"
+                        className="w-6 h-6 lg:w-8 lg:h-8 me-2"
+                    />
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+                        Explore Communities
+                    </h2>
+                </div>
                 <p className="text-gray-600 text-base sm:text-lg px-2">
                     Discover amazing communities and connect with like-minded
                     people
@@ -46,7 +86,12 @@ const CommunityExplore = () => {
             {/* Enhanced Search Bar */}
             <div className="mb-6 sm:mb-8 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-400 text-lg sm:text-xl">🔍</span>
+                    <span className="text-gray-400 text-lg sm:text-xl">
+                        <Icon
+                            icon="mdi:magnify"
+                            className="w-6 h-6 lg:w-8 lg:h-8"
+                        />
+                    </span>
                 </div>
                 <input
                     type="text"
@@ -58,8 +103,7 @@ const CommunityExplore = () => {
             {/* Featured Badge */}
             <div className="mb-4 sm:mb-6">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
-                    <span className="mr-2">🔥</span>
-                    Trending Communities
+                    Top Communities
                 </h3>
             </div>
 
@@ -83,11 +127,15 @@ const CommunityExplore = () => {
                                     <h3 className="font-bold text-gray-800 text-base sm:text-lg truncate">
                                         {community.name}
                                     </h3>
-                                    {community.trending && (
-                                        <span className="bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold animate-pulse whitespace-nowrap">
-                                            🔥 Trending
-                                        </span>
-                                    )}
+                                    {community.tags.map((tag) => (
+                                        <Tag
+                                            icon={tag.icon}
+                                            text={tag.text}
+                                            bgClass={tag.bgClass}
+                                            textColor={tag.textColor}
+                                            isFlashing={tag.isFlashing}
+                                        />
+                                    ))}
                                 </div>
                                 <p className="text-xs sm:text-sm text-gray-600 mb-2">
                                     <span className="font-medium">
