@@ -4,7 +4,7 @@ const Layout: React.FC<React.PropsWithChildren> = ({ children }) => {
     return (
         <>
             <Navbar />
-            <main className="min-h-screen">{children}</main>
+            <main className="min-h-screen w-full">{children}</main>
         </>
     );
 };
