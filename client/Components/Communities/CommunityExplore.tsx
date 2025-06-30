@@ -68,7 +68,7 @@ const CommunityExplore = () => {
                 </div>
                 <input
                     type="text"
-                    placeholder="Search communities..."
+                    placeholder="Messages..."
                     className="w-full pl-10 lg:pl-12 pr-4 py-3 lg:py-4 border-2 border-gray-200 rounded-lg lg:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 hover:shadow-md text-sm lg:text-base"
                 />
             </div>
