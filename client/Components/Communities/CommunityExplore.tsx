@@ -46,11 +46,11 @@ const CommunityExplore = () => {
                         icon="mdi:compass"
                         className="w-6 h-6 lg:w-8 lg:h-8 me-2"
                     />
-                    <h2 className="text-2xl lg:text-3xl font-bold mb-2">
+                    <h2 className="text-xl lg:text-3xl font-bold mb-2">
                         Explore Communities
                     </h2>
                 </div>
-                <p className="text-gray-600 text-base lg:text-lg px-2">
+                <p className="text-gray-600 text-base text-sm lg:text-lg px-2">
                     Discover amazing communities and connect with like-minded
                     people
                 </p>

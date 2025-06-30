@@ -7,48 +7,48 @@ function Sidebar() {
     const connections = [
         {
             name: 'Sarah Johnson',
-            goal: 'Software Engineer at Google',
-            mutualConnections: 12,
+            currentRole: 'Software Engineer at Google',
+            lastOnline: '',
             profileImage: 'SJ',
             isOnline: true,
             connectionType: '2nd',
         },
         {
             name: 'Mike Chen',
-            goal: 'Software Engineer',
-            mutualConnections: 8,
+            currentRole: 'Software Engineer',
+            lastOnline: '2 days ago',
             profileImage: 'MC',
             isOnline: false,
             connectionType: '3rd',
         },
         {
             name: 'Emily Davis',
-            goal: 'Web Development',
-            mutualConnections: 15,
+            currentRole: 'Web Development',
+            lastOnline: '14 hours ago',
             profileImage: 'ED',
-            isOnline: true,
+            isOnline: false,
             connectionType: '2nd',
         },
         {
             name: 'Sarah Johnson',
-            goal: 'Software Engineer at Google',
-            mutualConnections: 12,
+            currentRole: 'Software Engineer at Google',
+            lastOnline: '',
             profileImage: 'SJ',
             isOnline: true,
             connectionType: '2nd',
         },
         {
             name: 'Mike Chen',
-            goal: 'Software Engineer',
-            mutualConnections: 8,
+            currentRole: 'Software Engineer',
+            lastOnline: '10 minutes ago',
             profileImage: 'MC',
             isOnline: false,
             connectionType: '3rd',
         },
         {
             name: 'Emily Davis',
-            goal: 'Web Development',
-            mutualConnections: 15,
+            currentRole: 'Web Development',
+            lastOnline: '',
             profileImage: 'ED',
             isOnline: true,
             connectionType: '2nd',
@@ -58,39 +58,39 @@ function Sidebar() {
     const suggestions = [
         {
             name: 'Alex Rodriguez',
-            goal: 'Data Scientist at Netflix',
+            currentRole: 'Data Scientist at Netflix',
             mutualConnections: 5,
             profileImage: 'AR',
         },
         {
             name: 'Lisa Wang',
-            goal: 'Marketing Director at Spotify',
+            currentRole: 'Marketing Director at Spotify',
             mutualConnections: 3,
             profileImage: 'LW',
             reason: 'Mutual connections',
         },
         {
             name: 'Alex Rodriguez',
-            goal: 'Data Scientist at Netflix',
+            currentRole: 'Data Scientist at Netflix',
             mutualConnections: 5,
             profileImage: 'AR',
         },
         {
             name: 'Lisa Wang',
-            goal: 'Marketing Director at Spotify',
+            currentRole: 'Marketing Director at Spotify',
             mutualConnections: 3,
             profileImage: 'LW',
             reason: 'Mutual connections',
         },
         {
             name: 'Alex Rodriguez',
-            goal: 'Data Scientist at Netflix',
+            currentRole: 'Data Scientist at Netflix',
             mutualConnections: 5,
             profileImage: 'AR',
         },
         {
             name: 'Lisa Wang',
-            goal: 'Marketing Director at Spotify',
+            currentRole: 'Marketing Director at Spotify',
             mutualConnections: 3,
             profileImage: 'LW',
             reason: 'Mutual connections',
@@ -99,7 +99,6 @@ function Sidebar() {
 
     return (
         <section className="overflow-hidden">
-            {/* @TODO: make sidebar responsive */}
             {/* buttons for collapsing/opening sidebar */}
             <div
                 className={`fixed right-0 duration-400 ease-in ${
@@ -146,9 +145,12 @@ function Sidebar() {
                 </button>
 
                 {/* Your Network Section */}
-                <div className="p-4 border-b border-gray-100 hidden md:block">
+                <div className="p-4 border-b border-gray-100">
                     <h3 className="font-semibold text-gray-900 flex items-center">
-                        <span className="mr-2">👥</span>
+                        <Icon
+                            icon="mdi:account-group"
+                            className="w-6 h-6 text-blue-700 me-2"
+                        />
                         Fellow Collaborators
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">
@@ -156,7 +158,7 @@ function Sidebar() {
                     </p>
                 </div>
 
-                <div className="p-4 border-b border-gray-100 hidden md:block h-[35vh] overflow-y-scroll">
+                <div className="p-4 border-b border-gray-100 h-[27vh] lg:h-[35vh] overflow-y-scroll">
                     <div className="space-y-4">
                         {connections.map((connection, index) => (
                             <div
@@ -182,14 +184,13 @@ function Sidebar() {
                                         </span>
                                     </div>
                                     <p className="text-xs text-gray-600 mt-1">
-                                        <span className="text-black font-medium">
-                                            Career Goal:
-                                        </span>{' '}
-                                        {connection.goal}
+                                        {connection.currentRole}
                                     </p>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        {connection.mutualConnections} mutual
-                                        connections
+                                        {connection.isOnline
+                                            ? ''
+                                            : 'Last seen: ' +
+                                              connection.lastOnline}
                                     </p>
                                 </div>
 
@@ -199,21 +200,17 @@ function Sidebar() {
                             </div>
                         ))}
                     </div>
-
-                    <button className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium hidden ">
-                        See all connections
-                    </button>
                 </div>
 
                 {/* People You May Know Section */}
                 {/*@TODO create a separate component for Each Of The Cards */}
-                <div className="p-4 border-b border-gray-100 hidden md:block">
+                <div className="p-4 border-b border-gray-100">
                     <h3 className="font-semibold text-gray-900 flex items-center mb-4">
                         <span className="mr-2">🤝</span>
                         People you may know
                     </h3>
 
-                    <div className="space-y-4 h-[35vh] overflow-y-scroll">
+                    <div className="space-y-4 h-[30vh] lg:h-[35vh] overflow-y-scroll">
                         {suggestions.map((person, index) => (
                             <div
                                 key={index}
@@ -230,10 +227,7 @@ function Sidebar() {
                                         </h4>
 
                                         <p className="text-xs text-gray-600 mt-1">
-                                            <span className="text-black font-medium">
-                                                Career Goal:{' '}
-                                            </span>
-                                            {person.goal}
+                                            {person.currentRole}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-1">
                                             {person.mutualConnections} mutual
