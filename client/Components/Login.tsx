@@ -28,7 +28,7 @@ const stytchStyle = {
 const Login = () => (
     <div className="h-screen w-screen bg-linear-to-tr from-blue-700 to-slate-950">
         <div className="h-screen flex flex-col items-center justify-center">
-            <h1 className="text-center mb-8 text-6xl font-mono text-white font-black tracking-tight text-shadow-sm">
+            <h1 className="text-center mb-8 text-6xl text-white font-black tracking-tight text-shadow-sm">
                 Connect. Code. Create.
             </h1>
             <div className="shadow-xl">

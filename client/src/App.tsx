@@ -4,12 +4,12 @@ import AuthCallBack from '../Components/AuthCallBack';
 import Home from '../Components/Home';
 import Profile from '../Components/Profile';
 import Messages from '../Components/Messages';
+import Communities from '../Components/Communities/Communities';
 
 //Routing To Direct to home page.
 const App = () => {
     return (
         <BrowserRouter>
-            {/* <div className="flex flex-column justify-content-center align-items-center"> */}
             <Routes>
                 <Route
                     path="/"
@@ -31,8 +31,11 @@ const App = () => {
                     path="/messages"
                     element={<Messages />}
                 />
+                <Route
+                    path="/communities"
+                    element={<Communities />}
+                />
             </Routes>
-            {/* </div> */}
         </BrowserRouter>
     );
 };

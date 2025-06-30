@@ -1,10 +1,13 @@
 import React from 'react'
+import Layout from './Layout';
 
 function Profile() {
   return (
-  <div className="h-screen w-screen bg-linear-to-tr from-blue-700 to-slate-950">
+  <Layout>
+ 
        <h1 className="text-center  text-4xl font-bold text-white"> Profile Page</h1> 
-    </div>
+    
+    </Layout>
   )
 }
 
