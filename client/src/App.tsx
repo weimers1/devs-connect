@@ -3,8 +3,9 @@ import Login from '../Components/Login';
 import AuthCallBack from '../Components/AuthCallBack';
 import Home from '../Components/Home';
 import Profile from '../Components/Profile';
-import Messages from '../Components/Messages';
+import Messages from '../Components/Messages/Messages';
 import Communities from '../Components/Communities/Communities';
+import MessagesContent from '../Components/Messages/MessagesContent';
 
 //Routing To Direct to home page.
 const App = () => {
@@ -35,6 +36,7 @@ const App = () => {
                     path="/communities"
                     element={<Communities />}
                 />
+              
             </Routes>
         </BrowserRouter>
     );
