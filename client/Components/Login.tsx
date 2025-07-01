@@ -1,14 +1,15 @@
 import { StytchLogin } from '@stytch/react';
 import { Products } from '@stytch/vanilla-js';
+const URL_CLIENT = import.meta.env.URL_CLIENT;
 
 // Login Page That Uses Magic Link
 const stytchConfig = {
     emailMagicLinksOptions: {
         createUserAsPending: true,
         loginExpirationMinutes: 30,
-        loginRedirectURL: 'http://localhost:5173/authenticate',
+        loginRedirectURL: URL_CLIENT + '/authenticate',
         signupExpirationMinutes: 30,
-        signupRedirectURL: 'http://localhost:5173/authenticate',
+        signupRedirectURL: URL_CLIENT + '/authenticate',
     },
     products: [Products.emailMagicLinks],
 };
