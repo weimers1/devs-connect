@@ -36,6 +36,10 @@ const User = sequelize.define(
             type: DataTypes.DATE,
             allowNull: true,
         },
+        signupToken: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
     },
     {}
 );
