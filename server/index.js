@@ -5,6 +5,8 @@ import sequelize from './config/database.js';
 import './models/User.js';
 import './models/Session.js';
 import errorHandler from './utils/errorHandler.js';
+import csurf from 'csurf';
+import cookieParser from 'cookie-parser';
 
 const PORT = process.env.PORT || '8080';
 const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:80';
@@ -26,6 +28,10 @@ app.use(cors(corsOptions));
 // config incoming data
 app.use(express.json()); //Parses incoming request with JSON payloads and available in req.body
 app.use(express.urlencoded({ extended: true })); // parses the data from URL forms and makes it available in "req.body"
+
+// config csrf
+app.use(cookieParser());
+app.use(csurf({ cookie: true }));
 
 // handle errors:
 app.use(errorHandler);

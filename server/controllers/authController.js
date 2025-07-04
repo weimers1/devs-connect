@@ -2,6 +2,16 @@ import stytchClient from '../config/stytch.js';
 import Session from '../models/sessions.js';
 import User from '../models/users.js';
 
+export const getCsrfToken = (req, res) => {
+    try {
+        res.status(200).json({ csrfToken: req.csrfToken() });
+    } catch (error) {
+        throw Object.assign(new Error('Failed to generate CSRF token'), {
+            status: 500,
+        });
+    }
+};
+
 export const sendMagicLink = async (req, res) => {
     try {
         // grab the user's email

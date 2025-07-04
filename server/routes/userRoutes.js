@@ -1,10 +1,13 @@
 import express from 'express';
 import { getProfile, updateProfile } from '../controllers/userController.js';
-import authMiddleware from '../middleware/authMiddleware.js';
+import authMiddleware, {
+    csrfProtection,
+} from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+// ensure auth protection when getting and updating profile; ensure csrf protection when updating profile
 router.get('/profile', authMiddleware, getProfile);
-router.put('/profile', authMiddleware, updateProfile);
+router.put('/profile', authMiddleware, csrfProtection, updateProfile);
 
 export default router;

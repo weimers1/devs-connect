@@ -5,12 +5,17 @@ import {
     extendSession,
     destroySession,
 } from '../controllers/authController.js';
+import authMiddleware, {
+    csrfProtection,
+} from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/login', sendMagicLink);
+// ensure csrf protection when logging in
+router.post('/login', csrfProtection, sendMagicLink);
 router.get('/verify', verifyMagicLink);
-router.post('/session/extend', extendSession);
-router.post('/session/destroy', destroySession);
+// ensure authentication and csrf protection when extending sessions and logging out
+router.post('/session/extend', authMiddleware, csrfProtection, extendSession);
+router.post('/session/destroy', authMiddleware, csrfProtection, destroySession);
 
 export default router;
