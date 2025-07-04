@@ -1,6 +1,8 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
+
+
 //User Table
 const User = sequelize.define(
     'User',
@@ -10,11 +12,7 @@ const User = sequelize.define(
             type: DataTypes.INTEGER,
             autoIncrement: true,
             primaryKey: true,
-            references: {
-                id: 'sender_id', //Linking the User tables to a sender_id\
-                key: id,
-                receiver: 'receiver' //Linking The receiving ID to the user as well
-            },
+           
         },
         //Not Allowed To Be Null After Signup if redirected  to a signup page
         firstName: {

@@ -5,7 +5,8 @@ import sequelize from './config/database.js';
 import './Models/users.js';
 import './Models/sessions.js';
 import {createServer} from "http";
-import {Server} from "socket.io"
+import {Server} from "socket.io";
+import './Models/MessagesTable.js';
 
 const app = express();
 const httpServer = createServer(app); //Needs to attach itself to handle WebSocket Connections (express by itself doesn't expose the server Socket.Io needs)
