@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Message, ChatMessage, UseMessagesReturn, UseChatReturn } from './types';
+import {io, Socket} from "socket.io-client";
 
 // Custom hook for managing messages list
 export const useMessages = (): UseMessagesReturn => {
@@ -185,23 +186,30 @@ export const useChat = (conversationId: string | null): UseChatReturn => {
   };
 };
 
-// Hook for real-time message updates (WebSocket integration)
-export const useRealTimeMessages = (userId: string) => {
+// Hook for real-time message updates (WebSocket integration) | Testing to See if we can connect the server and client 
+export const useSocket = () => {
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  
+
   useEffect(() => {
-    // In production, implement WebSocket connection
-    // const ws = new WebSocket(`ws://your-websocket-url/${userId}`);
+    const newSocket = io('http://localhost:8080');
     
-    // ws.onopen = () => setIsConnected(true);
-    // ws.onclose = () => setIsConnected(false);
-    // ws.onmessage = (event) => {
-    //   const message = JSON.parse(event.data);
-    //   // Handle incoming messages
-    // };
-    
-    // return () => ws.close();
-  }, [userId]);
-  
-  return { isConnected };
+    newSocket.on('connect', () => {
+      setIsConnected(true);
+      console.log(`Connected to server ${newSocket.id}`); //Logging the User ID to the server
+    });
+
+    newSocket.on('disconnect', () => {
+      setIsConnected(false);
+      console.log('Disconnected from server');
+    });
+
+    setSocket(newSocket);
+
+    return () => { newSocket.close()
+    };
+  }, []);
+
+
+  return { socket, isConnected };
 };

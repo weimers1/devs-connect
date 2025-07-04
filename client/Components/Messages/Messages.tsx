@@ -5,11 +5,27 @@ import MessagesContent from './MessagesContent';
 import MessageSidebar from './MessageSidebar';
 import { useMessages, useChat } from './hooks';
 import type { Message } from './types';
+import {useSocket} from "./hooks";
 
 const Messages = () => {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
+  const  { socket, isConnected } = useSocket(); //Importing This socket hook from hooks 
   
+//Base Effect Method added (relying on the hook in the hooks which establishes a connection from client to server)
+  useEffect(() => {
+    if(socket) {
+      console.log(" Socket Connected"); 
+      socket.emit("test-connection", "Hello friends");
+    
+      socket.on("test-response", (data) => {
+        console.log("Server Responded:", data);
+      });
+    }
+  }, [socket]);
+ //This is building off of the previously established connection in the hooks and allowing us to put it to use with sending messages
+
+
   // Use custom hooks for state management
   const { messages, isLoading, error, searchMessages } = useMessages();
   const { chatMessages, sendMessage } = useChat(selectedMessage?.id || null);

@@ -14,6 +14,7 @@ const User = sequelize.define(
             primaryKey: true,
            
         },
+       
         //Not Allowed To Be Null After Signup if redirected  to a signup page
         firstName: {
             type: DataTypes.STRING,
@@ -40,7 +41,9 @@ const User = sequelize.define(
             allowNull: true,
         },
     },
-    {}
+     {
+            tableName: 'Users'
+        }
 );
 
 console.log(User === sequelize.models.User);
