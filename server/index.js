@@ -4,6 +4,38 @@ import cors from 'cors';
 import sequelize from './config/database.js';
 import './Models/users.js';
 import './Models/sessions.js';
+import {createServer} from "http";
+import {Server} from "socket.io"
+
+const app = express();
+const httpServer = createServer(app); //Needs to attach itself to handle WebSocket Connections (express by itself doesn't expose the server Socket.Io needs)
+
+
+
+
+//Creating the IO server for Websockets Communication (Socket.io needs its separate CORS for protecting WebSocket connections)
+const io = new Server(httpServer, {
+      cors: {
+      origin: ['http://localhost:5173', 'http://localhost:3000'], //Same Ports just adding socket as the chatting feature.
+      methods: ['GET', 'POST']  //Only Send and Receiving Text Messages Back And Forth
+     }
+})
+    //Testing The Socket Connection
+   io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+  
+  socket.on('test-connection', (data) => {
+    console.log('Received from client:', data);
+    socket.emit('test-response', 'Hello from server!');
+  });
+  
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+
+
 
 
 const PORT = process.env.PORT || '8080';
@@ -11,8 +43,7 @@ const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:5173';
 console.log(PORT);
 console.log(URL_CLIENT);
 
-const app = express();
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => { //Handles Both HTTP and WebSocket
     console.log('App is listening on port ' + PORT);
 });
 
@@ -28,7 +59,7 @@ async function testDatabaseConnection() {
 
 testDatabaseConnection(); 
 
-// configure cors
+// configure cors for API Endpoints 
 const corsOptions = {
     origin: ['http://localhost:5173', 'http://localhost:3000'],
     methods: ['GET', 'POST', 'OPTIONS'],
@@ -63,7 +94,7 @@ app.get('/', async (request, response) => {
     }
 });
 
-//Testing The Table SChema 
+//Testing The Table Schema 
 async function testTables() {
     try {
         await sequelize.sync(); //Attempt to add the tables to the DB
