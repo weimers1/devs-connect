@@ -36,16 +36,35 @@ app.use(csurf({ cookie: true }));
 // handle errors:
 app.use(errorHandler);
 
+// clean up duplicate email indexes because otherwise the old ones linger every time a sync is performed and then the max keys limit is reached (sequelize then stops working)
+async function cleanUpEmailIndexes() {
+    try {
+        const [indexes] = await sequelize.query(`
+            SELECT INDEX_NAME
+            FROM INFORMATION_SCHEMA.STATISTICS
+            WHERE TABLE_SCHEMA = 'devs_connect' 
+            AND TABLE_NAME = 'users' 
+            AND INDEX_NAME LIKE 'email%'
+            AND INDEX_NAME != 'email'; -- Keep one unique index
+        `);
+
+        for (const index of indexes) {
+            await sequelize.query(
+                `DROP INDEX \`${index.INDEX_NAME}\` ON Users`
+            );
+            console.log(`Dropped index: ${index.INDEX_NAME}`);
+        }
+    } catch (error) {
+        console.error('Error cleaning up indexes:', error);
+    }
+}
+
 //Will Use this for basic setup of update the DB models, but once we enter production will use Sequelize Migration for better Control
 if (process.env.STAGE_ENV !== 'production') {
-    sequelize
-        .sync({ alter: true }) // non-destructive update
-        .then(() => {
-            console.log('Database synced');
-        })
-        .catch((err) => {
-            console.error('Sync error:', err);
-        });
+    cleanUpEmailIndexes()
+        .then(() => sequelize.sync({ alter: true }))
+        .then(() => console.log('Database synced'))
+        .catch((err) => console.error('Sync error:', err));
 }
 
 sequelize
