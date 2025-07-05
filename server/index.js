@@ -7,6 +7,7 @@ import './Models/sessions.js';
 import {createServer} from "http";
 import {Server} from "socket.io";
 import './Models/MessagesTable.js';
+import messageRoutes from "./Routes/MessageRoutes.js";
 
 const app = express();
 const httpServer = createServer(app); //Needs to attach itself to handle WebSocket Connections (express by itself doesn't expose the server Socket.Io needs)
@@ -85,16 +86,6 @@ if(process.env.STAGE_ENV !== 'production') {
   });
 }
 
-// @TODO: move this to a reasonable routes file; just for test now
-app.get('/', async (request, response) => {
-    try {
-        return response.status(200).json({ response: 'what the sigma' });
-    } catch (error) {
-        console.log(error);
-        response.status(500).send('System Error');
-    }
-});
-
 //Testing The Table Schema 
 async function testTables() {
     try {
@@ -106,5 +97,11 @@ async function testTables() {
 }
 
 testTables();
+
+//API ENDPOINTS FOR MESSAGES 
+
+app.use('/api/messages', messageRoutes);
+
+
 
 

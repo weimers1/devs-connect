@@ -3,7 +3,7 @@ import Sidebar from '../Connections/Sidebar';
 import Layout from '../Layout';
 import MessagesContent from './MessagesContent';
 import MessageSidebar from './MessageSidebar';
-import { useMessages, useChat } from './hooks';
+import { useMessages, GetMessages, useChat } from './hooks';
 import type { Message } from './types';
 import {useSocket} from "./hooks";
 
@@ -28,7 +28,17 @@ const Messages = () => {
 
   // Use custom hooks for state management
   const { messages, isLoading, error, searchMessages } = useMessages();
-  const { chatMessages, sendMessage } = useChat(selectedMessage?.id || null);
+  // Extract other user ID from conversation ID (e.g., "1-2" -> "2")
+  const selectedUserId = selectedMessage?.id ? 
+    selectedMessage.id.split('-').find(id => id !== '1') || null : null;
+  
+  // Debug logging
+  console.log('Selected message:', selectedMessage);
+  console.log('Selected user ID:', selectedUserId);
+  
+  const { chatMessages, isLoading: chatLoading, sendMessage } = useChat(selectedUserId);
+  
+  console.log('Chat messages:', chatMessages);
 
   // Handle responsive behavior
   useEffect(() => {
@@ -79,8 +89,6 @@ const Messages = () => {
         <MessageSidebar 
           onMessageSelect={handleMessageSelect}
           selectedMessage={selectedMessage}
-          messages={messages}
-          isLoading={isLoading}
           onSearch={searchMessages}
           className={`${isMobileView ? 'hidden md:flex' : 'flex'}`}
         />

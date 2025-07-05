@@ -1,30 +1,32 @@
 import React, { useState, useCallback } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import type { MessageSidebarProps, Message } from './types';
+import { useMessages } from './hooks';
 
 const MessageSidebar: React.FC<MessageSidebarProps> = ({ 
   onMessageSelect, 
-  selectedMessage, 
-  messages = [],
-  isLoading = false,
+  selectedMessage,
   onSearch,
   className = '' 
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Use the proper hook that returns Message types
+  const { messages, isLoading, error, searchMessages } = useMessages();
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
+    searchMessages(query);
     onSearch?.(query);
-  }, [onSearch]);
+  }, [searchMessages, onSearch]);
 
   const handleMessageClick = useCallback((message: Message) => {
     onMessageSelect(message);
   }, [onMessageSelect]);
 
   const formatDate = useCallback((dateStr: string) => {
-    // In production, use proper date formatting
-    return dateStr;
+    return new Date(dateStr).toLocaleDateString();
   }, []);
 
   return (
@@ -33,15 +35,11 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
       <div className="flex-shrink-0 px-4 py-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
-          <button 
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="Compose new message"
-          >
+          <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
             <Icon icon="weui:pencil-filled" className="w-5 h-5" />
           </button>
         </div>
         
-        {/* Search */}
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Icon icon="mdi:magnify" className="w-4 h-4 text-gray-400" />
@@ -62,12 +60,14 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
           </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-8">
+            <p className="text-red-500 text-sm">{error}</p>
+          </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
             <Icon icon="mdi:message-outline" className="w-12 h-12 text-gray-300 mb-3" />
-            <p className="text-gray-500 text-sm">
-              {searchQuery ? 'No messages found' : 'No messages yet'}
-            </p>
+            <p className="text-gray-500 text-sm">No conversations yet</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">

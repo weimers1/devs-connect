@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Message, ChatMessage, UseMessagesReturn, UseChatReturn } from './types';
 import {io, Socket} from "socket.io-client";
+import messageApi from '../../Service/service';
 
-// Custom hook for managing messages list
+// Custom hook for managing messages list (SIDEBAR)
+// User opens the app and this "useMessages" fetches their recent chats
 export const useMessages = (): UseMessagesReturn => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -14,32 +16,20 @@ export const useMessages = (): UseMessagesReturn => {
     setError(null);
     
     try {
-      // In production, replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await messageApi.getConversations();
       
-      // Mock data - replace with actual API response
-      const mockMessages: Message[] = [
-        {
-          id: '1',
-          name: 'Phil Johnson',
-          date: 'June 12',
-          avatar: '/assets/images/Ryan.jpg',
-          lastMessage: 'Hey! I saw your latest post about React optimization. Great insights!',
-          unreadCount: 2,
-          isOnline: true
-        },
-        {
-            id: '2',
-          name: 'Phil Johnson',
-          date: 'June 12',
-          avatar: '/assets/images/Ryan.jpg',
-          lastMessage: 'Hey! I saw your latest post',
-          unreadCount: 2,
-          isOnline: true
-        }
-        // Add more mock messages as needed
-      ];   
-      setMessages(mockMessages);
+      // Transform backend data to Message type
+      const transformedMessages: Message[] = response.data.map((conv: any) => ({
+        id: conv.conversation_id,
+        name: `${conv.otherUser.firstName} ${conv.otherUser.lastName}`,
+        date: new Date(conv.lastMessage.createdAt).toLocaleDateString(),
+        avatar: `https://ui-avatars.com/api/?name=${conv.otherUser.firstName}+${conv.otherUser.lastName}&background=3b82f6&color=fff`,
+        lastMessage: conv.lastMessage.content,
+        unreadCount: conv.unreadCount || "",
+        isOnline: Math.random() > 0.5
+      }));
+      
+      setMessages(transformedMessages);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch messages');
     } finally {
@@ -76,40 +66,42 @@ export const useMessages = (): UseMessagesReturn => {
   };
 };
 
-// Custom hook for managing chat messages
-export const useChat = (conversationId: string | null): UseChatReturn => {
+
+
+
+// Custom hook for managing chat messages (CHAT WINDOW)
+export const useChat = (userId: string | null): UseChatReturn => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchChatMessages = useCallback(async (id: string) => {
+    console.log('Fetching chat messages for user ID:', id);
     setIsLoading(true);
     setError(null);
     
     try {
-      // In production, replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const response = await messageApi.getChatMessages(id);
+      console.log('Chat API response:', response);
+      console.log('Response data:', response.data);
+      console.log('Response data length:', response.data?.length);
       
-      // Mock chat messages
-      const mockChatMessages: ChatMessage[] = [
-        {
-          id: '1',
-          content: 'Hey! I saw your latest post about React optimization.',
-          timestamp: new Date(Date.now() - 3600000),
-          isOwn: false,
-          status: 'read'
-        },
-        {
-          id: '2',
-          content: 'Thanks for reaching out! I\'d be happy to discuss this further.',
-          timestamp: new Date(Date.now() - 1800000),
-          isOwn: true,
-          status: 'read'
-        }
-      ];
+      const transformedMessages: ChatMessage[] = response.data.map((msg: any) => ({
+        id: msg.id.toString(),
+        content: msg.content,
+        timestamp: new Date(msg.createdAt),
+        isOwn: msg.sender_id === 1,
+        status: msg.status || 'read'
+      }));
       
-      setChatMessages(mockChatMessages);
+      console.log('Transformed chat messages:', transformedMessages);
+      setChatMessages(transformedMessages);
+      
+      // Mark all unread messages as read when opening conversation
+      await markConversationAsRead(id);
+      
     } catch (err) {
+      console.error('Chat fetch error:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch chat messages');
     } finally {
       setIsLoading(false);
@@ -117,7 +109,7 @@ export const useChat = (conversationId: string | null): UseChatReturn => {
   }, []);
 
   const sendMessage = useCallback(async (content: string) => {
-    if (!conversationId || !content.trim()) return;
+    if (!userId || !content.trim()) return;
 
     const tempMessage: ChatMessage = {
       id: `temp-${Date.now()}`,
@@ -130,19 +122,40 @@ export const useChat = (conversationId: string | null): UseChatReturn => {
     setChatMessages(prev => [...prev, tempMessage]);
 
     try {
-      // In production, replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Call the actual API to save message to database
+      const response = await fetch('http://localhost:8080/api/messages/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          receiver_id: parseInt(userId),
+          content: content.trim()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const result = await response.json();
+      console.log('Message sent successfully:', result);
       
-      // Update message status
+      // Update the temp message with real data from server
       setChatMessages(prev => 
         prev.map(msg => 
           msg.id === tempMessage.id 
-            ? { ...msg, id: `msg-${Date.now()}`, status: 'sent' as const }
+            ? { 
+                ...msg, 
+                id: result.data.id.toString(), 
+                status: 'sent' as const,
+                timestamp: new Date(result.data.createdAt)
+              }
             : msg
         )
       );
     } catch (err) {
-      // Handle send error
+      console.error('Send message error:', err);
       setChatMessages(prev => 
         prev.map(msg => 
           msg.id === tempMessage.id 
@@ -152,29 +165,48 @@ export const useChat = (conversationId: string | null): UseChatReturn => {
       );
       setError('Failed to send message');
     }
-  }, [conversationId]);
+  }, [userId]);
 
   const loadMoreMessages = useCallback(async () => {
-    if (!conversationId) return;
-    // Implement pagination logic here
-  }, [conversationId]);
+    if (!userId) return;
+  }, [userId]);
 
   const markAsRead = useCallback(async (messageId: string) => {
-    // In production, make API call to mark message as read
     setChatMessages(prev => 
       prev.map(msg => 
         msg.id === messageId ? { ...msg, status: 'read' as const } : msg
       )
     );
   }, []);
+  
+  // Mark entire conversation as read
+  const markConversationAsRead = useCallback(async (otherUserId: string) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/messages/mark-read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          other_user_id: parseInt(otherUserId)
+        })
+      });
+      
+      if (response.ok) {
+        console.log('Conversation marked as read');
+      }
+    } catch (err) {
+      console.error('Failed to mark conversation as read:', err);
+    }
+  }, []);
 
   useEffect(() => {
-    if (conversationId) {
-      fetchChatMessages(conversationId);
+    if (userId) {
+      fetchChatMessages(userId);
     } else {
       setChatMessages([]);
     }
-  }, [conversationId, fetchChatMessages]);
+  }, [userId, fetchChatMessages]);
 
   return {
     chatMessages,
@@ -213,3 +245,23 @@ export const useSocket = () => {
 
   return { socket, isConnected };
 };
+
+
+//Messages Hook For Conversations API calls
+
+// Define the conversation type
+interface Conversation {
+  conversation_id: string;
+  otherUser: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  lastMessage: {
+    content: string;
+    createdAt: string;
+    sender_id: number;
+  };
+}
+

@@ -3,13 +3,11 @@ import sequelize from '../config/database.js';
 
 //Messages Table
 const Messages = sequelize.define('Messages', {
-    //Increment ID Upon Being Added to the DB
-     
-     id: {
-            type: DataTypes.INTEGER,
-            autoIncrement: true,
-            primaryKey: true,
-        },
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+    },
     sender_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -24,25 +22,37 @@ const Messages = sequelize.define('Messages', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Users', // Name of the User table
+            model: 'Users',
             key: 'id',
-          
         },
-        onUpdate: 'CASCADE', //Without this, deleting a user breaks all their messages
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
     },
-    
-  
     content: {
-        // Session tracking and verifies the user is logged and security.
+        type: DataTypes.TEXT, // Changed to TEXT for longer messages
+        allowNull: false,
+    },
+    message_type: {
+        type: DataTypes.ENUM('text', 'image', 'file'),
+        defaultValue: 'text',
+    },
+    status: {
+        type: DataTypes.ENUM('sent', 'delivered', 'read'),
+        defaultValue: 'sent',
+    },
+    conversation_id: {
         type: DataTypes.STRING,
         allowNull: false,
-        
+        // Format: smaller_user_id-larger_user_id (e.g., "1-5")
+    },
+    read_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
     }
-}, { 
-    timestamps: true,
-    
+}, {
+    timestamps: true // Adds createdAt and updatedAt
+    // Indexes removed to prevent duplicate key errors
+    // Add them back later when needed for performance
 });
 
-console.log(Messages === sequelize.models.Messages);
 export default Messages;
