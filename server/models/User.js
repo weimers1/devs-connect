@@ -20,7 +20,6 @@ const User = sequelize.define(
             type: DataTypes.STRING,
             allowNull: false,
         },
-        //Not Allowed To Be False
         email: {
             type: DataTypes.STRING,
             allowNull: false,

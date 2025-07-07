@@ -6,7 +6,6 @@ import Profile from '../Components/Profile';
 import Messages from '../Components/Messages';
 import Communities from '../Components/Communities/Communities';
 
-//Routing To Direct to home page.
 const App = () => {
     return (
         <BrowserRouter>
