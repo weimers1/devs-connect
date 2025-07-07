@@ -25,7 +25,7 @@ export const sendMagicLink = async (req, res) => {
         // send magic link via stytch
         const response = await stytchClient.magicLinks.email.loginOrCreate({
             email,
-            login_magic_link_url: `${process.env.URL_CLIENT}/verify`,
+            login_magic_link_url: `${process.env.URL_CLIENT}/authenticate`,
         });
 
         // find the user based on their email
@@ -73,7 +73,7 @@ export const verifyMagicLink = async (req, res) => {
         // grab their email from the created stytch session
         const email = session.user.emails[0].email;
 
-        // find the user with that email in the database
+        // find the user with that email in the database, and assume they exist
         const user = await User.findOne({ where: { email } });
 
         // if a user does not exist with that email or they aren't verified and don't have a correct token, deny access
@@ -83,9 +83,15 @@ export const verifyMagicLink = async (req, res) => {
             });
         }
 
+        // assume they already existed before this
+        let userCreated = false;
+
         // if they have not yet been verified, mark them as verified and clear signupToken as it's no longer needed
         if (!user.verifiedAt) {
             await user.update({ verifiedAt: new Date(), signupToken: null });
+
+            // they just "created" their account
+            userCreated = true;
         }
 
         // create a session for them in the database
@@ -94,7 +100,7 @@ export const verifyMagicLink = async (req, res) => {
             token: session.session_token,
         });
 
-        res.status(200).json({ session_token: dbSession.token });
+        res.status(200).json({ userCreated, session_token: dbSession.token });
     } catch (error) {
         // general error catch
         throw Object.assign(new Error(error.message || 'Verification failed'), {
