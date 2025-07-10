@@ -41,14 +41,14 @@ const Navbar: React.FC = () => {
     ];
 
     return (
-        <nav className="bg-transparent relative">
-            <div className="flex grid grid-cols-2 xl:grid-cols-3 px-8 pt-5">
+        <nav className="sticky top-0 z-1 relative">
+            <div className="flex grid grid-cols-2 xl:grid-cols-3 px-8 pt-5 bg-linear-to-t from-blue-700 to-slate-950 pb-3">
                 {/* Logo */}
-                <div className="w-15">
+                <div className="w-18 bg-linear-to-b to-slate-950/10 ps-2 shadow-lg rounded-xl">
                     <Link to="/">
                         <img
                             src={assets.Logo}
-                            className="h-15"
+                            className="h-16"
                             alt="logo"
                         />
                     </Link>
@@ -102,7 +102,7 @@ const Navbar: React.FC = () => {
 
             {/* Mobile Menu Dropdown */}
             {isMobileMenuOpen && (
-                <div className="xl:hidden absolute top-full left-0 right-0 z-50">
+                <div className="xl:hidden absolute top-full left-0 right-0 z-2 bg-linear-to-b from-blue-700 to-slate-950">
                     {/* Mobile Search */}
                     <div className="pt-2 px-3">
                         <input
@@ -117,7 +117,7 @@ const Navbar: React.FC = () => {
                             return (
                                 <Link
                                     key={`mobile-link-${i}`}
-                                    className="flex py-2 text-white hover:bg-white rounded p-3 hover:text-blue-900"
+                                    className="flex py-2 text-white rounded p-3"
                                     to={page.route}
                                 >
                                     <Icon
