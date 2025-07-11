@@ -7,9 +7,11 @@ import './models/Session.js';
 import errorHandler from './utils/errorHandler.js';
 import csurf from 'csurf';
 import cookieParser from 'cookie-parser';
+import authRouter from './routes/authRoutes.js';
 
 const PORT = process.env.PORT || '8080';
-const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:80';
+const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost';
+console.log(URL_CLIENT);
 
 const app = express();
 app.listen(PORT, () => {
@@ -35,6 +37,9 @@ app.use(csurf({ cookie: true }));
 
 // handle errors:
 app.use(errorHandler);
+
+// additional routes
+app.use('/auth', authRouter);
 
 // clean up duplicate email indexes because otherwise the old ones linger every time a sync is performed and then the max keys limit is reached (sequelize then stops working)
 async function cleanUpEmailIndexes() {

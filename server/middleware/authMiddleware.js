@@ -1,6 +1,6 @@
 import csurf from 'csurf';
 import stytchClient from '../config/stytch.js';
-import Session from '../models/sessions.js';
+import Session from '../models/Session.js';
 
 // set up csrf middleware (call once, reuse)
 export const csrfProtection = csurf({

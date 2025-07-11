@@ -1,6 +1,6 @@
 import stytchClient from '../config/stytch.js';
-import Session from '../models/sessions.js';
-import User from '../models/users.js';
+import Session from '../models/Session.js';
+import User from '../models/User.js';
 
 export const getCsrfToken = (req, res) => {
     try {
@@ -103,8 +103,8 @@ export const verifyMagicLink = async (req, res) => {
         res.status(200).json({ userCreated, session_token: dbSession.token });
     } catch (error) {
         // general error catch
-        throw Object.assign(new Error(error.message || 'Verification failed'), {
-            status: error.status || 500,
+        res.status(error.status || 500).json({
+            error: error.message || 'Verification failed',
         });
     }
 };
