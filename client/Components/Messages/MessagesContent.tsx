@@ -1,19 +1,19 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import type { MessagesContentProps, ChatMessage } from './types';
-
+//
 const MessagesContent: React.FC<MessagesContentProps> = ({ 
-  selectedMessage, 
-  onBackToList, 
-  messages = [],
-  onSendMessage,
-  isTyping = false,
+  selectedMessage, //current conversation data 
+  onBackToList, // Function to return to sidebar (mobile)
+  messages = [], // Array of chat messages
+  onSendMessage, // Function to send new messages (calls parent's sendmessage)
+  isTyping = false, //Indicator when other person is typing | unsure if this works since we only have 1 test acc
   className = '' 
 }) => {
-  const [newMessage, setNewMessage] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-
+  const [newMessage, setNewMessage] = useState(''); //Stores the text user is currently typing 
+  const messagesEndRef = useRef<HTMLDivElement>(null); //Reference to invisible div at bottom of messages | Autoscroll to show newest messages
+  const inputRef = useRef<HTMLTextAreaElement>(null); //Reference to the message input textarea | Purpose: to focus management and potential future features
+  //Automatically scrolls to newest message when new messages arrive | user will always see latest message without having to scroll
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
@@ -21,7 +21,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
-
+  //Handles sending new messages  | User types -> presses send -> clears input -> calls API
   const handleSendMessage = useCallback(async () => {
     if (!newMessage.trim() || !selectedMessage || !onSendMessage) return;
 
@@ -42,7 +42,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
       handleSendMessage();
     }
   }, [handleSendMessage]);
-
+  //Converts timestamp to regular time format
   const formatTime = useCallback((date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }, []);

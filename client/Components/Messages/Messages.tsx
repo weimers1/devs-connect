@@ -3,16 +3,26 @@ import Sidebar from '../Connections/Sidebar';
 import Layout from '../Layout';
 import MessagesContent from './MessagesContent';
 import MessageSidebar from './MessageSidebar';
-import { useMessages, GetMessages, useChat } from './hooks';
+import { useMessages, useChat, useSocket } from './hooks';
 import type { Message } from './types';
-import {useSocket} from "./hooks";
+
 
 const Messages = () => {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
-  const  { socket, isConnected } = useSocket(); //Importing This socket hook from hooks 
+      // Use custom hooks for state management
+   const { messages, isLoading, error, searchMessages } = useMessages();
+      // Extract other user ID from conversation ID (e.g., "1-2" -> "2")
+    const selectedUserId = selectedMessage?.id ? 
+    selectedMessage.id.split('-').find(id => id !== '1') || null : null;
+     const { chatMessages, isLoading: chatLoading, sendMessage, socket } = useChat(selectedUserId);
+   //This is building off of the previously established connection in the hooks and allowing us to put it to use with sending messages
+
+  // Debug logging
+  console.log('Selected message:', selectedMessage);
+  console.log('Selected user ID:', selectedUserId);
   
-//Base Effect Method added (relying on the hook in the hooks which establishes a connection from client to server)
+  //Base Effect Method added (relying on the hook in the hooks which establishes a connection from client to server)
   useEffect(() => {
     if(socket) {
       console.log(" Socket Connected"); 
@@ -20,23 +30,12 @@ const Messages = () => {
     
       socket.on("test-response", (data) => {
         console.log("Server Responded:", data);
+       
       });
+    
     }
   }, [socket]);
- //This is building off of the previously established connection in the hooks and allowing us to put it to use with sending messages
 
-
-  // Use custom hooks for state management
-  const { messages, isLoading, error, searchMessages } = useMessages();
-  // Extract other user ID from conversation ID (e.g., "1-2" -> "2")
-  const selectedUserId = selectedMessage?.id ? 
-    selectedMessage.id.split('-').find(id => id !== '1') || null : null;
-  
-  // Debug logging
-  console.log('Selected message:', selectedMessage);
-  console.log('Selected user ID:', selectedUserId);
-  
-  const { chatMessages, isLoading: chatLoading, sendMessage } = useChat(selectedUserId);
   
   console.log('Chat messages:', chatMessages);
 
@@ -54,10 +53,18 @@ const Messages = () => {
 
   const handleMessageSelect = useCallback((message: Message) => {
     setSelectedMessage(message);
+    
+    if(socket) {
+      console.log("EMITTING JOIN-CHAT:", message.id); // Add this
+      socket.emit("Join-chat", {id: message.id}) //Event to Join A chat with the message ID (Case Sensitive must match the backend)
+    } else {
+    console.log("NO SOCKET AVAILABLE"); //Console Log of not joining 
+  }
     if (window.innerWidth < 768) {
       setIsMobileView(true);
     }
-  }, []);
+
+  }, [socket]);
 
   const handleBackToList = useCallback(() => {
     setIsMobileView(false);

@@ -13,19 +13,19 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   
   // Use the proper hook that returns Message types
   const { messages, isLoading, error, searchMessages } = useMessages();
-
+  //When a user types this function runs, showed typed text in input, calls hooks search function
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
     searchMessages(query);
     onSearch?.(query);
   }, [searchMessages, onSearch]);
-
+  //When a user clicks a conversation this function runs 
   const handleMessageClick = useCallback((message: Message) => {
     onMessageSelect(message);
   }, [onMessageSelect]);
-
-  const formatDate = useCallback((dateStr: string) => {
+  //Converts ISO data string to readable content 
+  const formatDate = useCallback((dateStr: string) => { //CallBack has better performance, prevents unnecesary re-renders
     return new Date(dateStr).toLocaleDateString();
   }, []);
 

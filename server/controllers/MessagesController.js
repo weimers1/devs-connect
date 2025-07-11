@@ -3,14 +3,14 @@ import User from "../Models/users.js"
 import { Op } from 'sequelize';
 
 //Functions (For SideBar Messages List)
-// 1. GET CONVERSATIONS LIST
+//  GET CONVERSATIONS LIST
 export const getConversations = async (req, res) => {
   try {
-   // In MessagesController.js - line 9 and 79
-        const currentUserId = 1; // Hardcode user ID 1 for testing
+
+        const currentUserId = 1; // Hardcode user ID 1 for testing | This is Hard coded until we obtain the currentUserId from the auth middleware
 
     
-    // Get all messages involving current user 
+    // Get all messages involving current user  from the DB
     const result = await Messages.findAll({
       where: {
         [Op.or]: [
@@ -34,34 +34,34 @@ export const getConversations = async (req, res) => {
         
         // Count unread messages in this conversation
         const unreadCount = result.filter(msg => 
-          msg.conversation_id === conversationId && 
+          msg.conversation_id === conversationId &&  //This is how we determine how many unread messages they're are 
           msg.receiver_id === currentUserId && 
           msg.status !== 'read'
         ).length;
         
-        conversationsMap.set(conversationId, {
-          conversation_id: conversationId,
-          otherUser: {
+        conversationsMap.set(conversationId, { //This will add a new entry to the Map with conversationId as the key
+          conversation_id: conversationId, //Frontend uses this to identify the conversation
+          otherUser: { //This Creates Info About the Person you're chatting with
             id: otherUserId,
-            firstName: `User${otherUserId}`,
+            firstName: `User${otherUserId}`,//So This will create if otherUserid = 2, then this will be User2 Test
             lastName: 'Test',
-            email: `user${otherUserId}@test.com`
+            email: `user${otherUserId}@test.com` //This Creates A fixed email
           },
-          lastMessage: {
-            content: message.content,
-            createdAt: message.createdAt,
+          lastMessage: { //This will store the most recent message in the sidebar 
+            content: message.content, //EX:Hey There
+            createdAt: message.createdAt, //EX: 2 min ago
             sender_id: message.sender_id
           },
-          unreadCount: unreadCount,
-          isOnline: false
+          unreadCount: unreadCount, //This is the number of unread message in the conversation
+          isOnline: false //Set this as false for now @TODO: in the future update via Socket.io presence
         });
       }
     });
     
-    const conversations = Array.from(conversationsMap.values());
+    const conversations = Array.from(conversationsMap.values()); //This will convert the Map Data Structure into an array thats why we're extracting the values so we can use res.json
     
     console.log('Found conversations:', conversations.length);
-    res.json({ success: true, data: conversations });
+    res.json({ success: true, data: conversations }); //Makes this serializable so the frontend can consume it
     
   } catch (error) {
     console.error('Error:', error);
@@ -82,7 +82,7 @@ export const getConversationMessages = async (req, res) => {
 
     //Create Conversation_id (Smaller Id First) | creates Array With both users ID's, converts Userid to number
     const conversationId = [currentUserId, parseInt(userId)] //Ensures Consistent Conversation_id regardless of who sends first
-    .sort((a,b) => a- b)
+    .sort((a,b) => a-b)
     .join('-');
   
   const result = await Messages.findAll({ //Gets all messages between you and User using Sequelize
@@ -100,26 +100,41 @@ export const getConversationMessages = async (req, res) => {
   
 };
 
-// 3. SEND MESSAGE
+//  SEND MESSAGE | Front end sends a Post Requests to receiver_id: 2, content: "hey" then sender_id (hardcoded). Then the conversation is created example 1-2, we then save to the database and return the message to frontend
 export const sendMessage = async (req, res) => {
   try {
-    const { receiver_id, content } = req.body;
-    const sender_id = 1; // Hardcoded for testing
+    const { receiver_id, content } = req.body; //Gets who to send to and the message content from the frontend
+    const sender_id = 1; // Hardcoded until auth is implemented 
     
-    // Create conversation_id
-    const conversationId = [sender_id, receiver_id]
-      .sort((a, b) => a - b)
+    // Create conversation_id | Purpose is to group messages between same two users
+    const conversationId = [sender_id, receiver_id] //Example User 1 -> User -> 2 = 1-2 This is how we can create a consistent Conversation
+      .sort((a, b) => a - b) 
       .join('-');
-    
+    //Saves TO Database | Creates new row in Messages table : Result: Message gets unique ID and timestamps
     const message = await Messages.create({
-      sender_id,
-      receiver_id,
-      content,
-      conversation_id: conversationId,
-      message_type: 'text',
-      status: 'sent'
+      sender_id,    // Who sent it (1)
+      receiver_id,  // Who receives it (2)
+      content,       // Message text ("Hello there!")
+      conversation_id: conversationId,  // Which conversation ("1-2")
+      message_type: 'text', // Type of message
+      status: 'sent'  // Initial status
     });
+    //  Emit Socket.io event after saving to DB
+   //  Emit Socket.io event after saving
+    const messageData = {
+      id: message.id,
+      sender_id: message.sender_id,
+      conversation_id: message.conversation_id,
+      receiver_id: message.receiver_id,
+      content: message.content,
+      timestamp: message.createdAt
+    };
     
+    // Get the io instance and emit to conversation room
+    const io = req.app.get('io');
+    io.to(conversationId).emit("receiver-message", messageData);
+    console.log(`🔥 EMITTED TO ROOM: ${conversationId}`, messageData); // Debug log
+ 
     res.json({ success: true, data: message });
   } catch (error) {
     console.error('Error:', error);
@@ -128,7 +143,7 @@ export const sendMessage = async (req, res) => {
 };
 
 
-// SEND REPLY (simulate other user replying)
+// SEND REPLY (simulate other user replying) | This is just for testing at the moment with postman
 export const sendReply = async (req, res) => {
   try {
     const { sender_id, content } = req.body;
@@ -147,6 +162,21 @@ export const sendReply = async (req, res) => {
       message_type: 'text',
       status: 'sent'
     });
+    
+   //  Emit Socket.io event (same as sendMessage)
+    const messageData = {
+      id: message.id,
+      sender_id: message.sender_id,
+      conversation_id: message.conversation_id,
+      receiver_id: message.receiver_id,
+      content: message.content,
+      timestamp: message.createdAt
+    };
+    
+    // Get the io instance and emit to conversation room
+    const io = req.app.get('io');
+    io.to(conversationId).emit("receiver-message", messageData);
+    console.log(`REPLY EMITTED TO ROOM: ${conversationId}`, messageData);
     
     res.json({ success: true, data: message });
   } catch (error) {
@@ -179,13 +209,13 @@ export const createTestUsers = async (req, res) => {
   }
 };
 
-// 4. MARK AS READ
+//  MARK AS READ
 export const markAsRead = async (req, res) => {
   try {
-    const { other_user_id } = req.body;
+    const { other_user_id } = req.body; //This will get the other persons ID from the frontend Request Ex(User 2 sent messages to User 1)
     const currentUserId = 1; // Hardcoded for testing
     
-    // Create conversation_id
+    // Create conversation_id | Target specific conversations for updates
     const conversationId = [currentUserId, other_user_id]
       .sort((a, b) => a - b)
       .join('-');
@@ -193,14 +223,14 @@ export const markAsRead = async (req, res) => {
     // Mark all messages in this conversation as read where current user is receiver
     await Messages.update(
       { 
-        status: 'read',
+        status: 'read', //Status changes to read 
         read_at: new Date()
       },
       {
-        where: {
+        where: { //where the coversation_id  = 1-2
           conversation_id: conversationId,
-          receiver_id: currentUserId,
-          status: { [Op.ne]: 'read' }
+          receiver_id: currentUserId, //Received by current user 1
+          status: { [Op.ne]: 'read' } //When the status is currently unread
         }
       }
     );
@@ -212,7 +242,7 @@ export const markAsRead = async (req, res) => {
   }
 }
 
-// 5. DELETE MESSAGE
+// DELETE MESSAGE  (we can implement this in the future)
 export const deleteMessage = async (req, res) => {
   // Soft delete or hard delete message
 }

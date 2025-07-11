@@ -21,7 +21,8 @@ const io = new Server(httpServer, {
       origin: ['http://localhost:5173', 'http://localhost:3000'], //Same Ports just adding socket as the chatting feature.
       methods: ['GET', 'POST']  //Only Send and Receiving Text Messages Back And Forth
      }
-})
+});
+app.set('io', io);
     //Testing The Socket Connection
    io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
@@ -31,10 +32,28 @@ const io = new Server(httpServer, {
     socket.emit('test-response', 'Hello from server!');
   });
   
-  socket.on('disconnect', () => {
+//Socket API integration (Joining Conversations) {7/8/25}
+socket.on("Join-chat", (data) => {
+    console.log(`USER JOINED ROOM: ${data.id}`); // Add this 
+  socket.join(data.id); //Join the Conversation_ID (While Be The Chat Name);
+}) 
+socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
+// SEND messages Through socket.io 
+socket.on("sending-messages", (data) => {
+  console.log(data); 
+  const messageData = { //Message Object
+    sender_id: data.sender_id, //The Sender_id  
+    conversation_id: data.conversation_id, //The conversationID
+    receiver_id: data.receiver_id, //Who is receiver said message
+    content: data.content, //Content were sending 
+    timestamp: new Date() //Time
+  }
+  socket.to(data.conversation_id).emit("receiver-message", messageData);
+})
 });
+
 
 
 
