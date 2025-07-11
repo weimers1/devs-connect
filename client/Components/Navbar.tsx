@@ -1,133 +1,165 @@
 import React, { useState } from 'react';
 import { assets } from '../assets/assets';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 
 const Navbar: React.FC = () => {
-    {
-        /* Mobile Responsive Feature */
-    }
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const location = useLocation();
 
     const pages = [
         {
             route: '/',
-            src: assets.Home,
             title: 'Home',
-            alt: 'home',
-            icon: 'mdi:home-outline',
+            icon: 'mdi:home',
         },
         {
             route: '/communities',
-            src: assets.Communities,
             title: 'Communities',
-            alt: 'Communities',
-            icon: 'mdi:account-group-outline',
+            icon: 'mdi:account-group',
         },
         {
             route: '/messages',
-            src: assets.Messages,
             title: 'Messages',
-            alt: 'Messages',
-            icon: 'mdi:message-reply-text-outline',
+            icon: 'mdi:message-reply-text',
         },
         {
             route: '/profile',
-            src: assets.Profile,
             title: 'Profile',
-            alt: 'Profile',
-            icon: 'mdi:account-circle-outline',
+            icon: 'mdi:account-circle',
         },
     ];
 
+    const isActive = (route: string) => location.pathname === route;
+
     return (
-        <nav className="bg-transparent relative">
-            <div className="flex grid grid-cols-2 xl:grid-cols-3 px-8 pt-5">
-                {/* Logo */}
-                <div className="w-15">
-                    <Link to="/">
-                        <img
-                            src={assets.Logo}
-                            className="h-15"
-                            alt="logo"
-                        />
-                    </Link>
-                </div>
-
-                {/* Desktop Search Bar */}
-                <div className="hidden xl:block">
-                    <input
-                        type="text"
-                        className="border-2 border-gray-300 bg-white h-10 w-9/10 px-5 mt-3 pr-16 rounded-lg text-sm focus:outline-none"
-                        placeholder="Search...."
-                    />
-                </div>
-
-                {/* Desktop Navigation Links */}
-                <div className="hidden xl:w-2/3 xl:flex">
-                    {pages.map((page, i) => {
-                        return (
-                            <Link
-                                className="hover:bg-white text-white hover:text-blue-900 rounded-lg mx-2 p-3"
-                                to={page.route}
-                                key={`desktop-link-${i}`}
-                            >
-                                <div className="grid place-items-center">
-                                    <Icon
-                                        icon={page.icon}
-                                        className="w-5 h-5"
-                                    />
-                                    <span className="font-medium">
-                                        {page.title}
-                                    </span>
-                                </div>
-                            </Link>
-                        );
-                    })}
-                </div>
-
-                {/* Mobile Menu Button */}
-                <div className="flex justify-self-end xl:hidden">
-                    <button
-                        className="hover:bg-white rounded p-3 cursor-pointer text-white hover:text-blue-900"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    >
-                        <Icon
-                            icon="mdi:menu"
-                            className="w-8 h-8"
-                        />
-                    </button>
-                </div>
-            </div>
-
-            {/* Mobile Menu Dropdown */}
-            {isMobileMenuOpen && (
-                <div className="xl:hidden absolute top-full left-0 right-0 z-50">
-                    {/* Mobile Search */}
-                    <div className="pt-2 px-3">
-                        <input
-                            type="text"
-                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                            placeholder="Search...."
-                        />
+        <nav className="sticky top-0 z-50 bg-white shadow-lg border-b border-gray-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center h-16">
+                    {/* Logo */}
+                    <div className="flex-shrink-0 flex items-center">
+                        <Link to="/" className="flex items-center space-x-2">
+                            <img
+                                src={assets.Logo}
+                                className="h-10 w-auto"
+                                alt="DevConnect Logo"
+                            />
+                            <span className="text-xl font-bold text-gray-900 hidden sm:block">
+                                DevConnect
+                            </span>
+                        </Link>
                     </div>
 
-                    <div className="px-4 py-2 space-y-2">
+                    {/* Desktop Search Bar */}
+                    <div className="hidden md:block flex-1 max-w-lg mx-8">
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Icon icon="mdi:magnify" className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
+                                placeholder="Search developers, projects, communities..."
+                            />
+                        </div>
+                    </div>
+
+                    {/* Desktop Navigation Links */}
+                    <div className="hidden md:flex items-center space-x-1">
                         {pages.map((page, i) => {
+                            const active = isActive(page.route);
                             return (
                                 <Link
-                                    key={`mobile-link-${i}`}
-                                    className="flex py-2 text-white hover:bg-white rounded p-3 hover:text-blue-900"
+                                    key={`desktop-link-${i}`}
                                     to={page.route}
+                                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
+                                        active
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                    }`}
                                 >
-                                    <Icon
-                                        icon={page.icon}
-                                        className="w-6 h-6"
-                                    />
-                                    <span className="ps-2">{page.title}</span>
+                                    <Icon icon={page.icon} className="w-5 h-5" />
+                                    <span>{page.title}</span>
                                 </Link>
                             );
                         })}
+                        
+                        {/* User Profile */}
+                        <div className="ml-4 flex items-center space-x-3">
+                            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                <Icon icon="mdi:bell-outline" className="w-6 h-6" />
+                            </button>
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                                <span className="text-white text-sm font-medium">U</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile menu button */}
+                    <div className="md:hidden">
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                        >
+                            <Icon
+                                icon={isMobileMenuOpen ? 'mdi:close' : 'mdi:menu'}
+                                className="w-6 h-6"
+                            />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Mobile menu */}
+            {isMobileMenuOpen && (
+                <div className="md:hidden border-t border-gray-200 bg-white">
+                    {/* Mobile Search */}
+                    <div className="px-4 py-3 border-b border-gray-200">
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Icon icon="mdi:magnify" className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Search..."
+                            />
+                        </div>
+                    </div>
+
+                    {/* Mobile Navigation Links */}
+                    <div className="px-2 pt-2 pb-3 space-y-1">
+                        {pages.map((page, i) => {
+                            const active = isActive(page.route);
+                            return (
+                                <Link
+                                    key={`mobile-link-${i}`}
+                                    to={page.route}
+                                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-base font-medium transition-colors ${
+                                        active
+                                            ? 'bg-blue-100 text-blue-700'
+                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                    }`}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <Icon icon={page.icon} className="w-6 h-6" />
+                                    <span>{page.title}</span>
+                                </Link>
+                            );
+                        })}
+                    </div>
+
+                    {/* Mobile User Section */}
+                    <div className="border-t border-gray-200 px-4 py-3">
+                        <div className="flex items-center space-x-3">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                                <span className="text-white font-medium">U</span>
+                            </div>
+                            <div>
+                                <div className="text-base font-medium text-gray-800">User Name</div>
+                                <div className="text-sm text-gray-500">user@example.com</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

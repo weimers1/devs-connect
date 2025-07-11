@@ -24,7 +24,6 @@ const User = sequelize.define(
             type: DataTypes.STRING,
             allowNull: false,
         },
-        //Not Allowed To Be False
         email: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -38,6 +37,10 @@ const User = sequelize.define(
         },
         verifiedAt: {
             type: DataTypes.DATE,
+            allowNull: true,
+        },
+        signupToken: {
+            type: DataTypes.STRING,
             allowNull: true,
         },
     },

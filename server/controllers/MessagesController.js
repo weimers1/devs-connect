@@ -1,5 +1,5 @@
-import Messages from "../Models/MessagesTable.js";
-import User from "../Models/users.js"
+import Messages from "../models/MessagesTable.js";
+import User from "../models/User.js"
 import { Op } from 'sequelize';
 
 //Functions (For SideBar Messages List)

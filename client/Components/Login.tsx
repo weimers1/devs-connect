@@ -1,23 +1,65 @@
 import { StytchLogin } from '@stytch/react';
 import { Products } from '@stytch/vanilla-js';
+import Layout from './Layout';
+const URL_CLIENT = import.meta.env.URL_CLIENT;
+
+// Define TypeScript interface for stytchStyle
+interface StytchStyle {
+    fontFamily: string;
+    container: {
+        backgroundColor: string;
+        borderColor: string;
+        width?: string; // Optional width property
+        [key: string]: string | undefined; // Allow additional string properties
+    };
+    input: {
+        textAlign: string;
+    };
+    buttons: {
+        primary: {
+            textAlign: string;
+        };
+        secondary: {
+            textAlign: string;
+        };
+    };
+    colors: {
+        primary: string;
+    };
+}
 
 // Login Page That Uses Magic Link
 const stytchConfig = {
     emailMagicLinksOptions: {
         createUserAsPending: true,
         loginExpirationMinutes: 30,
-        loginRedirectURL: 'http://localhost:5173/authenticate',
+        loginRedirectURL: URL_CLIENT + '/authenticate',
         signupExpirationMinutes: 30,
-        signupRedirectURL: 'http://localhost:5173/authenticate',
+        signupRedirectURL: URL_CLIENT + '/authenticate',
     },
     products: [Products.emailMagicLinks],
 };
 
-const stytchStyle = {
+// Conditionally set the width based on screen size
+const isSmallScreen = window.innerWidth < 1024;
+
+const stytchStyle: StytchStyle = {
     fontFamily: 'Monospace',
     container: {
         backgroundColor: 'white',
         borderColor: 'white',
+        ...(isSmallScreen ? { width: '100%' } : { width: '500px' }), // Conditionally add width
+    },
+    input: {
+        textAlign: 'center', // Center text in input fields
+    },
+    buttons: {
+        primary: {
+            textAlign: 'center', // Center text in primary buttons
+        },
+        secondary: {
+            textAlign: 'center', // Center text in secondary buttons
+        },
     },
     colors: {
         primary: 'navy',
@@ -26,8 +68,8 @@ const stytchStyle = {
 
 // @TODO Need to implement A Register Feature; Just tested The magic link functionality
 const Login = () => (
-    <div className="h-screen w-screen bg-linear-to-tr from-blue-700 to-slate-950">
-        <div className="h-screen flex flex-col items-center justify-center">
+    <Layout>
+        <section className="h-175 lg:h-250 flex flex-col items-center justify-center">
             <h1 className="text-center mb-8 text-6xl text-white font-black tracking-tight text-shadow-sm">
                 Connect. Code. Create.
             </h1>
@@ -37,8 +79,8 @@ const Login = () => (
                     styles={stytchStyle}
                 />
             </div>
-        </div>
-    </div>
+        </section>
+    </Layout>
 );
 
 export default Login;

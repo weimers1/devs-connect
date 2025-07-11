@@ -2,29 +2,30 @@ import express from 'express';
 import 'dotenv/config.js';
 import cors from 'cors';
 import sequelize from './config/database.js';
-import './Models/users.js';
-import './Models/sessions.js';
+import './models/User.js';
+import './models/Session.js';
+import './models/MessagesTable.js';
 import {createServer} from "http";
 import {Server} from "socket.io";
-import './Models/MessagesTable.js';
 import messageRoutes from "./Routes/MessageRoutes.js";
+import errorHandler from './utils/errorHandler.js';
+import csurf from 'csurf';
+import cookieParser from 'cookie-parser';
 
 const app = express();
-const httpServer = createServer(app); //Needs to attach itself to handle WebSocket Connections (express by itself doesn't expose the server Socket.Io needs)
+const httpServer = createServer(app);
 
-
-
-
-//Creating the IO server for Websockets Communication (Socket.io needs its separate CORS for protecting WebSocket connections)
+// Socket.io setup for real-time messaging
 const io = new Server(httpServer, {
-      cors: {
-      origin: ['http://localhost:5173', 'http://localhost:3000'], //Same Ports just adding socket as the chatting feature.
-      methods: ['GET', 'POST']  //Only Send and Receiving Text Messages Back And Forth
-     }
+  cors: {
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost', 'http://localhost:80'],
+    methods: ['GET', 'POST']
+  }
 });
 app.set('io', io);
-    //Testing The Socket Connection
-   io.on('connection', (socket) => {
+
+// Socket.io connection handlers
+io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
   
   socket.on('test-connection', (data) => {
@@ -32,95 +33,96 @@ app.set('io', io);
     socket.emit('test-response', 'Hello from server!');
   });
   
-//Socket API integration (Joining Conversations) {7/8/25}
-socket.on("Join-chat", (data) => {
-    console.log(`USER JOINED ROOM: ${data.id}`); // Add this 
-  socket.join(data.id); //Join the Conversation_ID (While Be The Chat Name);
-}) 
-socket.on('disconnect', () => {
+  // Join conversation room
+  socket.on("Join-chat", (data) => {
+    console.log(`USER JOINED ROOM: ${data.id}`);
+    socket.join(data.id);
+  });
+  
+  // Handle message sending via Socket.io
+  socket.on("sending-messages", (data) => {
+    console.log(data);
+    const messageData = {
+      sender_id: data.sender_id,
+      conversation_id: data.conversation_id,
+      receiver_id: data.receiver_id,
+      content: data.content,
+      timestamp: new Date()
+    };
+    socket.to(data.conversation_id).emit("receiver-message", messageData);
+  });
+  
+  socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
-// SEND messages Through socket.io 
-socket.on("sending-messages", (data) => {
-  console.log(data); 
-  const messageData = { //Message Object
-    sender_id: data.sender_id, //The Sender_id  
-    conversation_id: data.conversation_id, //The conversationID
-    receiver_id: data.receiver_id, //Who is receiver said message
-    content: data.content, //Content were sending 
-    timestamp: new Date() //Time
-  }
-  socket.to(data.conversation_id).emit("receiver-message", messageData);
-})
 });
-
-
-
-
-
 
 const PORT = process.env.PORT || '8080';
 const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:5173';
-console.log(PORT);
-console.log(URL_CLIENT);
 
-httpServer.listen(PORT, () => { //Handles Both HTTP and WebSocket
-    console.log('App is listening on port ' + PORT);
-});
-
-    // TESTING DB FUNCTIONALITY
-async function testDatabaseConnection() {
-  try {
-    await sequelize.authenticate(); // Attempt to authenticate the connection
-    console.log('Database connection has been established successfully.'); // Log success if connected
-  } catch (error) {
-    console.error('Unable to connect to the database:', error); // Log error if connection fails
-  }
-}
-
-testDatabaseConnection(); 
-
-// configure cors for API Endpoints 
+// Configure CORS
 const corsOptions = {
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
-    credentials: true
+  origin: [URL_CLIENT, 'http://localhost:5173', 'http://localhost:3000', 'http://localhost', 'http://localhost:80'],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
+  credentials: true
 };
 app.use(cors(corsOptions));
 
-    //Middle Ware
-// Add to index.js after cors
-app.use(express.json()); //Parses incoming request with JSON payloads and available in req.body
-app.use(express.urlencoded({ extended: true })); // parses the data from URL forms and makes it available in "req.body"
+// Middleware for parsing requests
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-//Will Use this for basic setup of update the DB models, but once we enter production will use Sequelize Migration for better Control
-if(process.env.STAGE_ENV !== 'production') {
-    sequelize.sync({ alter: true })  // non-destructive update
-  .then(() => {
-    console.log("Database synced");
-  })
-  .catch(err => {
-    console.error("Sync error:", err);
-  });
-}
+// Cookie parser for CSRF
+// app.use(cookieParser());
 
-//Testing The Table Schema 
-async function testTables() {
-    try {
-        await sequelize.sync(); //Attempt to add the tables to the DB
-        console.log("Database Tables created successfully"); 
-    }  catch(error) {
-        console.error("unable to add tables to the database", error);
+// CSRF protection
+// app.use(csurf({ cookie: true }));
+
+// Clean up duplicate email indexes
+async function cleanUpEmailIndexes() {
+  try {
+    const [indexes] = await sequelize.query(`
+      SELECT INDEX_NAME
+      FROM INFORMATION_SCHEMA.STATISTICS
+      WHERE TABLE_SCHEMA = 'devs_connect' 
+      AND TABLE_NAME = 'users' 
+      AND INDEX_NAME LIKE 'email%'
+      AND INDEX_NAME != 'email';
+    `);
+
+    for (const index of indexes) {
+      await sequelize.query(
+        `DROP INDEX \`${index.INDEX_NAME}\` ON Users`
+      );
+      console.log(`Dropped index: ${index.INDEX_NAME}`);
     }
+  } catch (error) {
+    console.error('Error cleaning up indexes:', error);
+  }
 }
 
-testTables();
+// Database sync for development
+if (process.env.STAGE_ENV !== 'production') {
+  cleanUpEmailIndexes()
+    .then(() => sequelize.sync({ alter: true }))
+    .then(() => console.log('Database synced'))
+    .catch((err) => console.error('Sync error:', err));
+}
 
-//API ENDPOINTS FOR MESSAGES 
+// Test database connection
+sequelize
+  .authenticate()
+  .then(() => console.log('Connected to database successfully.'))
+  .catch((error) => console.error('Database connection failed:', error));
 
+// API Routes
 app.use('/api/messages', messageRoutes);
 
+// Error handling middleware (should be last)
+// app.use(errorHandler);
 
-
-
+// Start server
+httpServer.listen(PORT, () => {
+  console.log(`App is listening on port ${PORT}`);
+});
