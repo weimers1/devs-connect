@@ -12,21 +12,16 @@ export const getCsrfToken = (req, res) => {
     }
 };
 
-export const sendMagicLink = async (req, res) => {
+export const loginOrSignup = async (req, res) => {
     try {
+        // @TODO: rempve signup token token logic from signup process, simply update verifiedAt
         // grab the user's email
         const { email } = req.body;
 
-        // if they didn't enter one, that's a problem
+        // idk how but if they didn't enter one, that's a problem
         if (!email) {
             throw Object.assign(new Error('Email required'), { status: 400 });
         }
-
-        // send magic link via stytch
-        const response = await stytchClient.magicLinks.email.loginOrCreate({
-            email,
-            login_magic_link_url: `${process.env.URL_CLIENT}/authenticate`,
-        });
 
         // find the user based on their email
         let user = await User.findOne({ where: { email } });
@@ -43,15 +38,12 @@ export const sendMagicLink = async (req, res) => {
             await user.update({ signupToken: response.token });
         }
 
-        res.status(200).json({ message: 'Magic link sent' });
+        res.status(200).json({ message: 'Login successful' });
     } catch (error) {
         // general error catch
-        throw Object.assign(
-            new Error(error.message || 'Failed to send magic link'),
-            {
-                status: error.status || 500,
-            }
-        );
+        throw Object.assign(new Error(error.message || 'Failed to log in'), {
+            status: error.status || 500,
+        });
     }
 };
 
@@ -66,7 +58,8 @@ export const verifyMagicLink = async (req, res) => {
         }
 
         // authenticate the magic link with stytch and create a session within stytch
-        const session = await stytchClient.magicLinks.authenticate(token, {
+        const session = await stytchClient.magicLinks.authenticate({
+            token: token,
             session_duration_minutes: 60,
         });
 

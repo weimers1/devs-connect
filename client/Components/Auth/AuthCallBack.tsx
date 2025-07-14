@@ -25,8 +25,33 @@ const Authenticate: React.FC = () => {
             .then((data) => {
                 console.log('data: ', data);
                 if (data.error) {
-                    console.log(data.error);
+                    const errorObject = JSON.parse(data.error);
+                    switch (errorObject.status_code) {
+                        case 400:
+                            // @TODO: handle UI for this message
+                            console.log('invalid request');
+                            break;
+                        case 401:
+                            // @TODO: handle UI for this message
+                            console.log('expired');
+                            break;
+                        case 403:
+                            // @TODO: handle UI for this message
+                            console.log('unauthenticated');
+                            break;
+                        case 500:
+                            // @TODO: handle UI for this message
+                            console.log('server error');
+                            break;
+                        default:
+                            // @TODO: handle UI for this message
+                            console.log(errorObject.error_message);
+                            break;
+                    }
+
+                    return;
                 }
+
                 if (data.userCreated) {
                     // @TODO: if the returned data created a new user, have them finish setting up their account
                     console.log('User created:', data.email);

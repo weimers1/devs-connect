@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-    sendMagicLink,
+    loginOrSignup,
     verifyMagicLink,
     extendSession,
     destroySession,
@@ -12,7 +12,7 @@ import authMiddleware, {
 const router = express.Router();
 
 // ensure csrf protection when logging in
-router.post('/login', sendMagicLink);
+router.post('/login', loginOrSignup);
 router.get('/verify', verifyMagicLink);
 // ensure authentication and csrf protection when extending sessions and logging out
 router.post('/session/extend', authMiddleware, csrfProtection, extendSession);

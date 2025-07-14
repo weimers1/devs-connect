@@ -40,6 +40,29 @@ const stytchConfig = {
     products: [Products.emailMagicLinks],
 };
 
+const stytchCallbacks = {
+    onEvent: () => {
+        // grab email
+        const email = (
+            document.getElementById('email-input') as HTMLInputElement
+        )?.value;
+
+        // begin call to log in function
+        // @TODO: rempve signup token token logic from signup process, simply update verifiedAt
+        fetch('http://localhost:6969/auth/login', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }), // Send email in body
+        })
+            .then((res) => res.json())
+            .then((data) => {})
+            .catch((error) => {});
+    },
+};
+
 // Conditionally set the width based on screen size
 const isSmallScreen = window.innerWidth < 1024;
 
@@ -77,6 +100,7 @@ const Login = () => (
                 <StytchLogin
                     config={stytchConfig}
                     styles={stytchStyle}
+                    callbacks={stytchCallbacks}
                 />
             </div>
         </section>
