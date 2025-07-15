@@ -1,6 +1,7 @@
 import stytchClient from '../config/stytch.js';
 import Session from '../models/Session.js';
 import User from '../models/User.js';
+import { v4 as uuidv4 } from 'uuid';
 
 export const getCsrfToken = (req, res) => {
     try {
@@ -14,7 +15,6 @@ export const getCsrfToken = (req, res) => {
 
 export const loginOrSignup = async (req, res) => {
     try {
-        // @TODO: rempve signup token token logic from signup process, simply update verifiedAt
         // grab the user's email
         const { email } = req.body;
 
@@ -23,22 +23,24 @@ export const loginOrSignup = async (req, res) => {
             throw Object.assign(new Error('Email required'), { status: 400 });
         }
 
+        // assume they're just logging in
+        let message = 'A login link has been sent to your email.';
+
         // find the user based on their email
         let user = await User.findOne({ where: { email } });
         if (!user) {
-            // if they didn't exist, create a record for them in the database and keep track of their signupToken for verification
+            // if they didn't exist, create a record for them in the database with temp name data
             user = await User.create({
                 email,
-                firstName: 'New',
-                lastName: 'User',
-                signupToken: response.token,
+                firstName: 'User',
+                lastName: uuidv4(),
             });
-        } else if (!user.verifiedAt) {
-            // if they do exist, but haven't been verified, update that signupToken for verification
-            await user.update({ signupToken: response.token });
+
+            // they're actually signing up
+            message = 'A sign up link has been sent to your email.';
         }
 
-        res.status(200).json({ message: 'Login successful' });
+        res.status(200).json({ message: message });
     } catch (error) {
         // general error catch
         throw Object.assign(new Error(error.message || 'Failed to log in'), {
@@ -62,6 +64,7 @@ export const verifyMagicLink = async (req, res) => {
             token: token,
             session_duration_minutes: 60,
         });
+        res.status(200).json({ session: session });
 
         // grab their email from the created stytch session
         const email = session.user.emails[0].email;
@@ -69,8 +72,8 @@ export const verifyMagicLink = async (req, res) => {
         // find the user with that email in the database, and assume they exist
         const user = await User.findOne({ where: { email } });
 
-        // if a user does not exist with that email or they aren't verified and don't have a correct token, deny access
-        if (!user || (user.signupToken !== token && !user.verifiedAt)) {
+        // if a user does not exist with that email, deny access
+        if (!user) {
             throw Object.assign(new Error('Invalid token or user'), {
                 status: 403,
             });
@@ -79,9 +82,9 @@ export const verifyMagicLink = async (req, res) => {
         // assume they already existed before this
         let userCreated = false;
 
-        // if they have not yet been verified, mark them as verified and clear signupToken as it's no longer needed
+        // if they have not yet been verified, mark them as verified
         if (!user.verifiedAt) {
-            await user.update({ verifiedAt: new Date(), signupToken: null });
+            await user.update({ verifiedAt: new Date() });
 
             // they just "created" their account
             userCreated = true;
@@ -97,7 +100,10 @@ export const verifyMagicLink = async (req, res) => {
     } catch (error) {
         // general error catch
         res.status(error.status || 500).json({
-            error: error.message || 'Verification failed',
+            error: {
+                status_code: error.status || 500,
+                error_message: error.message || 'Verification failed',
+            },
         });
     }
 };

@@ -7,6 +7,9 @@ const Authenticate: React.FC = () => {
     // get token for checking and storing session info
     const token = params.get('token');
 
+    // track whether the call to verify the link has already been made
+    let calledVerify = false;
+
     const navigate = useNavigate();
 
     // if no token, have them try to log in again
@@ -15,6 +18,12 @@ const Authenticate: React.FC = () => {
             navigate('/login');
             return;
         }
+
+        // if the call to verify has already been made, ignore
+        if (calledVerify) return;
+
+        // the call to verify is being made next, so track it to prevent future repeat calls
+        calledVerify = true;
 
         // otherwise, send the request to the backend to try verifying with stytch
         fetch(`http://localhost:6969/auth/verify?token=${token}`, {
@@ -25,7 +34,10 @@ const Authenticate: React.FC = () => {
             .then((data) => {
                 console.log('data: ', data);
                 if (data.error) {
-                    const errorObject = JSON.parse(data.error);
+                    const errorObject =
+                        typeof data.error === 'object'
+                            ? data.error
+                            : JSON.parse(data.error);
                     switch (errorObject.status_code) {
                         case 400:
                             // @TODO: handle UI for this message
