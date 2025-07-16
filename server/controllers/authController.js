@@ -40,11 +40,14 @@ export const loginOrSignup = async (req, res) => {
             message = 'A sign up link has been sent to your email.';
         }
 
-        res.status(200).json({ message: message });
+        res.status(200).json({ response: message });
     } catch (error) {
         // general error catch
-        throw Object.assign(new Error(error.message || 'Failed to log in'), {
-            status: error.status || 500,
+        res.status(error.status || 500).json({
+            error: {
+                status_code: error.status || 500,
+                error_message: error.message || 'Login failed',
+            },
         });
     }
 };
@@ -105,53 +108,5 @@ export const verifyMagicLink = async (req, res) => {
                 error_message: error.message || 'Verification failed',
             },
         });
-    }
-};
-
-export const extendSession = async (req, res) => {
-    try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'No token' });
-
-        const session = await stytchClient.sessions.authenticate({
-            session_token: token,
-            session_duration_minutes: 60, // extend for another 60 min
-        });
-
-        await Session.update(
-            { token: session.session_token, updatedAt: new Date() },
-            { where: { token, isActive: true } }
-        );
-
-        res.status(200).json({ message: 'Session extended' });
-    } catch (error) {
-        res.status(401).json({ error: 'Session extension failed' });
-    }
-};
-
-export const destroySession = async (req, res) => {
-    try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'No token provided' });
-
-        // verify session exists and is active
-        const session = await Session.findOne({
-            where: { token, isActive: true },
-        });
-        if (!session)
-            return res
-                .status(404)
-                .json({ error: 'Session not found or already inactive' });
-
-        // remove session in stytch
-        await stytchClient.sessions.revoke({ session_token: token });
-
-        // mark session as inactive in database
-        await session.update({ isActive: false, updatedAt: new Date() });
-
-        res.status(200).json({ message: 'Session destroyed' });
-    } catch (error) {
-        console.error('Destroy session error:', error);
-        res.status(500).json({ error: 'Failed to destroy session' });
     }
 };

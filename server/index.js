@@ -8,6 +8,7 @@ import errorHandler from './utils/errorHandler.js';
 import csurf from 'csurf';
 import cookieParser from 'cookie-parser';
 import authRouter from './routes/authRoutes.js';
+import sessionRouter from './routes/sessionRoutes.js';
 
 const PORT = process.env.PORT || '8080';
 const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost';
@@ -33,7 +34,7 @@ app.use(express.urlencoded({ extended: true })); // parses the data from URL for
 
 // config csrf
 app.use(cookieParser());
-app.use(csurf({ cookie: true }));
+app.use('/session', csurf({ cookie: true }), sessionRouter);
 
 // handle errors:
 app.use(errorHandler);

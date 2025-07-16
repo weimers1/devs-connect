@@ -58,8 +58,17 @@ const stytchCallbacks = {
             body: JSON.stringify({ email }), // Send email in body
         })
             .then((res) => res.json())
-            .then((data) => {})
-            .catch((error) => {});
+            .then((data) => {
+                if (data.error) {
+                    // @TODO: display error
+                    return;
+                }
+
+                // @TODO: display response
+            })
+            .catch((error) => {
+                console.log(error);
+            });
     },
 };
 
