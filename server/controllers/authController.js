@@ -67,7 +67,6 @@ export const verifyMagicLink = async (req, res) => {
             token: token,
             session_duration_minutes: 60,
         });
-        res.status(200).json({ session: session });
 
         // grab their email from the created stytch session
         const email = session.user.emails[0].email;
@@ -83,14 +82,11 @@ export const verifyMagicLink = async (req, res) => {
         }
 
         // assume they already existed before this
-        let userCreated = false;
+        let isNewUser = false;
 
-        // if they have not yet been verified, mark them as verified
+        // if they have not yet been verified, mark them as a new user
         if (!user.verifiedAt) {
-            await user.update({ verifiedAt: new Date() });
-
-            // they just "created" their account
-            userCreated = true;
+            isNewUser = true;
         }
 
         // create a session for them in the database
@@ -99,7 +95,7 @@ export const verifyMagicLink = async (req, res) => {
             token: session.session_token,
         });
 
-        res.status(200).json({ userCreated, session_token: dbSession.token });
+        res.status(200).json({ isNewUser, session_token: dbSession.token });
     } catch (error) {
         // general error catch
         res.status(error.status || 500).json({

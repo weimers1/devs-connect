@@ -64,8 +64,8 @@ const Authenticate: React.FC = () => {
                     return;
                 }
 
-                if (data.userCreated) {
-                    // @TODO: if the returned data created a new user, have them finish setting up their account
+                if (data.isNewUser) {
+                    // @TODO: if they are a new user, have them finish setting up their account
                     console.log('User created:', data.email);
                 } else {
                     console.log('User logged in:', data.email);
