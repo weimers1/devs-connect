@@ -1,6 +1,7 @@
 // Skills.tsx
 import React from 'react';
 import { Icon } from '@iconify/react';
+import ProfileCard from './ProfileCard'
 
 function Skills() {
   // Sample skills data - replace with your actual data
@@ -42,27 +43,19 @@ function Skills() {
   const hasMoreSkills = skills.length > 3;
 
   return (
-    <div className="bg-white shadow-md p-4 sm:p-6 w-full sm:rounded-lg mb-0">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-gray-800">Skills</h2>
-        <button className="text-blue-600 hover:text-blue-800">
-          <Icon icon="mdi:plus" className="w-5 h-5" />
-        </button>
-      </div>
-
+    <ProfileCard title="Skills">
       <div className="space-y-4">
         {displayedSkills.map(skill => (
-          <div key={skill.id} className="flex items-center justify-between border-b border-gray-100 pb-3">
-            <div className="overflow-hidden">
-              <h3 className="font-medium text-gray-900 truncate">{skill.name}</h3>
+          <div key={skill.id} className=" rounded-2xl  flex items-center justify-between border-b border-gray-100 pb-3">
+            <div>
+              <h3 className="font-medium text-gray-900">{skill.name}</h3>
               <p className="text-gray-500 text-sm">
                 {skill.endorsements} endorsement{skill.endorsements !== 1 ? 's' : ''}
                 {skill.isEndorsedByConnections && ' • Endorsed by connections'}
               </p>
             </div>
             
-            <div className="flex items-center flex-shrink-0">
+            <div className="flex items-center">
               <button className="text-blue-600 hover:text-blue-800 text-sm font-medium mr-4">
                 Endorse
               </button>
@@ -80,7 +73,7 @@ function Skills() {
           <Icon icon="mdi:chevron-down" className="w-4 h-4 ml-1" />
         </button>
       )}
-    </div>
+    </ProfileCard>
   );
 }
 

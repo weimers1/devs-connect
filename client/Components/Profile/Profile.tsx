@@ -9,20 +9,20 @@ import Communities from './ProfileCommunities';
 function Profile() {
   return (
     <Layout>
-      {/* Main container with full width on mobile, narrower on desktop */}
-      <div className="bg-gradient-to-b from-blue-700 to-slate-950 min-h-screen">
+      {/* Main container with full width on mobile */}
+      <div className="bg-gradient-to-b  min-h-screen">
         {/* User Profile Card - Full width on mobile */}
         <UserCard />
         
-        {/* Profile sections - No spacing between sections */}
+        {/* Profile sections - No spacing between sections on mobile */}
         <div className="divide-y-0 divide-transparent">
           <Skills />
           <Certifications />
           <Communities />
         </div>
         
-        {/* Sidebar for desktop only - positioned relative to viewport */}
-        <div className="hidden lg:block fixed right-8 xl:right-16 2xl:right-24 top-24">
+        {/* Sidebar for desktop only */}
+        <div className="hidden lg:block fixed right-4 top-24">
           <Sidebar />
         </div>
       </div>
