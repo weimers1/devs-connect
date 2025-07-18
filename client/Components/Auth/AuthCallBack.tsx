@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import Modal from '../Decal/Modal';
+import Layout from '../Layout';
+import { Icon } from '@iconify/react/dist/iconify.js';
 
 const Authenticate: React.FC = () => {
     // grab params
@@ -10,7 +13,16 @@ const Authenticate: React.FC = () => {
     // track whether the call to verify the link has already been made
     let calledVerify = false;
 
+    // prep navigating if needed
     const navigate = useNavigate();
+
+    // init default modal response config
+    const [modalInfo, setModalInfo] = useState({
+        title: 'Oops!',
+        icon: 'mdi-emoticon-sad-outline',
+        message: 'Something went wrong...',
+        isLoaded: false,
+    });
 
     // if no token, have them try to log in again
     React.useEffect(() => {
@@ -40,24 +52,39 @@ const Authenticate: React.FC = () => {
                             : JSON.parse(data.error);
                     switch (errorObject.status_code) {
                         case 400:
-                            // @TODO: handle UI for this message
-                            console.log('invalid request');
+                            setModalInfo({
+                                ...modalInfo,
+                                title: 'Invalid Request',
+                                isLoaded: true,
+                            });
                             break;
                         case 401:
-                            // @TODO: handle UI for this message
-                            console.log('expired');
+                            setModalInfo({
+                                icon: 'mdi-emoticon-frown-outline',
+                                title: 'Expired Link',
+                                message:
+                                    'The link you used is outdated. Please try signing in again with a different link.',
+                                isLoaded: true,
+                            });
                             break;
                         case 403:
-                            // @TODO: handle UI for this message
-                            console.log('unauthenticated');
+                            setModalInfo({
+                                icon: 'mdi-emoticon-frown-outline',
+                                title: 'Access Denied',
+                                message: 'Access denied for this link.',
+                                isLoaded: true,
+                            });
                             break;
                         case 500:
-                            // @TODO: handle UI for this message
-                            console.log('server error');
+                            setModalInfo({
+                                icon: 'mdi-emoticon-frown-outline',
+                                title: 'Our Bad...',
+                                message:
+                                    "Something went wrong on our end. We'll try to fix this shortly.",
+                                isLoaded: true,
+                            });
                             break;
                         default:
-                            // @TODO: handle UI for this message
-                            console.log(errorObject.error_message);
                             break;
                     }
 
@@ -66,7 +93,6 @@ const Authenticate: React.FC = () => {
 
                 if (data.isNewUser) {
                     // @TODO: if they are a new user, have them finish setting up their account
-                    console.log('User created:', data.email);
                 } else {
                     console.log('User logged in:', data.email);
                 }
@@ -80,7 +106,23 @@ const Authenticate: React.FC = () => {
             });
     }, [token, navigate]);
 
-    return <div>Authenticating user ...</div>;
+    return (
+        <Layout>
+            {modalInfo.isLoaded && (
+                <Modal title={modalInfo.title}>
+                    <div className="flex grid grid-cols-12">
+                        <Icon
+                            icon={modalInfo.icon}
+                            className="me-2 w-6 h-6 col-span-2 lg:col-span-1"
+                        />
+                        <span className="col-span-10 lg:col-span-11">
+                            {modalInfo.message}
+                        </span>
+                    </div>
+                </Modal>
+            )}
+        </Layout>
+    );
 };
 
 export default Authenticate;
