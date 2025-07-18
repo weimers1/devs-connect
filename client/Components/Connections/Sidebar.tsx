@@ -127,12 +127,12 @@ function Sidebar() {
             )}
 
             <div
-                className={`fixed right-0 bottom-0 bg-white rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[100vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
+                className={`fixed right-0 bottom-0 bg-white rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[91vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
                 <button
-                    type="button"
+                    type="button"   
                     className="cursor-pointer text-blue-700 p-3"
                     onClick={() => {
                         setIsOpen(false);

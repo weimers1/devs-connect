@@ -1,0 +1,33 @@
+import React from 'react'
+import Layout from '../Layout';
+import UserCard from './UserCard';
+import Sidebar from '../Connections/Sidebar';
+import Certifications from './Certifactions';
+import Skills from './Skills';
+import Communities from './ProfileCommunities';
+
+function Profile() {
+  return (
+    <Layout>
+      {/* Main container with full width on mobile, narrower on desktop */}
+      <div className="bg-gradient-to-b from-blue-700 to-slate-950 min-h-screen">
+        {/* User Profile Card - Full width on mobile */}
+        <UserCard />
+        
+        {/* Profile sections - No spacing between sections */}
+        <div className="divide-y-0 divide-transparent">
+          <Skills />
+          <Certifications />
+          <Communities />
+        </div>
+        
+        {/* Sidebar for desktop only - positioned relative to viewport */}
+        <div className="hidden lg:block fixed right-8 xl:right-16 2xl:right-24 top-24">
+          <Sidebar />
+        </div>
+      </div>
+    </Layout>
+  )
+}
+
+export default Profile;

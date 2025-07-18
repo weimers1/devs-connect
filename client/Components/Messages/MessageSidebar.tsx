@@ -30,9 +30,9 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   }, []);
 
   return (
-    <aside className={`w-full md:w-80 lg:w-96 bg-white border-r border-gray-200 flex flex-col ${className}`}>
+    <aside className={`w-full md:w-80 lg:w-96 rounded-r-xl overflow-hidden flex flex-col ${className}`}>
       {/* Header */}
-      <div className="flex-shrink-0 px-4 py-4 border-b border-gray-100">
+      <div className="flex-shrink-0 px-4 py-4  border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
           <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
@@ -55,7 +55,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
       </div>
 
       {/* Messages List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto ">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
@@ -101,13 +101,14 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                       <div className="flex items-center space-x-2">
                         <span className="text-xs text-gray-500">
                           {formatDate(message.date)}
+                          
                         </span>
                         {message.unreadCount && message.unreadCount > 0 && (
                           <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-blue-500 rounded-full">
                             {message.unreadCount}
                           </span>
                         )}
-                      </div>
+                      </div>  
                     </div>
                     <p className="text-sm text-gray-600 line-clamp-2">
                       {message.lastMessage}

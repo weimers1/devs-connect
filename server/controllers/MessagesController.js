@@ -133,7 +133,7 @@ export const sendMessage = async (req, res) => {
     // Get the io instance and emit to conversation room
     const io = req.app.get('io');
     io.to(conversationId).emit("receiver-message", messageData);
-    console.log(`🔥 EMITTED TO ROOM: ${conversationId}`, messageData); // Debug log
+    console.log(`EMITTED TO ROOM: ${conversationId}`, messageData); // Debug log
  
     res.json({ success: true, data: message });
   } catch (error) {

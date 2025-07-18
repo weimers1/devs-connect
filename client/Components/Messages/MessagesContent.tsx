@@ -15,7 +15,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
   const inputRef = useRef<HTMLTextAreaElement>(null); //Reference to the message input textarea | Purpose: to focus management and potential future features
   //Automatically scrolls to newest message when new messages arrive | user will always see latest message without having to scroll
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: `auto` });
   }, []);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
 
   if (!selectedMessage) {
     return (
-      <div className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}>
+      <div className={`flex-1 flex items-center justify-center rounded-r-xl overflow-hidden  bg-gray-100 ${className}`}>
         <div className="text-center">
           <Icon icon="mdi:message-outline" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
@@ -60,7 +60,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
   }
 
   return (
-    <div className={`flex-1 flex flex-col bg-white ${className}`}>
+    <div className={`flex-1   flex flex-col rounded-r-xl overflow-hidden  ${className}`}>
       {/* Header */}
       <div className="flex-shrink-0 px-4 py-4 border-b border-gray-200 bg-white">
         <div className="flex items-center space-x-3">
@@ -105,7 +105,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 scrollbar-hide ">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-xs lg:max-w-md xl:max-w-lg ${

@@ -44,6 +44,7 @@ const Messages = () => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
         setIsMobileView(false);
+     
       }
     };
 
@@ -62,8 +63,9 @@ const Messages = () => {
   }
     if (window.innerWidth < 768) {
       setIsMobileView(true);
-    }
+    
 
+    }
   }, [socket]);
 
   const handleBackToList = useCallback(() => {
@@ -80,7 +82,7 @@ const Messages = () => {
   if (error) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="flex items-center justify-center h-screen mt-4  md:rounded-xl  bg-gray-50">
           <div className="text-center">
             <div className="text-red-500 text-lg font-medium mb-2">Error loading messages</div>
             <p className="text-gray-600">{error}</p>
@@ -92,19 +94,24 @@ const Messages = () => {
 
   return (
     <Layout>
-      <div className="flex h-screen bg-gray-50 messages-container">
+     <div className="flex h-screen w-5xl  bg-gray-50 messages-container 
+                  md:mt-4 md:rounded-xl 
+                  -mx-5 md:mx-0 md:my-0
+                  absolute md:relative inset-2  top-1 mt-16 md:top-auto ">
         <MessageSidebar 
           onMessageSelect={handleMessageSelect}
           selectedMessage={selectedMessage}
           onSearch={searchMessages}
-          className={`${isMobileView ? 'hidden md:flex' : 'flex'}`}
+          className={`${isMobileView ? 'hidden md:flex' : `flex`}`}
         />
         <MessagesContent 
           selectedMessage={selectedMessage}
           onBackToList={handleBackToList}
           messages={chatMessages}
           onSendMessage={handleSendMessage}
-          className={`${!isMobileView ? 'hidden md:flex' : 'flex'} md:flex`}
+          
+          className={`${!isMobileView ? 'hidden md:flex' : 'flex'} md:flex`
+        }
         />
         <div className="hidden lg:flex">
         <Sidebar  />

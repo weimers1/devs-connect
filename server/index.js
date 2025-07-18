@@ -74,10 +74,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Cookie parser for CSRF
-// app.use(cookieParser());
+ //app.use(cookieParser());
 
 // CSRF protection
-// app.use(csurf({ cookie: true }));
+ //app.use(csurf({ cookie: true }));
 
 // Clean up duplicate email indexes
 async function cleanUpEmailIndexes() {
