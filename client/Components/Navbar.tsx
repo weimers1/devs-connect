@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { assets } from '../assets/assets';
 import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
+import { useDropdown } from './DropDown/DropDownContext';
+import ProfileDropdown from "./DropDown/ProfileDropDown";
 
 const Navbar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
+    const {isProfileDropdownOpen, toggleProfileDropdown} = useDropdown();
 
     const pages = [
         {
@@ -84,14 +87,23 @@ const Navbar: React.FC = () => {
                             );
                         })}
                         
-                        {/* User Profile */}
+                        {/* User Profile / DROPDOWN */}
                         <div className="ml-4 flex items-center space-x-3">
                             <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                                 <Icon icon="mdi:bell-outline" className="w-6 h-6" />
                             </button>
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                            <button
+                            onClick={toggleProfileDropdown}
+                           
+                           className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
                                 <span className="text-white text-sm font-medium">U</span>
+                                   
+                                </button>
+                               
                             </div>
+                             {isProfileDropdownOpen && (
+                                    <ProfileDropdown />
+                                     )}
                         </div>
                     </div>
 
@@ -108,7 +120,7 @@ const Navbar: React.FC = () => {
                         </button>
                     </div>
                 </div>
-            </div>
+            
 
             {/* Mobile menu */}
             {isMobileMenuOpen && (

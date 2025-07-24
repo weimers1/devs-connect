@@ -10,7 +10,7 @@ function Profile() {
   return (
     <Layout>
       {/* Main container with full width on mobile */}
-      <div className="bg-gradient-to-b  min-h-screen">
+      <div className="bg-gradient-to-b  min-h-screen md:mr-7">
         {/* User Profile Card - Full width on mobile */}
         <UserCard />
         
