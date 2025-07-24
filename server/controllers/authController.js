@@ -98,9 +98,9 @@ export const verifyMagicLink = async (req, res) => {
         res.status(200).json({ isNewUser, session_token: dbSession.token });
     } catch (error) {
         // general error catch
-        res.status(error.status || 500).json({
+        res.status(error.status || error.status_code || 500).json({
             error: {
-                status_code: error.status || 500,
+                status_code: error.status || error.status_code || 500,
                 error_message: error.message || 'Verification failed',
             },
         });

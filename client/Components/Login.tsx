@@ -48,7 +48,6 @@ const stytchCallbacks = {
         )?.value;
 
         // begin call to log in function
-        // @TODO: rempve signup token token logic from signup process, simply update verifiedAt
         fetch('http://localhost:6969/auth/login', {
             method: 'POST',
             credentials: 'include',

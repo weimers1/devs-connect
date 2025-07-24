@@ -8,6 +8,7 @@ import errorHandler from './utils/errorHandler.js';
 import csurf from 'csurf';
 import cookieParser from 'cookie-parser';
 import authRouter from './routes/authRoutes.js';
+import utilsRouter from './routes/utilRoutes.js';
 import sessionRouter from './routes/sessionRoutes.js';
 
 const PORT = process.env.PORT || '8080';
@@ -41,6 +42,7 @@ app.use(errorHandler);
 
 // additional routes
 app.use('/auth', authRouter);
+app.use('/utils', utilsRouter);
 
 // clean up duplicate email indexes because otherwise the old ones linger every time a sync is performed and then the max keys limit is reached (sequelize then stops working)
 async function cleanUpEmailIndexes() {

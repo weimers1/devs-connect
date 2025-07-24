@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Modal from '../Decal/Modal';
 import Layout from '../Layout';
+import Typeahead from '../Utils/Typeahead';
 import { Icon } from '@iconify/react/dist/iconify.js';
 
 const Authenticate: React.FC = () => {
     // grab params
     const [params] = useSearchParams();
+
     // get token for checking and storing session info
     const token = params.get('token');
 
@@ -22,7 +24,11 @@ const Authenticate: React.FC = () => {
         icon: 'mdi-emoticon-sad-outline',
         message: 'Something went wrong...',
         isLoaded: false,
+        allowClose: false,
     });
+
+    // track whether they are a new user
+    const [isNewUser, setIsNewUser] = useState(false);
 
     // if no token, have them try to log in again
     React.useEffect(() => {
@@ -60,6 +66,7 @@ const Authenticate: React.FC = () => {
                             break;
                         case 401:
                             setModalInfo({
+                                ...modalInfo,
                                 icon: 'mdi-emoticon-frown-outline',
                                 title: 'Expired Link',
                                 message:
@@ -69,6 +76,7 @@ const Authenticate: React.FC = () => {
                             break;
                         case 403:
                             setModalInfo({
+                                ...modalInfo,
                                 icon: 'mdi-emoticon-frown-outline',
                                 title: 'Access Denied',
                                 message: 'Access denied for this link.',
@@ -77,6 +85,7 @@ const Authenticate: React.FC = () => {
                             break;
                         case 500:
                             setModalInfo({
+                                ...modalInfo,
                                 icon: 'mdi-emoticon-frown-outline',
                                 title: 'Our Bad...',
                                 message:
@@ -91,25 +100,47 @@ const Authenticate: React.FC = () => {
                     return;
                 }
 
-                if (data.isNewUser) {
-                    // @TODO: if they are a new user, have them finish setting up their account
-                } else {
-                    console.log('User logged in:', data.email);
-                }
                 // set the session token in localStorage
                 localStorage.setItem('session_token', data.session_token);
-                // navigate("/home");
+
+                if (data.isNewUser) {
+                    // @TODO: if they are a new user, have them finish setting up their account
+                    setModalInfo({
+                        icon: 'mdi-emoticon-smile-outline',
+                        title: 'Welcome New User!',
+                        message:
+                            'Please take a few seconds to finish filling out some details.',
+                        isLoaded: true,
+                        allowClose: true,
+                    });
+                    setIsNewUser(true);
+                    return;
+                } else {
+                    console.log('User logged in:', data.email);
+                    navigate('/home');
+                }
             })
             .catch((error) => {
+                // @TODO: probably wanna send emails here since this is unexpected
                 console.error('Authentication failed:', error);
-                // navigate('/login');
+                setModalInfo({
+                    ...modalInfo,
+                    icon: 'mdi-emoticon-frown-outline',
+                    title: 'Our Bad...',
+                    message:
+                        "Something went wrong on our end. We'll try to fix this shortly.",
+                    isLoaded: true,
+                });
             });
-    }, [token, navigate]);
+    }, [token]);
 
     return (
         <Layout>
             {modalInfo.isLoaded && (
-                <Modal title={modalInfo.title}>
+                <Modal
+                    title={modalInfo.title}
+                    allowClose={modalInfo.allowClose}
+                >
                     <div className="flex grid grid-cols-12">
                         <Icon
                             icon={modalInfo.icon}
@@ -120,6 +151,36 @@ const Authenticate: React.FC = () => {
                         </span>
                     </div>
                 </Modal>
+            )}
+            {isNewUser && (
+                <section className="relative w-full h-full flex justify-center items-center">
+                    <form className="mt-45 lg:mt-70 h-85 lg:h-95 w-100 bg-white rounded-md shadow-md p-4 flex flex-col justify-center items-center">
+                        <p className="text-lg text-blue-700 mt-3 mb-7">
+                            Finish Setting Up Your Account
+                        </p>
+                        <input
+                            className="p-2 w-75 bg-white rounded-md border border-gray-200 shadow-sm mb-4 lg:mb-8"
+                            type="text"
+                            placeholder="First Name"
+                        />
+                        <input
+                            className="p-2 w-75 bg-white rounded-md border border-gray-200 shadow-sm mb-4 lg:mb-8"
+                            type="text"
+                            placeholder="Last Name"
+                        />
+                        <Typeahead
+                            apiEndpoint="http://localhost:6969/utils/careers/search"
+                            id="career-goal"
+                            inputClasses="p-2 w-75 bg-white rounded-md border border-gray-200 shadow-sm"
+                            placeHolder="Search Career Goals..."
+                        ></Typeahead>
+                        <div className="w-full flex justify-end">
+                            <button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 cursor-pointer text-white font-bold mt-4 lg:mt-8 py-2 px-4 me-1 rounded shadow-md">
+                                Submit
+                            </button>
+                        </div>
+                    </form>
+                </section>
             )}
         </Layout>
     );
