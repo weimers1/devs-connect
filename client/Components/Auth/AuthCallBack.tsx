@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type ChangeEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Modal from '../Decal/Modal';
 import Layout from '../Layout';
@@ -29,6 +29,64 @@ const Authenticate: React.FC = () => {
 
     // track whether they are a new user
     const [isNewUser, setIsNewUser] = useState(false);
+
+    // track new user info
+    const [firstNameValue, setFirstNameValue] = useState('');
+    const [lastNameValue, setLastNameValue] = useState('');
+    const [careerIdValue, setCareerIdValue] = useState(-1);
+
+    // handle change for fields
+    const handleChange = <T,>(
+        setterFunction: React.Dispatch<React.SetStateAction<T>>,
+        valueOrEvent: ChangeEvent<HTMLInputElement> | T // Accepts either an event or the raw value
+    ) => {
+        let valueToSet: T;
+
+        // Check if it's a synthetic event or a direct value
+        if (
+            typeof valueOrEvent === 'object' &&
+            valueOrEvent !== null &&
+            'target' in valueOrEvent
+        ) {
+            // It's a ChangeEvent
+            const event = valueOrEvent as ChangeEvent<HTMLInputElement>;
+            // For number inputs, remember value is always a string from event.target.value
+            if (event.target.type === 'number') {
+                valueToSet = Number(event.target.value) as T;
+            } else {
+                valueToSet = event.target.value as T;
+            }
+        } else {
+            // It's a direct value (like selectedId)
+            valueToSet = valueOrEvent;
+        }
+
+        setterFunction(valueToSet);
+    };
+
+    // handle when they submit new user info
+    const handleAccountSubmit = () => {
+        console.log(firstNameValue, lastNameValue, careerIdValue);
+        // fetch(`http://localhost:6969/user/profile`, {
+        //     method: 'PUT',
+        //     credentials: 'include',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //     },
+        //     body: JSON.stringify({ email }), // Send email in body
+        // })
+        //     .then((res) => res.json())
+        //     .then((data) => {
+        //         if (data.error) {
+        //             // @TODO: display error
+        //             return;
+        //         }
+        //         // @TODO: display response
+        //     })
+        //     .catch((error) => {
+        //         console.log(error);
+        //     });
+    };
 
     // if no token, have them try to log in again
     React.useEffect(() => {
@@ -162,20 +220,37 @@ const Authenticate: React.FC = () => {
                             className="p-2 w-75 bg-white rounded-md border border-gray-200 shadow-sm mb-4 lg:mb-8"
                             type="text"
                             placeholder="First Name"
+                            onChange={(e) => {
+                                handleChange(setFirstNameValue, e);
+                            }}
                         />
                         <input
                             className="p-2 w-75 bg-white rounded-md border border-gray-200 shadow-sm mb-4 lg:mb-8"
                             type="text"
                             placeholder="Last Name"
+                            onChange={(e) => {
+                                handleChange(setLastNameValue, e);
+                            }}
                         />
                         <Typeahead
                             apiEndpoint="http://localhost:6969/utils/careers/search"
                             id="career-goal"
                             inputClasses="p-2 w-75 bg-white rounded-md border border-gray-200 shadow-sm"
                             placeHolder="Search Career Goals..."
+                            inheritedOnChange={(
+                                e: ChangeEvent<HTMLInputElement>
+                            ) => {
+                                handleChange(setCareerIdValue, e);
+                            }}
                         ></Typeahead>
                         <div className="w-full flex justify-end">
-                            <button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 cursor-pointer text-white font-bold mt-4 lg:mt-8 py-2 px-4 me-1 rounded shadow-md">
+                            <button
+                                type="button"
+                                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 cursor-pointer text-white font-bold mt-4 lg:mt-8 py-2 px-4 me-1 rounded shadow-md"
+                                onClick={() => {
+                                    handleAccountSubmit();
+                                }}
+                            >
                                 Submit
                             </button>
                         </div>

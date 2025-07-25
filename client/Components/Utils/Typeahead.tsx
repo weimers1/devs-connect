@@ -5,6 +5,7 @@ interface TypeaheadProps {
     id: string;
     inputClasses: string;
     placeHolder: string;
+    inheritedOnChange: Function;
 }
 
 interface SearchResult {
@@ -17,6 +18,7 @@ const Typeahead = ({
     id,
     inputClasses,
     placeHolder,
+    inheritedOnChange,
 }: TypeaheadProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
@@ -44,7 +46,6 @@ const Typeahead = ({
     // Delay search to prevent excessive API calls
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            console.log(hasSelected);
             if (searchTerm && !hasSelected) {
                 // Skip search during selection
                 performSearch(searchTerm);
@@ -56,6 +57,10 @@ const Typeahead = ({
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, hasSelected]);
+
+    useEffect(() => {
+        inheritedOnChange(selectedId);
+    }, [selectedId]);
 
     const performSearch = async (term: string) => {
         try {
@@ -70,7 +75,6 @@ const Typeahead = ({
             setResults(jsonResponse.data);
             setIsOpen(true);
         } catch (error) {
-            console.error('Search error:', error);
             setResults([]);
             setIsOpen(false);
         }
@@ -80,6 +84,7 @@ const Typeahead = ({
         setHasSelected(true); // Set flag to prevent search
         setSearchTerm(result.text);
         setSelectedId(result.id);
+        setResults([]);
         setIsOpen(false);
     };
 
