@@ -24,8 +24,8 @@ app.listen(PORT, () => {
 // configure cors
 const corsOptions = {
     origin: [URL_CLIENT],
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'Authorization'],
     credentials: true,
 };
 app.use(cors(corsOptions));
@@ -37,6 +37,9 @@ app.use(express.urlencoded({ extended: true })); // parses the data from URL for
 // config csrf
 app.use(cookieParser());
 app.use('/session', csurf({ cookie: true }), sessionRouter);
+app.get('/csrf-token', csurf({ cookie: true }), (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+});
 
 // handle errors:
 app.use(errorHandler);

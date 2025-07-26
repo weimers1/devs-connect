@@ -58,6 +58,7 @@ const Typeahead = ({
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, hasSelected]);
 
+    // call the inherited onchange function when the selectedId changes
     useEffect(() => {
         inheritedOnChange(selectedId);
     }, [selectedId]);
@@ -115,22 +116,20 @@ const Typeahead = ({
                 autoComplete="off"
                 placeholder={placeHolder}
             />
-            <span
-                className={`absolute block bg-gray-100/75 px-4 py-2 rounded-md w-75 text-xs text-red-700 ${
-                    error !== '' ? '' : 'hidden'
-                }`}
-            >
-                {error}
-            </span>
+            {error && (
+                <span className="absolute top-full left-0 mt-1 block bg-red-50 border border-red-200 px-3 py-2 rounded-md text-xs text-red-700 z-10">
+                    {error}
+                </span>
+            )}
             {isOpen && results.length > 0 && (
                 <ul
-                    className="absolute z-2 w-full max-h-60 overflow-y-auto bg-white border border-gray-300 rounded-md shadow-lg"
+                    className="absolute z-10 w-full max-h-60 overflow-y-auto bg-white border border-blue-300 rounded-md shadow-lg mt-1"
                     role="listbox"
                 >
                     {results.map((result) => (
                         <li
                             key={result.id}
-                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                            className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-blue-700 border-b border-blue-100 last:border-b-0"
                             onClick={() => handleSelect(result)}
                             role="option"
                         >

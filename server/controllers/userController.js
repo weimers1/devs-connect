@@ -20,39 +20,31 @@ export const getProfile = async (req, res) => {
 // information update
 export const updateProfile = async (req, res) => {
     try {
-        const { firstName, lastName, careerId, sessionToken } = req.body;
+        const { firstName, lastName, careerId } = req.body;
+        const token = req.headers.authorization?.split(' ')[1];
 
         // validate firstName
         if (!firstName || typeof firstName !== 'string' || !firstName.trim()) {
-            throw Object.assign(
-                new Error('First name must be a non-empty string'),
-                {
-                    status: 400,
-                    message: 'First name must be a non-empty string',
-                }
-            );
+            throw Object.assign(new Error('First name error'), {
+                status: 400,
+                message: 'First name must be non-empty',
+            });
         }
 
         // validate lastName
         if (!lastName || typeof lastName !== 'string' || !lastName.trim()) {
-            throw Object.assign(
-                new Error('Last name must be a non-empty string'),
-                {
-                    status: 400,
-                    message: 'Last name must be a non-empty string',
-                }
-            );
+            throw Object.assign(new Error('Last name error'), {
+                status: 400,
+                message: 'Last name must be non-empty',
+            });
         }
 
         // validate careerId
         if (!careerId || isNaN(parseInt(careerId))) {
-            throw Object.assign(
-                new Error('Invalid career. Please select one from our list.'),
-                {
-                    status: 400,
-                    message: 'Invalid career. Please select one from our list.',
-                }
-            );
+            throw Object.assign(new Error('Invalid career'), {
+                status: 400,
+                message: 'Please select a career from our list.',
+            });
         }
 
         // check if careerId exists and is active
@@ -64,19 +56,16 @@ export const updateProfile = async (req, res) => {
         });
 
         if (!career) {
-            throw Object.assign(
-                new Error('Invalid career. Please select one from our list.'),
-                {
-                    status: 400,
-                    message: 'Invalid career. Please select one from our list.',
-                }
-            );
+            throw Object.assign(new Error('Invalid career'), {
+                status: 400,
+                message: 'Please select a career from our list.',
+            });
         }
 
         // get active session for user
         const session = await Session.findOne({
             where: {
-                token: sessionToken,
+                token: token,
                 isActive: 1,
             },
         });
@@ -108,7 +97,7 @@ export const updateProfile = async (req, res) => {
     } catch (error) {
         res.status(error.status || 500).json({
             status: error.status || 500,
-            message: 'Failed to update profile',
+            message: error.message || 'Failed to update profile',
         });
     }
 };

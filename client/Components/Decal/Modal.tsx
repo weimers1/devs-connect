@@ -1,18 +1,24 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ModalContent {
     children: React.ReactNode;
     title?: string;
     allowClose?: boolean;
+    onClose?: () => void;
 }
 
 const Modal: React.FC<ModalContent> = ({
     children,
     title = 'Attention',
     allowClose = true,
+    onClose,
 }) => {
     const [isHidden, setIsHidden] = useState(false);
+
+    useEffect(() => {
+        setIsHidden(false);
+    }, [title, children, allowClose]);
 
     return (
         <div
@@ -32,6 +38,7 @@ const Modal: React.FC<ModalContent> = ({
                         }`}
                         onClick={() => {
                             setIsHidden(true);
+                            onClose?.();
                         }}
                     >
                         <Icon

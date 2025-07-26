@@ -1,259 +1,283 @@
-import React, { useState, type ChangeEvent } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import getCsrfToken from '../Utils/Csrf';
 import Modal from '../Decal/Modal';
 import Layout from '../Layout';
 import Typeahead from '../Utils/Typeahead';
 import { Icon } from '@iconify/react/dist/iconify.js';
 
 const Authenticate: React.FC = () => {
-    // grab params
     const [params] = useSearchParams();
-
-    // get token for checking and storing session info
     const token = params.get('token');
-
-    // track whether the call to verify the link has already been made
-    let calledVerify = false;
-
-    // prep navigating if needed
     const navigate = useNavigate();
+    const calledVerify = useRef(false);
 
-    // init default modal response config
-    const [modalInfo, setModalInfo] = useState({
-        title: 'Oops!',
-        icon: 'mdi-emoticon-sad-outline',
-        message: 'Something went wrong...',
-        isLoaded: false,
-        allowClose: false,
-    });
+    const [modalInfo, setModalInfo] = useState<{
+        title: string;
+        icon: string;
+        message: string;
+        allowClose: boolean;
+    } | null>(null);
 
-    // track whether they are a new user
     const [isNewUser, setIsNewUser] = useState(false);
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [careerId, setCareerId] = useState(-1);
 
-    // track new user info
-    const [firstNameValue, setFirstNameValue] = useState('');
-    const [lastNameValue, setLastNameValue] = useState('');
-    const [careerIdValue, setCareerIdValue] = useState(-1);
+    const closeModal = () => setModalInfo(null);
 
-    // handle change for fields
-    const handleChange = <T,>(
-        setterFunction: React.Dispatch<React.SetStateAction<T>>,
-        valueOrEvent: ChangeEvent<HTMLInputElement> | T // Accepts either an event or the raw value
-    ) => {
-        let valueToSet: T;
+    const showModal = (info: typeof modalInfo) => setModalInfo(info);
 
-        // Check if it's a synthetic event or a direct value
-        if (
-            typeof valueOrEvent === 'object' &&
-            valueOrEvent !== null &&
-            'target' in valueOrEvent
-        ) {
-            // It's a ChangeEvent
-            const event = valueOrEvent as ChangeEvent<HTMLInputElement>;
-            // For number inputs, remember value is always a string from event.target.value
-            if (event.target.type === 'number') {
-                valueToSet = Number(event.target.value) as T;
-            } else {
-                valueToSet = event.target.value as T;
-            }
-        } else {
-            // It's a direct value (like selectedId)
-            valueToSet = valueOrEvent;
+    const handleAccountSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!firstName.trim() || !lastName.trim() || careerId === -1) {
+            showModal({
+                icon: 'mdi-emoticon-frown-outline',
+                title: 'Missing Info',
+                message: 'Please fill out all fields before submitting.',
+                allowClose: true,
+            });
+            return;
         }
 
-        setterFunction(valueToSet);
+        try {
+            const sessionToken = localStorage.getItem('session_token');
+            const csrfToken = await getCsrfToken();
+
+            const response = await fetch(`http://localhost:6969/user/profile`, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken,
+                    Authorization: `Bearer ${sessionToken}`,
+                },
+                body: JSON.stringify({
+                    firstName: firstName.trim(),
+                    lastName: lastName.trim(),
+                    careerId,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.status !== 200) {
+                showModal({
+                    icon: 'mdi-emoticon-frown-outline',
+                    title: 'Oops!',
+                    message: data.message,
+                    allowClose: true,
+                });
+                return;
+            }
+
+            showModal({
+                icon: 'mdi-emoticon-outline',
+                title: 'All Set!',
+                message:
+                    'Account setup complete. Now you can start connecting 🧩',
+                allowClose: true,
+            });
+        } catch (error) {
+            console.error('Profile update failed:', error);
+            showModal({
+                icon: 'mdi-emoticon-frown-outline',
+                title: 'Our Bad...',
+                message:
+                    "Something went wrong on our end. We'll try to fix this shortly.",
+                allowClose: true,
+            });
+        }
     };
 
-    // handle when they submit new user info
-    const handleAccountSubmit = () => {
-        console.log(firstNameValue, lastNameValue, careerIdValue);
-        // fetch(`http://localhost:6969/user/profile`, {
-        //     method: 'PUT',
-        //     credentials: 'include',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //     },
-        //     body: JSON.stringify({ email }), // Send email in body
-        // })
-        //     .then((res) => res.json())
-        //     .then((data) => {
-        //         if (data.error) {
-        //             // @TODO: display error
-        //             return;
-        //         }
-        //         // @TODO: display response
-        //     })
-        //     .catch((error) => {
-        //         console.log(error);
-        //     });
-    };
-
-    // if no token, have them try to log in again
-    React.useEffect(() => {
+    useEffect(() => {
         if (!token) {
             navigate('/login');
             return;
         }
 
-        // if the call to verify has already been made, ignore
-        if (calledVerify) return;
+        if (calledVerify.current) return;
+        calledVerify.current = true;
 
-        // the call to verify is being made next, so track it to prevent future repeat calls
-        calledVerify = true;
+        const verifyToken = async () => {
+            try {
+                const response = await fetch(
+                    `http://localhost:6969/auth/verify?token=${token}`,
+                    {
+                        method: 'GET',
+                        credentials: 'include',
+                    }
+                );
 
-        // otherwise, send the request to the backend to try verifying with stytch
-        fetch(`http://localhost:6969/auth/verify?token=${token}`, {
-            method: 'GET',
-            credentials: 'include',
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                console.log('data: ', data);
+                const data = await response.json();
+
                 if (data.error) {
                     const errorObject =
                         typeof data.error === 'object'
                             ? data.error
                             : JSON.parse(data.error);
-                    switch (errorObject.status_code) {
-                        case 400:
-                            setModalInfo({
-                                ...modalInfo,
-                                title: 'Invalid Request',
-                                isLoaded: true,
-                            });
-                            break;
-                        case 401:
-                            setModalInfo({
-                                ...modalInfo,
-                                icon: 'mdi-emoticon-frown-outline',
-                                title: 'Expired Link',
-                                message:
-                                    'The link you used is outdated. Please try signing in again with a different link.',
-                                isLoaded: true,
-                            });
-                            break;
-                        case 403:
-                            setModalInfo({
-                                ...modalInfo,
-                                icon: 'mdi-emoticon-frown-outline',
-                                title: 'Access Denied',
-                                message: 'Access denied for this link.',
-                                isLoaded: true,
-                            });
-                            break;
-                        case 500:
-                            setModalInfo({
-                                ...modalInfo,
-                                icon: 'mdi-emoticon-frown-outline',
-                                title: 'Our Bad...',
-                                message:
-                                    "Something went wrong on our end. We'll try to fix this shortly.",
-                                isLoaded: true,
-                            });
-                            break;
-                        default:
-                            break;
-                    }
+                    const errorMessages = {
+                        400: {
+                            title: 'Invalid Request',
+                            message: 'The request was invalid.',
+                        },
+                        401: {
+                            title: 'Expired Link',
+                            message:
+                                'The link you used is outdated. Please try signing in again.',
+                        },
+                        403: {
+                            title: 'Access Denied',
+                            message: 'Access denied for this link.',
+                        },
+                        500: {
+                            title: 'Our Bad...',
+                            message:
+                                "Something went wrong on our end. We'll try to fix this shortly.",
+                        },
+                    };
 
+                    const error = errorMessages[
+                        errorObject.status_code as keyof typeof errorMessages
+                    ] || {
+                        title: 'Error',
+                        message: 'An unexpected error occurred.',
+                    };
+
+                    showModal({
+                        icon: 'mdi-emoticon-frown-outline',
+                        title: error.title,
+                        message: error.message,
+                        allowClose: false,
+                    });
                     return;
                 }
 
-                // set the session token in localStorage
                 localStorage.setItem('session_token', data.session_token);
 
                 if (data.isNewUser) {
-                    // @TODO: if they are a new user, have them finish setting up their account
-                    setModalInfo({
+                    showModal({
                         icon: 'mdi-emoticon-smile-outline',
                         title: 'Welcome New User!',
                         message:
                             'Please take a few seconds to finish filling out some details.',
-                        isLoaded: true,
                         allowClose: true,
                     });
                     setIsNewUser(true);
-                    return;
                 } else {
-                    console.log('User logged in:', data.email);
-                    navigate('/home');
+                    navigate('/');
                 }
-            })
-            .catch((error) => {
-                // @TODO: probably wanna send emails here since this is unexpected
+            } catch (error) {
                 console.error('Authentication failed:', error);
-                setModalInfo({
-                    ...modalInfo,
+                showModal({
                     icon: 'mdi-emoticon-frown-outline',
                     title: 'Our Bad...',
                     message:
                         "Something went wrong on our end. We'll try to fix this shortly.",
-                    isLoaded: true,
+                    allowClose: false,
                 });
-            });
-    }, [token]);
+            }
+        };
+
+        verifyToken();
+    }, [token, navigate]);
 
     return (
         <Layout>
-            {modalInfo.isLoaded && (
+            {modalInfo && (
                 <Modal
                     title={modalInfo.title}
                     allowClose={modalInfo.allowClose}
+                    onClose={
+                        modalInfo.title === 'All Set!'
+                            ? () => navigate('/')
+                            : closeModal
+                    }
                 >
-                    <div className="flex grid grid-cols-12">
+                    <div className="flex justify-center items-center">
                         <Icon
                             icon={modalInfo.icon}
-                            className="me-2 w-6 h-6 col-span-2 lg:col-span-1"
+                            className="me-2 w-6 h-6 text-blue-700"
                         />
-                        <span className="col-span-10 lg:col-span-11">
-                            {modalInfo.message}
-                        </span>
+                        <span>{modalInfo.message}</span>
                     </div>
                 </Modal>
             )}
             {isNewUser && (
-                <section className="relative w-full h-full flex justify-center items-center">
-                    <form className="mt-45 lg:mt-70 h-85 lg:h-95 w-100 bg-white rounded-md shadow-md p-4 flex flex-col justify-center items-center">
-                        <p className="text-lg text-blue-700 mt-3 mb-7">
-                            Finish Setting Up Your Account
-                        </p>
-                        <input
-                            className="p-2 w-75 bg-white rounded-md border border-gray-200 shadow-sm mb-4 lg:mb-8"
-                            type="text"
-                            placeholder="First Name"
-                            onChange={(e) => {
-                                handleChange(setFirstNameValue, e);
-                            }}
-                        />
-                        <input
-                            className="p-2 w-75 bg-white rounded-md border border-gray-200 shadow-sm mb-4 lg:mb-8"
-                            type="text"
-                            placeholder="Last Name"
-                            onChange={(e) => {
-                                handleChange(setLastNameValue, e);
-                            }}
-                        />
-                        <Typeahead
-                            apiEndpoint="http://localhost:6969/utils/careers/search"
-                            id="career-goal"
-                            inputClasses="p-2 w-75 bg-white rounded-md border border-gray-200 shadow-sm"
-                            placeHolder="Search Career Goals..."
-                            inheritedOnChange={(
-                                e: ChangeEvent<HTMLInputElement>
-                            ) => {
-                                handleChange(setCareerIdValue, e);
-                            }}
-                        ></Typeahead>
-                        <div className="w-full flex justify-end">
-                            <button
-                                type="button"
-                                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 cursor-pointer text-white font-bold mt-4 lg:mt-8 py-2 px-4 me-1 rounded shadow-md"
-                                onClick={() => {
-                                    handleAccountSubmit();
-                                }}
-                            >
-                                Submit
-                            </button>
+                <section className="absolute top-5 left-0 lg:top-0 lg:relative w-screen lg:w-full h-full lg:mt-50 flex justify-center items-center">
+                    <form
+                        onSubmit={handleAccountSubmit}
+                        className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md border border-blue-200"
+                    >
+                        <h2 className="text-2xl font-bold text-blue-700 mb-6 text-center">
+                            Complete Your Profile
+                        </h2>
+
+                        <div className="lg:space-y-4">
+                            <div>
+                                <label
+                                    htmlFor="firstName"
+                                    className="block text-sm font-medium text-blue-700 mb-1"
+                                >
+                                    First Name
+                                </label>
+                                <input
+                                    type="text"
+                                    id="firstName"
+                                    value={firstName}
+                                    onChange={(e) =>
+                                        setFirstName(e.target.value)
+                                    }
+                                    className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter first name"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor="lastName"
+                                    className="block text-sm font-medium text-blue-700 mb-1"
+                                >
+                                    Last Name
+                                </label>
+                                <input
+                                    type="text"
+                                    id="lastName"
+                                    value={lastName}
+                                    onChange={(e) =>
+                                        setLastName(e.target.value)
+                                    }
+                                    className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter last name"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor="career"
+                                    className="block text-sm font-medium text-blue-700 mb-1"
+                                >
+                                    Career Goal
+                                </label>
+                                <Typeahead
+                                    apiEndpoint="http://localhost:6969/utils/careers/search"
+                                    id="career"
+                                    inputClasses="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeHolder="Search career goals..."
+                                    inheritedOnChange={setCareerId}
+                                />
+                            </div>
                         </div>
+
+                        <button
+                            type="submit"
+                            className="w-full mt-6 bg-blue-700 text-white py-2 px-4 rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                        >
+                            Complete Setup
+                        </button>
                     </form>
                 </section>
             )}
