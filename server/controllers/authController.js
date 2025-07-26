@@ -95,6 +95,17 @@ export const verifyMagicLink = async (req, res) => {
             token: session.session_token,
         });
 
+        // if they're a new user, mark them as verified
+        if (isNewUser) {
+            user.verifiedAt = new Date();
+            user.save();
+        }
+
+        // call the checkSession function in 60 minutes
+        setTimeout(() => {
+            checkSession(dbSession.token);
+        }, 1000 * 60 * 60);
+
         res.status(200).json({ isNewUser, session_token: dbSession.token });
     } catch (error) {
         // general error catch
@@ -105,4 +116,34 @@ export const verifyMagicLink = async (req, res) => {
             },
         });
     }
+};
+
+export const checkSession = (token) => {
+    // check if the session has been extended (via the isExtended column in the session record);
+    // if it has, start a countdown to checkSession again; but if it hasn't been extended, mark it inactive
+    // and log them out
+    Session.findOne({ where: { token } })
+        .then((session) => {
+            if (!session) return;
+
+            // if the session is not extended, mark it inactive and drop it
+            if (!session.isExtended) {
+                session.isActive = false;
+                session.save();
+                return;
+            }
+
+            // if the session is extended, call to checkSession again in 60 min;
+            // also mark isExtended false now (since this will be set via the endpoint)
+            setTimeout(() => {
+                checkSession(token);
+            }, 1000 * 60 * 60);
+            session.isExtended = false;
+            session.save();
+        })
+        .catch((error) => {
+            throw Object.assign(new Error('Failed to check session'), {
+                status: 500,
+            });
+        });
 };

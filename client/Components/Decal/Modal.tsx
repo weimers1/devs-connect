@@ -24,10 +24,10 @@ const Modal: React.FC<ModalContent> = ({
         <div
             className={`${
                 isHidden ? 'hidden' : ''
-            } absolute flex items-center justify-center w-9/10 h-full`}
+            } fixed inset-0 flex items-center justify-center p-4 z-50`}
         >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-full w-full fixed left-0 top-0 bg-slate-900 opacity-50 z-1"></div>
-            <div className="bg-white text-md text-blue-700 p-5 mb-80 rounded-lg w-100 lg:w-150 z-2">
+            <div className="absolute inset-0 bg-slate-900 opacity-50"></div>
+            <div className="relative bg-white text-md text-blue-700 p-5 rounded-lg w-full lg:max-w-xl mx-auto z-10">
                 <div className="border-b w-full border-gray-200 flex items-center justify-between pb-4">
                     <div className="text-lg font-bold text-blue-700">
                         {title}
