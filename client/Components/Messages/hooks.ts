@@ -9,6 +9,7 @@ export const useMessages = (): UseMessagesReturn => {
   const [messages, setMessages] = useState<Message[]>([]); //Array of Conversation objects for sidebar
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { socket } = useSocket();
   const [searchQuery, setSearchQuery] = useState(''); //User's search input
     //The purpose of the is to prevent any unnecessary re-renders
   const fetchMessages = useCallback(async () => { 
@@ -29,7 +30,7 @@ export const useMessages = (): UseMessagesReturn => {
         //Fixed for now @TODO: add tracking to determine isOnline status
         isOnline: Math.random() > 0.5
       }));
-      
+       
       setMessages(transformedMessages); //Updates state with ready conversation data
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch messages'); //Error handling
@@ -54,9 +55,46 @@ export const useMessages = (): UseMessagesReturn => {
     await fetchMessages();
   }, [fetchMessages]);
 //Automatically loads conversations when component mounts
-  useEffect(() => {
+ 
+    useEffect(() => {
     fetchMessages();
-  }, [fetchMessages]);
+    
+      //WEB SOCKET INTEGRATION For updates on the sidebar
+          if(socket) {
+            socket.on("receiver-message", (messageData) => {
+                {/* NEED TO IMPLEMENT EDGE CASES | ALSO NEED TO Accurately update the message count*/} 
+              setMessages(prev => 
+              prev.map(conversation => {
+                  if(conversation.id === messageData.conversation_id) {
+                    return {
+                      ...conversation,
+                      lastMessage: messageData.content,
+                      date: new Date(messageData.timestamp).toLocaleDateString(),
+                      unreadCount: (
+                        (typeof conversation.unreadCount === 'string'
+                          ? parseInt(conversation.unreadCount)
+                          : (typeof conversation.unreadCount === 'number'
+                              ? conversation.unreadCount
+                              : 0)
+                        ) || 0
+                      ) + 1
+                    };
+                  }
+                  return conversation;
+                })
+                
+              );
+
+            });
+            return () => {
+              socket.off("receiver-message");
+            };
+          }
+
+      
+  }, [fetchMessages, socket]);
+
+
   //This will expose all functionality to components
   return {
     messages: filteredMessages,
@@ -72,7 +110,7 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]); //Chat messages array
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const { socket } = useSocket(); //Destructured so we can share throughout the other hooks
   
 
 
@@ -95,10 +133,8 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
         isOwn: msg.sender_id === 1,
         status: msg.status || 'read'
       }));
-      
-      console.log('Transformed chat messages:', transformedMessages);
-      setChatMessages(transformedMessages);
-      
+   
+      setChatMessages(transformedMessages); // Update the state so we can update the message state.
       // Mark all unread messages as read when opening conversation
       await markConversationAsRead(id);
       
@@ -138,11 +174,11 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
         })
       });
       if(socket) { //Sending messages looking for the sending-message event in the backend
-        socket.emit("sending-messages", {
+        socket.emit("send-message", {
           sender_id: 1,
           receiver_id: parseInt(userId),
           content: content.trim(),
-         conversation_id: [1, parseInt(userId)].sort((a, b) => a - b).join('-')
+          conversation_id: [1, parseInt(userId)].sort((a, b) => a - b).join('-')
      })
       }
       if (!response.ok) {
@@ -210,7 +246,7 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
       console.error('Failed to mark conversation as read:', err);
     }
   }, []);
-  //Automatically loads message when userid changes | triggers when user clicks different conversatio in sidebar
+  //Automatically loads message when userid changes | triggers when user clicks different conversation in sidebar
   useEffect(() => {
     if (userId) {
       fetchChatMessages(userId);
@@ -220,37 +256,35 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
   }, [userId, fetchChatMessages]);
 // In useChat hook, after the userId useEffect:
 useEffect(() => {
-  const newSocket = io('http://localhost:8080');
-  
-  newSocket.on('connect', () => {
-    console.log('Chat socket connected');
-  });
-  
-  newSocket.on("receiver-message", (messageData) => {
-    console.log("Received new message:", messageData);
 
+  if(socket) {
+  socket.on("receiver-message", (messageData) => {
+    console.log("Received new message:", messageData);
+    
       // ONLY add messages from OTHER users (not your own)
   if (messageData.sender_id === 1) {
     console.log("Ignoring own message from socket");
     return; // Don't add your own messages via socket
   }
+  
 
     // Transform the data
     const newMessage: ChatMessage = {
      id: messageData.id ? messageData.id.toString() : `socket-${Date.now()}`,// or messageData.id if available
       content: messageData.content,
   timestamp: messageData.timestamp ? new Date(messageData.timestamp) : new Date(),
-     isOwn: messageData.sender_id === 1,
+      isOwn: false,
       status: 'delivered'
     };
+    
     
     // Add to chat messages
     setChatMessages(prev => [...prev, newMessage]);
   });
-  
-  setSocket(newSocket);
-  return () => { newSocket.close() };
-}, []);
+    return () => { socket.off("receiver-message") };  
+}
+
+}, [socket]);
   //Exposes all chat functionality to components
   return {
     chatMessages,
@@ -272,10 +306,15 @@ export const useSocket = () => {
   useEffect(() => {
     const newSocket = io('http://localhost:8080');
     
+    
     newSocket.on('connect', () => {
       setIsConnected(true);
-      console.log(`Connected to server ${newSocket.id}`); //Logging the User ID to the server
+    
+      newSocket.emit(`user-login`, {userId:1});
+      console.log(`User Connect Successfully`);
+      
     });
+  
 
     newSocket.on('disconnect', () => {
       setIsConnected(false);

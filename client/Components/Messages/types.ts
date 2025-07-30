@@ -32,6 +32,7 @@ export interface MessageSidebarProps {
   messages?: Message[];
   isLoading?: boolean;
   onSearch?: (query: string) => void;
+ 
 }
 
 export interface MessagesContentProps {

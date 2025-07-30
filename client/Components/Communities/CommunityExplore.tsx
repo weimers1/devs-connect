@@ -38,7 +38,7 @@ const CommunityExplore = () => {
     ];
 
     return (
-        <div className="bg-white rounded-xl lg:rounded-2xl shadow-xl p-6 mt-10 mb-5 mx-5 lg:mx-0 border border-gray-100 bg-transparent w-[92vw] lg:w-[65vw]">
+        <div className="bg-white  lg:rounded-2xl shadow-xl p-6 mt-2  lg:mx-0 border border-gray-100 ">
             {/* Header with gradient */}
             <div className="mb-6 md:mb-8">
                 <div className="flex justify-center text-blue-800">
@@ -89,7 +89,7 @@ const CommunityExplore = () => {
                     >
                         <div className="flex items-center space-x-3 lg:space-x-4">
                             <div
-                                className={`w-12 h-12 lg:w-16 lg:h-16 ${community.color} rounded-lg lg:rounded-xl flex items-center justify-center shadow-lg flex-shrink-0`}
+                                className={`w-8 h-8 lg:w-16 lg:h-16 ${community.color} rounded-lg lg:rounded-xl flex items-center justify-center shadow-lg flex-shrink-0`}
                             >
                                 <span className="text-white font-bold text-lg lg:text-xl">
                                     {community.name.charAt(0)}

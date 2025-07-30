@@ -57,7 +57,7 @@ const Messages = () => {
     
     if(socket) {
       console.log("EMITTING JOIN-CHAT:", message.id); // Add this
-      socket.emit("Join-chat", {id: message.id}) //Event to Join A chat with the message ID (Case Sensitive must match the backend)
+      socket.emit("user-login", {id: message.id}) //Event to Join A chat with the message ID (Case Sensitive must match the backend)
     } else {
     console.log("NO SOCKET AVAILABLE"); //Console Log of not joining 
   }
@@ -68,6 +68,7 @@ const Messages = () => {
     }
   }, [socket]);
 
+   
   const handleBackToList = useCallback(() => {
     setIsMobileView(false);
     if (window.innerWidth < 768) {
@@ -94,15 +95,16 @@ const Messages = () => {
 
   return (
     <Layout>
-     <div className="flex h-screen w-5xl  bg-gray-50 messages-container 
+     <div className="flex h-screen   bg-gray-50 messages-container 
                   md:mt-4 md:rounded-xl 
-                  -mx-5 md:mx-0 md:my-0
-                  absolute md:relative inset-2  top-1 mt-16 md:top-auto ">
+                  -mx-3 md:my-0
+                  absolute md:relative inset-3 top-17 md:top-auto w-full md:w-3/4 lg:w-2/3 xl:w-3/5">
         <MessageSidebar 
           onMessageSelect={handleMessageSelect}
           selectedMessage={selectedMessage}
           onSearch={searchMessages}
           className={`${isMobileView ? 'hidden md:flex' : `flex`}`}
+
         />
         <MessagesContent 
           selectedMessage={selectedMessage}

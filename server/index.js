@@ -11,6 +11,7 @@ import messageRoutes from "./Routes/MessageRoutes.js";
 import errorHandler from './utils/errorHandler.js';
 import csurf from 'csurf';
 import cookieParser from 'cookie-parser';
+import { timeStamp } from 'console';
 
 const app = express();
 const httpServer = createServer(app);
@@ -34,28 +35,42 @@ io.on('connection', (socket) => {
   });
   
   // Join conversation room
-  socket.on("Join-chat", (data) => {
-    console.log(`USER JOINED ROOM: ${data.id}`);
-    socket.join(data.id);
-  });
-  
+ socket.on(`user-login`, (userData) => { 
+      socket.userId = userData.userId;
+      socket.join(`user-${userData.userId}`); //Joining Their own Rooms for example user 1 is joining user 1 with his by his userID 
+      console.log(`user-${userData.userId}`)
+ })
+     
   // Handle message sending via Socket.io
-  socket.on("sending-messages", (data) => {
-    console.log(data);
-    const messageData = {
-      sender_id: data.sender_id,
-      conversation_id: data.conversation_id,
-      receiver_id: data.receiver_id,
-      content: data.content,
-      timestamp: new Date()
-    };
-    socket.to(data.conversation_id).emit("receiver-message", messageData);
+  socket.on("send-message", (messageData) => {
+      if(!messageData.sender_id || !messageData.content || !messageData.receiver_id) {
+        socket.emit(`message-error`, {error: `Missing Required Data`})
+        return;
+      }    
+    try {
+          //Import for message to be set we determine A) who is sending the message B) who is receiving the message and C) The message, the date, and the conversation_id (who the conversation is between)
+        const message = {
+        sender_id: messageData.sender_id, //Sending the message to who is receiving the message
+        content: messageData.content, //The content we are sending over
+        timestamp: new Date(), //The time the content is sent
+        conversation_id: messageData.conversation_id, //The conversation_id shared between the two people communicating
+        receiver_id: messageData.receiver_id //Who is receiving the message
+        }
+      socket.to(`user-${messageData.receiver_id}`).emit("receiver-message", message); //Who were sending the message to
+        console.log(`user-${messageData.sender_id} Has SUCCESSFULLY SENT A MESSAGE AND ${messageData.receiver_id} HAS SUCCESSFULLY RECEIVED THE MESSAGE`) //Console log for success
+      } catch (error) { //Catch an error for example if someone tries to message a User with 999 (User Doesn't Exist)
+          console.error("Message send error:", error);
+          socket.emit(`message-error`, {error: `Failed to send message`})
+      }
+    
+   
   });
-  
-  socket.on('disconnect', () => {
+       socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
 });
+
+
 
 const PORT = process.env.PORT || '8080';
 const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:5173';

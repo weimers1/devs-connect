@@ -131,15 +131,22 @@ export const sendMessage = async (req, res) => {
     };
     
     // Get the io instance and emit to conversation room
-    const io = req.app.get('io');
-    io.to(conversationId).emit("receiver-message", messageData);
-    console.log(`EMITTED TO ROOM: ${conversationId}`, messageData); // Debug log
- 
+  const io = req.app.get('io');
+    io.to(`user-${receiver_id}`).emit("receiver-message", {
+        id: message.id,
+        sender_id: message.sender_id,
+        receiver_id: message.receiver_id,
+        content: message.content,
+        timestamp: message.createdAt,
+        conversation_id: message.conversation_id
+    });
+    
     res.json({ success: true, data: message });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Failed to send message' });
   }
+
 };
 
 
@@ -147,7 +154,7 @@ export const sendMessage = async (req, res) => {
 export const sendReply = async (req, res) => {
   try {
     const { sender_id, content } = req.body;
-    const receiver_id = 1; // Always reply to User 1
+    const receiver_id = 1; // Always reply to User 1 for now
     
     // Create conversation_id
     const conversationId = [sender_id, receiver_id]
@@ -174,8 +181,8 @@ export const sendReply = async (req, res) => {
     };
     
     // Get the io instance and emit to conversation room
-    const io = req.app.get('io');
-    io.to(conversationId).emit("receiver-message", messageData);
+    const io = req.app.get('io'); //This will help with the simulation of a PostMan Request so that we can have the socket pickup on the Postman Request
+    io.to(`user-${receiver_id}`).emit("receiver-message", messageData);
     console.log(`REPLY EMITTED TO ROOM: ${conversationId}`, messageData);
     
     res.json({ success: true, data: message });

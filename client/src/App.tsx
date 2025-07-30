@@ -6,6 +6,7 @@ import Profile from "../Components/Profile/Profile";
 import AuthCallBack from "../Components/Auth/AuthCallBack";
 import Messages from "../Components/Messages/Messages";
 import Communities from "../Components/Communities/Communities";
+import Setting from "../Components/Settings/Settings";
 
 const App = () => {
     return (
@@ -19,6 +20,7 @@ const App = () => {
                 <Route path="authenticate" element={<AuthCallBack />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/communities" element={<Communities />} />
+                <Route path="/settings" element={<Setting/>} />
             </Routes>
         </BrowserRouter>
     );

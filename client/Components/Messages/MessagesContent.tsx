@@ -105,7 +105,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 scrollbar-hide ">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 scrollbar-hide  ">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-xs lg:max-w-md xl:max-w-lg ${

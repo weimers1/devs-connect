@@ -4,7 +4,7 @@ import Profile from '/assets/images/Nav-Profile.png';
 import Messages from '/assets/images/Nav-Messages.png';
 import Communities from '../assets/images/Nav-Communities.png';
 import Logo from '../assets/images/logo.png';
-import Ryan from './images/Ryan.jpg'
+
 import Banner from '../assets/images/Banner.png';
 
 interface AssetMap {
@@ -18,7 +18,6 @@ export const assets: AssetMap = {
     Messages,
     Communities,
     Logo,
-    Ryan,
     Banner
   
 };
