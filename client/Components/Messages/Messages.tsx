@@ -56,7 +56,7 @@ const Messages = () => {
     setSelectedMessage(message);
     
     if(socket) {
-      console.log("EMITTING JOIN-CHAT:", message.id); // Add this
+      console.log("EMITTING JOIN-CHAT:", message.id); 
       socket.emit("user-login", {id: message.id}) //Event to Join A chat with the message ID (Case Sensitive must match the backend)
     } else {
     console.log("NO SOCKET AVAILABLE"); //Console Log of not joining 

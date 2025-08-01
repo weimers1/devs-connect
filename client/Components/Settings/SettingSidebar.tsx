@@ -1,69 +1,73 @@
 import React from 'react'
 import { assets } from '../../assets/assets'
 import { Icon } from '@iconify/react/dist/iconify.js'
+import SettingSidebarProps from './SettingProps'
 
-function SettingSidebar() {
+function SettingSidebar({activeSection, onSelectionClick}) {
   
   const SettingsOptions = [
 
     {
-        link: '',
-        icon: '',
-        title: '',
-    }
-  ]
-
-    return (
+        id: 'Profile-Information',
+        icon: 'mdi:account-card',
+        title: 'Account Preferences',
+    },
+    {
+        id: 'Privacy',
+        icon: 'dashicons:privacy',
+        title: 'Account Privacy',
+    },
+     {
+        id: 'Visibility',
+        icon: 'material-symbols:visibility-outline',
+        title: 'Visibility',
+    },
+     {
+        id: 'Billing',
+        icon: 'mage:dollar-fill',
+        title: 'Billing Preferences',
+    },
+    {
+        id: 'Management',
+        icon: 'line-md:account',
+        title: 'Account Management',
+    },
     
-    <div className="bg-white w-80 h-screen pt-8 border-gray-200 sticky top-0">
-   
-            <div className="flex justify-start ml-3">
-                  <Icon className="ml-2.5 mt-3" width="35" height="35" icon ="mdi:cog"></Icon>
-                
-            <span className="font-semi-bold text-4xl mt-2 ml-3">
-                    Settings
-            </span>
-                
+  ]
+  return (
+          <div className="bg-white w-80 h-screen pt-8 border-gray-200 sticky top-0">
+              <div className="flex justify-start ml-3">
+                   <Icon className="ml-2.5 mt-3" width="35" height="35" icon="flat-color-icons:settings"></Icon>
+                 <span className="font-semi-bold text-4xl mt-2 ml-3">
+                       Settings
+               </span>
                 </div>
-                <div className="flex pt-8 justify-start hover:text-blue-700 text-gray-600 ml-6">
-                        <Icon icon="mdi:account-card" width="26" height="30" />
-                        <span className="ml-6 text-xl mt-0.5">
-                                Account Preferences
-                            </span>   
+          {SettingsOptions.map((option) => (
+                    
+                        <button
+                        key={option.id} 
+                        onClick={() => onSelectionClick(option.id)}
+                        >
+                      <div className={`flex pt-8 justify-start ml-6 ${
+                        activeSection === option.id ?  'text-blue-700' : 'text-gray-600 '
+                      }`}
+                      >
 
+                              <Icon icon={option.icon} width="26" height="30" />
+                                    <span className="ml-6 text-xl mt-0.5">
+                                            {option.title}
+                                      </span>   
+                
+                                      
                             </div>
-                             <div className="flex pt-8 mt-3 justify-start hover:text-blue-700 text-gray-600 ml-5">
-                        <Icon icon="dashicons:privacy" width="32" height="32" />
-                        <span className="ml-6 text-xl mt-0.5">
-                                    Account Privacy 
-                            </span>   
-                                    
-                            </div>
-                             <div className="flex pt-8 mt-3 justify-start hover:text-blue-700 focus:outline-2 focus:outline-offset-2 text-gray-600 ml-6">
-                       <Icon icon="material-symbols:visibility-outline" width="30" height="30" />
-                        <span className="ml-6 text-xl mt-0.5">
-                               Profile Visibility 
-                            </span>   
-                                    
-                            </div>
-                                 <div className="flex pt-8 mt-3 justify-start hover:text-blue-700 text-gray-600 ml-6">
-                            <Icon icon="mage:dollar-fill" width="28" height="28" />
-                        <span className="ml-6 text-xl mt-0.5">
-                               Billing Preferences
-                            </span>   
-                                    
-                            </div>
-                             <div className="flex pt-8 mt-3 justify-start hover:text-blue-700 text-gray-600 ml-6">
-                            <Icon icon="ion:notifications-sharp" width="28" height="28" />
-                        <span className="ml-6 text-xl mt-0.5">
-                               Notifications
-                            </span>   
-                                    
-                            </div>
+                            </button>
                             
-            </div>
- 
-  )
+                          
+          ))}
+                  
+                
+          </div>
+ )        
 }
-
+          
 export default SettingSidebar
