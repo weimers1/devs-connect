@@ -29,7 +29,7 @@ export default function Visibility() {
   return (
     <div>
                {/*Visibility */}  
-                   <div className="bg-white h-fit pb-4 rounded-xl w-200 col-start-1 row-start-1" id="Visibility">
+                   <div className="bg-white h-fit pb-4 md:rounded-xl md:w-200 w-full  col-start-1 row-start-1" id="Visibility">
                    <span className="text-2xl font-serif ml-5  pt-1 mb-2 flex items-center "> 
                   Visibility
                   </span>

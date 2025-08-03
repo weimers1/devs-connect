@@ -2,7 +2,7 @@ import { Icon } from "@iconify/react/dist/iconify.js"
 import React from 'react'
 
 function BillingPreferences() {
-  const BilliningOptions = [
+  const BillingOptions = [
     {
       name: 'Upgrade',
       icon: 'si:code-duotone'
@@ -20,13 +20,13 @@ function BillingPreferences() {
   return (
     <div>
         {/* Billing Preferences*/}
-            <div className="bg-white h-fit pb-4 rounded-xl w-200 col-start-1 row-start-1"id="Billing">
+            <div className="bg-white h-fit pb-4  md:w-200 md:rounded-xl col-start-1 row-start-1"id="Billing">
                    <span className="text-2xl font-serif ml-5   mb-2 flex items-center "> 
                   Payments & Subscriptions
                   </span>
-                  {BilliningOptions.map((item, index) => (
+                  {BillingOptions.map((item, index) => (
                         <>
-                        <div key={index} className="flex justify-between pt-2 ">
+                        <div key={index} className="flex justify-between pt-2">
                           <button className="ml-5 font-sans text-[16px] text-gray-900">
                             {item.name}
                           </button>

@@ -20,7 +20,7 @@ function Privacy() {
   return (
     <div>
       {/* Privacy & Security */} 
-               <div className="bg-white h-fit pb-4 rounded-xl w-200 col-start-1 row-start-1" id="Privacy">
+               <div className="bg-white h-fit pb-4 md:rounded-xl w-full  mx-auto md:w-200 col-start-1 row-start-1" id="Privacy">
                    <span className="text-2xl font-serif ml-5  mb-2 flex items-center  "> 
                   Privacy & Security
                   </span>

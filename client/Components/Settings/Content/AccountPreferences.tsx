@@ -5,8 +5,8 @@
    return (
     <div>
         {/* Profile Information */}
-    <div className="bg-white h-54 w-200 rounded-xl mt-4 col-start-1 row-start-1">
-       <span className="text-2xl font-serif ml-5 mt-2 pt-1 mb-2 flex items-center"> 
+    <div className="bg-white h-54 md:w-200 w-full  md:rounded-xl mt-4 col-start-1 row-start-1">
+       <span className="text-2xl font-serif ml-5 mt-2 pt-1 mb-2 flex items-center "> 
         Profile Information
        </span>
             <div className="flex justify-between pt-1 ">
@@ -40,7 +40,7 @@
          </div>
         </div>
          {/*Display */}
-                <div className="bg-white h-23 w-200 rounded-xl col-start-1 row-start-1" id="Display">
+                <div className="bg-white h-23 md:w-200 w-full md:rounded-xl col-start-1 row-start-1" id="Display">
                         <span className="text-2xl font-serif ml-5 mt-2 mb-3 flex items-center  "> 
                     Display
                </span>
@@ -52,7 +52,7 @@
                  </div>
                      </div>
                     {/* General Preferences */}
-                                    <div className="bg-white h-98 w-200 rounded-xl col-start-1 row-start-1" id="General-Preferences">
+                                    <div className="bg-white h-98 md:w-200 w-full md:rounded-xl col-start-1 row-start-1" id="General-Preferences">
                                     <span className="text-2xl font-serif ml-5 mt-2 mb-3 flex items-center  "> 
                                 General Preferences
                            </span>

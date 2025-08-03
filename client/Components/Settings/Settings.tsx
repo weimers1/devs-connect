@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Navbar from '../Navbar/Navbar';
 import SettingsNavbar from './SettingsNavbar';
 import SettingSidebar from './SettingSidebar';
@@ -6,14 +6,22 @@ import SettingsContent from './SettingsContent';
 
 function Settings() {
   const [activeSection, setActiveSection] = React.useState<string | undefined>(undefined);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    const scrollToSection = (sectionId: string) => {
-  setActiveSection(sectionId); {/*Ternary Operator To Scroll to the top if its profile-Information, so the UI looks better */}
- sectionId === 'Profile-Information'  ?  document.querySelector('.overflow-y-auto')?.scrollTo({ top: 0, behavior: 'smooth' }) : document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
-  
-
-};
-
+  const scrollToSection = (sectionId: string) => {
+    setActiveSection(sectionId);
+    if (sectionId === 'Profile-Information') {
+      console.log('Scrolling to Account Preferences', scrollContainerRef.current);
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const element = document.getElementById(sectionId);
+      const container = scrollContainerRef.current;
+      if (element && container) {
+        const elementTop = element.offsetTop;
+        container.scrollTo({ top: elementTop - 20, behavior: 'smooth' });
+      }
+    }
+  };
 
   return (
     
@@ -21,14 +29,14 @@ function Settings() {
       <SettingsNavbar />
       
    
-      <div className="grid grid-cols-[300px_1fr] h-[calc(100vh-64px)]">
-        {/* sidebar */}
-        <div className="overflow-hidden">
+      <div className="md:grid md:grid-cols-[300px_1fr] h-[calc(100vh-64px)]">
+        {/* sidebar - hidden on mobile */}
+        <div className="hidden md:flex">
           <SettingSidebar activeSection={activeSection} onSelectionClick={scrollToSection} />
         </div>
         
         {/* Scrollable content */}
-        <div className="overflow-y-auto">
+        <div ref={scrollContainerRef} className="overflow-y-auto h-full w-full">
           <SettingsContent />
         </div>
       </div>

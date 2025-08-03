@@ -11,13 +11,13 @@ function SettingsContent() {
 
     return (
     <>
-        <div className="mt-6 flex overflow-y-auto flex-col gap-3 items-center">
+        <div className="md:mt-6 flex flex-col gap-3 md:items-center pb-16  ">
              <AccountPreferences/>
              <Privacy/>
              <Visibility/>
              <BillingPreferences/>
              <AccountManagement/>
-            <footer >&copy; Sam Weimer & Ethan Mclaughlin</footer>
+            <footer className='text-center'>&copy; Sam Weimer & Ethan Mclaughlin</footer>
       </div>
       </>
   )

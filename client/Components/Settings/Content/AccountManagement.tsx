@@ -15,7 +15,7 @@ const Management = [
 
 function AccountManagement() {
   return (
-    <div className="bg-white h-fit pb-4 rounded-xl w-200 col-start-1 row-start-1" id="Management">
+    <div className="bg-white h-fit pb-4 md:rounded-xl col-start-1 w-full  md:w-200 row-start-1" id="Management">
                       <span className="text-2xl font-serif ml-5   pt-1 mb-2 flex items-center ">
                           Account Management
                         </span>
