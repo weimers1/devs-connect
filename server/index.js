@@ -11,7 +11,13 @@ import messageRoutes from "./Routes/MessageRoutes.js";
 import errorHandler from './utils/errorHandler.js';
 import csurf from 'csurf';
 import cookieParser from 'cookie-parser';
-import { timeStamp } from 'console';
+import authRouter from './routes/authRoutes.js';
+import utilsRouter from './routes/utilRoutes.js';
+import userRouter from './routes/userRoutes.js';
+import sessionRouter from './routes/sessionRoutes.js';
+
+const PORT = process.env.PORT || '8080';
+const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:5173';
 
 const app = express();
 const httpServer = createServer(app);
@@ -19,7 +25,7 @@ const httpServer = createServer(app);
 // Socket.io setup for real-time messaging
 const io = new Server(httpServer, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost', 'http://localhost:80'],
+    origin: [URL_CLIENT, 'http://localhost:5173', 'http://localhost:3000', 'http://localhost', 'http://localhost:80'],
     methods: ['GET', 'POST']
   }
 });
@@ -37,7 +43,7 @@ io.on('connection', (socket) => {
   // Join conversation room
  socket.on(`user-login`, (userData) => { 
       socket.userId = userData.userId;
-      socket.join(`user-${userData.userId}`); //Joining Their own Rooms for example user 1 is joining user 1 with his by his userID 
+      socket.join(`user-${userData.userId}`);
       console.log(`user-${userData.userId}`)
  })
      
@@ -48,38 +54,31 @@ io.on('connection', (socket) => {
         return;
       }    
     try {
-          //Import for message to be set we determine A) who is sending the message B) who is receiving the message and C) The message, the date, and the conversation_id (who the conversation is between)
         const message = {
-        sender_id: messageData.sender_id, //Sending the message to who is receiving the message
-        content: messageData.content, //The content we are sending over
-        timestamp: new Date(), //The time the content is sent
-        conversation_id: messageData.conversation_id, //The conversation_id shared between the two people communicating
-        receiver_id: messageData.receiver_id //Who is receiving the message
+        sender_id: messageData.sender_id,
+        content: messageData.content,
+        timestamp: new Date(),
+        conversation_id: messageData.conversation_id,
+        receiver_id: messageData.receiver_id
         }
-      socket.to(`user-${messageData.receiver_id}`).emit("receiver-message", message); //Who were sending the message to
-        console.log(`user-${messageData.sender_id} Has SUCCESSFULLY SENT A MESSAGE AND ${messageData.receiver_id} HAS SUCCESSFULLY RECEIVED THE MESSAGE`) //Console log for success
-      } catch (error) { //Catch an error for example if someone tries to message a User with 999 (User Doesn't Exist)
+      socket.to(`user-${messageData.receiver_id}`).emit("receiver-message", message);
+        console.log(`user-${messageData.sender_id} Has SUCCESSFULLY SENT A MESSAGE AND ${messageData.receiver_id} HAS SUCCESSFULLY RECEIVED THE MESSAGE`)
+      } catch (error) {
           console.error("Message send error:", error);
           socket.emit(`message-error`, {error: `Failed to send message`})
       }
-    
-   
   });
-       socket.on('disconnect', () => {
+  
+  socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
 });
 
-
-
-const PORT = process.env.PORT || '8080';
-const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:5173';
-
 // Configure CORS
 const corsOptions = {
   origin: [URL_CLIENT, 'http://localhost:5173', 'http://localhost:3000', 'http://localhost', 'http://localhost:80'],
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'Authorization'],
   credentials: true
 };
 app.use(cors(corsOptions));
@@ -89,10 +88,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Cookie parser for CSRF
- //app.use(cookieParser());
+app.use(cookieParser());
 
-// CSRF protection
- //app.use(csurf({ cookie: true }));
+// CSRF protection for specific routes
+app.use('/session', csurf({ cookie: true }), sessionRouter);
+app.get('/csrf-token', csurf({ cookie: true }), (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+});
+
+// API Routes
+app.use('/api/messages', messageRoutes);
+app.use('/auth', authRouter);
+app.use('/user', userRouter);
+app.use('/utils', utilsRouter);
+
+// Error handling middleware
+app.use(errorHandler);
 
 // Clean up duplicate email indexes
 async function cleanUpEmailIndexes() {
@@ -130,12 +141,6 @@ sequelize
   .authenticate()
   .then(() => console.log('Connected to database successfully.'))
   .catch((error) => console.error('Database connection failed:', error));
-
-// API Routes
-app.use('/api/messages', messageRoutes);
-
-// Error handling middleware (should be last)
-// app.use(errorHandler);
 
 // Start server
 httpServer.listen(PORT, () => {
