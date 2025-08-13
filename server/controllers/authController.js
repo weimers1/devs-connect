@@ -89,10 +89,18 @@ export const verifyMagicLink = async (req, res) => {
             isNewUser = true;
         }
 
+        // mark all previous sessions as inactive for a user to ensure there are no duplicate active sessions
+        await Session.update(
+            { isActive: false },
+            { where: { userId: user.id, isActive: true } }
+        );
+
         // create a session for them in the database
         const dbSession = await Session.create({
             userId: user.id,
             token: session.session_token,
+            isActive: true,
+            isExtended: false, // setting to false: manageSessionLifecycle happens in 60 min; by then, session should be extended
         });
 
         // if they're a new user, mark them as verified
