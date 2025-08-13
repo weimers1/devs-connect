@@ -12,7 +12,11 @@ export const extendSession = async (req, res) => {
         });
 
         await Session.update(
-            { token: session.session_token, updatedAt: new Date() },
+            {
+                token: session.session_token,
+                updatedAt: new Date(),
+                isExtended: true,
+            },
             { where: { token, isActive: true } }
         );
 

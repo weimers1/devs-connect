@@ -101,9 +101,9 @@ export const verifyMagicLink = async (req, res) => {
             user.save();
         }
 
-        // call the checkSession function in 60 minutes
+        // call the manageSessionLifecycle function in 60 minutes
         setTimeout(() => {
-            checkSession(dbSession.token);
+            manageSessionLifecycle(dbSession.token);
         }, 1000 * 60 * 60);
 
         res.status(200).json({ isNewUser, session_token: dbSession.token });
@@ -118,9 +118,9 @@ export const verifyMagicLink = async (req, res) => {
     }
 };
 
-export const checkSession = (token) => {
+export const manageSessionLifecycle = (token) => {
     // check if the session has been extended (via the isExtended column in the session record);
-    // if it has, start a countdown to checkSession again; but if it hasn't been extended, mark it inactive
+    // if it has, start a countdown to manageSessionLifecycle again; but if it hasn't been extended, mark it inactive
     // and log them out
     Session.findOne({ where: { token } })
         .then((session) => {
@@ -133,10 +133,10 @@ export const checkSession = (token) => {
                 return;
             }
 
-            // if the session is extended, call to checkSession again in 60 min;
+            // if the session is extended, call to manageSessionLifecycle again in 60 min;
             // also mark isExtended false now (since this will be set via the endpoint)
             setTimeout(() => {
-                checkSession(token);
+                manageSessionLifecycle(token);
             }, 1000 * 60 * 60);
             session.isExtended = false;
             session.save();
@@ -146,4 +146,31 @@ export const checkSession = (token) => {
                 status: 500,
             });
         });
+};
+
+export const getSessionStatus = async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res
+                .status(401)
+                .json({ success: false, message: 'No token provided' });
+        }
+
+        // Verify session with Stytch (example, adjust as needed)
+        const session = await stytchClient.sessions.authenticate({
+            session_token: token,
+            session_duration_minutes: 60,
+        });
+        res.status(200).json({
+            success: true,
+            message: 'Session active',
+            userId: session.user_id,
+        });
+    } catch (error) {
+        res.status(401).json({
+            success: false,
+            message: 'Invalid or expired session',
+        });
+    }
 };
