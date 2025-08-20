@@ -65,7 +65,7 @@ export const verifyMagicLink = async (req, res) => {
         // authenticate the magic link with stytch and create a session within stytch
         const session = await stytchClient.magicLinks.authenticate({
             token: token,
-            session_duration_minutes: 60,
+            session_duration_minutes: 1, // temporarily using 1 minute for testing
         });
 
         // grab their email from the created stytch session
@@ -112,7 +112,7 @@ export const verifyMagicLink = async (req, res) => {
         // call the manageSessionLifecycle function in 60 minutes
         setTimeout(() => {
             manageSessionLifecycle(dbSession.token);
-        }, 1000 * 60 * 60);
+        }, 1000 * 60 * 1); // temporarily using 1 minute for testing
 
         res.status(200).json({ isNewUser, session_token: dbSession.token });
     } catch (error) {
@@ -145,7 +145,7 @@ export const manageSessionLifecycle = (token) => {
             // also mark isExtended false now (since this will be set via the endpoint)
             setTimeout(() => {
                 manageSessionLifecycle(token);
-            }, 1000 * 60 * 60);
+            }, 1000 * 60 * 1); // temporarily using 1 minute for testing
             session.isExtended = false;
             session.save();
         })
@@ -154,31 +154,4 @@ export const manageSessionLifecycle = (token) => {
                 status: 500,
             });
         });
-};
-
-export const getSessionStatus = async (req, res) => {
-    try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
-            return res
-                .status(401)
-                .json({ success: false, message: 'No token provided' });
-        }
-
-        // Verify session with Stytch (example, adjust as needed)
-        const session = await stytchClient.sessions.authenticate({
-            session_token: token,
-            session_duration_minutes: 60,
-        });
-        res.status(200).json({
-            success: true,
-            message: 'Session active',
-            userId: session.user_id,
-        });
-    } catch (error) {
-        res.status(401).json({
-            success: false,
-            message: 'Invalid or expired session',
-        });
-    }
 };

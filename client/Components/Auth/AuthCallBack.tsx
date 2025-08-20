@@ -97,6 +97,7 @@ const Authenticate: React.FC = () => {
             return;
         }
 
+        // avoid duplicate calls
         if (calledVerify.current) return;
         calledVerify.current = true;
 
