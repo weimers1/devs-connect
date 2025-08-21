@@ -1,24 +1,45 @@
-export const validateSession = (sessionToken: string) => {
-    // call to backend's api endpoint /session/status/get
-    fetch(`http://localhost:6969/session/status/get`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sessionToken }),
-    })
-        .then((response) => response.json())
-        .then((data) => {
-            // @TODO: verify Amazon Q dev got this right
-            if (data.status !== 200) {
-                console.error('Session validation failed:', data.message);
-                return false;
+import getCsrfToken from '../Components/Utils/Csrf';
+
+export const validateSession = async (
+    sessionToken: string
+): Promise<boolean> => {
+    try {
+        const response = await fetch(
+            `http://localhost:6969/session/status/get`,
+            {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    Authorization: `Bearer ${sessionToken}`,
+                },
             }
-            return true;
-        })
-        .catch((error) => {
-            console.error('Session validation failed:', error);
-            return false;
+        );
+
+        const data = await response.json();
+        return data.success === true;
+    } catch (error) {
+        console.error('Session validation failed:', error);
+        return false;
+    }
+};
+
+export const extendSession = async (sessionToken: string): Promise<boolean> => {
+    try {
+        const csrfToken = await getCsrfToken();
+
+        const response = await fetch(`http://localhost:6969/session/extend`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${sessionToken}`,
+                'X-CSRF-Token': csrfToken,
+            },
         });
+
+        return response.ok;
+    } catch (error) {
+        console.error('Session extension failed:', error);
+        return false;
+    }
 };

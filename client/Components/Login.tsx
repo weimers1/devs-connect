@@ -100,7 +100,7 @@ const stytchStyle: StytchStyle = {
 // @TODO Need to implement A Register Feature; Just tested The magic link functionality
 const Login = () => (
     <Layout>
-        <section className="h-175 lg:h-250 flex flex-col items-center justify-center">
+        <section className="h-175 lg:h-[100vh] flex flex-col items-center justify-center">
             <h1 className="text-center mb-8 text-6xl text-white font-black tracking-tight text-shadow-sm">
                 Connect. Code. Create.
             </h1>

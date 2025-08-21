@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from '../Components/Auth/AuthContext';
 import { ProtectedRoute } from '../Components/Auth/ProtectedRoute';
 import Login from '../Components/Login';
 import Home from '../Components/Home';
@@ -6,51 +7,38 @@ import Profile from '../Components/Profile';
 import AuthCallBack from '../Components/Auth/AuthCallBack';
 import Messages from '../Components/Messages';
 import Communities from '../Components/Communities/Communities';
-import { validateSession } from '../Utils/Session';
 
-const App = () => {
-    // check for session_token in user's localStorage
-    const sessionToken = localStorage.getItem('session_token');
+const AuthenticatedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { isAuthenticated } = useAuth();
+    return isAuthenticated ? <Navigate to="/" replace /> : <>{children}</>;
+};
 
-    // if invalid, remove it to prevent issues
-    if (!sessionToken) {
-        localStorage.removeItem('session_token');
-    } else {
-        // otherwise, validate session_token in the database
-        validateSession(sessionToken);
-    }
-
+const AppRoutes = () => {
     return (
         <BrowserRouter>
             <Routes>
-                <Route
-                    path="/"
-                    element={<Home />}
-                />
-                <Route
-                    path="/login"
-                    element={<Login />}
-                />
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={
+                    <AuthenticatedRoute>
+                        <Login />
+                    </AuthenticatedRoute>
+                } />
                 <Route element={<ProtectedRoute />}>
-                    <Route
-                        path="/profile"
-                        element={<Profile />}
-                    />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/messages" element={<Messages />} />
+                    <Route path="/communities" element={<Communities />} />
                 </Route>
-                <Route
-                    path="authenticate"
-                    element={<AuthCallBack />}
-                />
-                <Route
-                    path="/messages"
-                    element={<Messages />}
-                />
-                <Route
-                    path="/communities"
-                    element={<Communities />}
-                />
+                <Route path="authenticate" element={<AuthCallBack />} />
             </Routes>
         </BrowserRouter>
+    );
+};
+
+const App = () => {
+    return (
+        <AuthProvider>
+            <AppRoutes />
+        </AuthProvider>
     );
 };
 
