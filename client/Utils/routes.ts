@@ -28,13 +28,6 @@ export const defaultRoutes: RouteConfig[] = [
         icon: 'mdi:account-group-outline',
         showInNav: true,
     },
-    {
-        path: '/login',
-        component: Login,
-        title: 'Login',
-        icon: 'mdi:login',
-        showInNav: true,
-    },
 ];
 
 export const protectedRoutes: RouteConfig[] = [
