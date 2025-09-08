@@ -3,10 +3,12 @@ import Navbar from '../Navbar/Navbar';
 import SettingsNavbar from './SettingsNavbar';
 import SettingSidebar from './SettingSidebar';
 import SettingsContent from './SettingsContent';
+import { useTheme } from '../../src/ThemeContext';
 
 function Settings() {
   const [activeSection, setActiveSection] = React.useState<string | undefined>(undefined);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+   const { theme } = useTheme();
 
   const scrollToSection = (sectionId: string) => {
     setActiveSection(sectionId);
@@ -26,23 +28,31 @@ function Settings() {
   return (
     
     <div className="h-screen overflow-hidden">
-      <SettingsNavbar />
+      <SettingsNavbar/>
       
    
       <div className="md:grid md:grid-cols-[300px_1fr] h-[calc(100vh-64px)]">
         {/* sidebar - hidden on mobile */}
-        <div className="hidden md:flex">
+        <div className={`hidden md:flex ${
+             theme === 'dark' 
+                ? 'bg-gray-900 border-gray-700' 
+                : 'bg-white'
+        }`}>
           <SettingSidebar activeSection={activeSection} onSelectionClick={scrollToSection} />
         </div>
         
         {/* Scrollable content */}
-        <div ref={scrollContainerRef} className="overflow-y-auto h-full w-full">
+        <div ref={scrollContainerRef} className={`overflow-y-auto h-full w-full ${
+              theme === 'dark' 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-linear-to-tr from-blue-700 to-slate-950'
+        }`}>
+      
           <SettingsContent />
         </div>
       </div>
     </div>
   )
 }
-
 
 export default Settings;

@@ -43,6 +43,30 @@ const User = sequelize.define(
             type: DataTypes.STRING,
             allowNull: true,
         },
+        isDeleted: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    deletedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+}, 
+    githubId: {
+    type: DataTypes.STRING,
+    allowNull: true
+}, 
+    githubUsername: {
+    type: DataTypes.STRING,
+    allowNull: true
+}, 
+    githubAccessToken: {
+    type: DataTypes.STRING ,
+    allowNull: true
+}, 
+    githubEmail: {
+    type: DataTypes.STRING,
+    allowNull: true
+}, 
     },
      {
             tableName: 'Users'

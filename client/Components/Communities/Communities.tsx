@@ -5,9 +5,9 @@ import CommunityExplore from '../Communities/CommunityExplore';
 const Communities = () => {
     return (
         <Layout>
-            <section className="flex lg:w-2/3">
-                <div className=" md:ml-15 md:w-3/4 lg:w-2/3 xl:w-6/6 ">
-                <CommunityExplore />
+            <section className="flex w-full">
+                <div className="flex-1 px-4 lg:px-8">
+                    <CommunityExplore />
                 </div>
                 <Sidebar />
             </section>

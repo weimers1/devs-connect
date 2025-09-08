@@ -1,10 +1,12 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useState } from 'react';
 import { useDropdown } from '../DropDown/DropDownContext';
+import {useTheme} from '../../src/ThemeContext';
 
 
 function Sidebar() {
     const {isSidebarOpen, toggleSidebar} = useDropdown();
+    const {theme} = useTheme();
 
     const connections = [
         {
@@ -100,7 +102,7 @@ function Sidebar() {
     ];
 
     return (
-        <section className="overflow-hidden">
+        <section className='overflow-hidden'>
             {/* buttons for collapsing/opening sidebar */}
             <div
                 className={`fixed right-0 duration-400 ease-in ${
@@ -124,13 +126,18 @@ function Sidebar() {
                 </button>
             </div>
             {isSidebarOpen && (
-                <div className="fixed left-0 top-0 w-screen h-screen bg-slate-900 opacity-50 z-1"></div>
+                <div className="fixed left-0  w-screen h-screen bg-slate-900 opacity-50 z-1 "></div>
             )}
 
+            
             <div
-                className={`fixed right-0 bottom-0 lg:top-22 top-29 bg-white md:rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[92vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
+                className={`fixed right-0 bottom-0 lg:top-18.5 top-29  md:rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[92vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
                     isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
-                }`}
+                       } ${
+                        theme === "dark" ? "bg-gray-800" : "bg-white"
+                       }`
+                       
+                    }
             >
                 <button
                     type="button"   

@@ -5,11 +5,13 @@ import Modal from '../Decal/Modal';
 import Layout from '../Layout';
 import Typeahead from '../Utils/Typeahead';
 import { Icon } from '@iconify/react/dist/iconify.js';
+import { useTheme } from '../../src/ThemeContext';
 
 const Authenticate: React.FC = () => {
     const [params] = useSearchParams();
     const token = params.get('token');
     const navigate = useNavigate();
+    const { loadUserTheme } = useTheme();
     const calledVerify = useRef(false);
 
     const [modalInfo, setModalInfo] = useState<{
@@ -155,6 +157,9 @@ const Authenticate: React.FC = () => {
                 }
 
                 localStorage.setItem('session_token', data.session_token);
+                
+                // Load user's theme preference after successful authentication
+                await loadUserTheme();
 
                 if (data.isNewUser) {
                     showModal({
@@ -166,7 +171,7 @@ const Authenticate: React.FC = () => {
                     });
                     setIsNewUser(true);
                 } else {
-                    navigate('/');
+                    navigate('/home');
                 }
             } catch (error) {
                 console.error('Authentication failed:', error);

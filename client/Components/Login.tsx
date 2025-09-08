@@ -2,6 +2,10 @@ import { StytchLogin } from '@stytch/react';
 import { Products } from '@stytch/vanilla-js';
 import Layout from './Layout';
 const URL_CLIENT = import.meta.env.VITE_URL_CLIENT;
+import { useTheme } from '../src/ThemeContext';
+
+// In your login success handler:
+
 
 // Define TypeScript interface for stytchStyle
 interface StytchStyle {
@@ -70,6 +74,7 @@ const stytchCallbacks = {
             });
     },
 };
+
 
 // Conditionally set the width based on screen size
 const isSmallScreen = window.innerWidth < 1024;

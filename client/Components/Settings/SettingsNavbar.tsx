@@ -1,11 +1,17 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { assets } from '../../assets/assets'
-
+import {useTheme} from '../../src/ThemeContext';
 function SettingsNavbar() {
+    const {theme} = useTheme();
   return (
     <>
- <nav className="sticky top-0 z-50 bg-white shadow-lg border-b border-gray-200  ">
+ <nav className={`sticky top-0 z-50 shadow-lg border-b  ${
+             theme === 'dark' 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white'
+
+        }`}>
     
             <div className="max-w-10xl ml-1 px-4  sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">

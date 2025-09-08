@@ -2,8 +2,10 @@ import React from 'react'
 import { assets } from '../../assets/assets'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import SettingSidebarProps from './SettingProps'
+import { useTheme } from '../../src/ThemeContext';
 
 function SettingSidebar({activeSection, onSelectionClick}) {
+const {theme} = useTheme();
   
   const SettingsOptions = [
 
@@ -22,23 +24,26 @@ function SettingSidebar({activeSection, onSelectionClick}) {
         icon: 'material-symbols:visibility-outline',
         title: 'Visibility',
     },
-     {
-        id: 'Billing',
-        icon: 'mage:dollar-fill',
-        title: 'Billing Preferences',
-    },
+    //  { WILL ADD EVENTUALLY
+    //     id: 'Billing',
+    //     icon: 'mage:dollar-fill',
+    //     title: 'Billing Preferences', 
+    // },
     {
         id: 'Management',
-        icon: 'line-md:account',
+        icon: 'mdi:account-outline',
         title: 'Account Management',
     },
     
   ]
   return (
-          <div className="bg-white w-80 h-screen pt-8 border-gray-200 sticky top-0">
+          <div className="w-80 h-screen pt-8 border-gray-200 sticky top-0"
+            >
               <div className="flex justify-start ml-3">
                    <Icon className="ml-2.5 mt-3" width="35" height="35" icon="flat-color-icons:settings"></Icon>
-                 <span className="font-semi-bold text-4xl mt-2 ml-3">
+                 <span className={`font-semi-bold text-4xl mt-2 ml-3 ${
+                  theme === "dark" ? "text-white" : "text-gray-600"
+                 }`}>
                        Settings
                </span>
                 </div>
@@ -50,6 +55,8 @@ function SettingSidebar({activeSection, onSelectionClick}) {
                         >
                       <div className={`flex pt-8 justify-start ml-6 ${
                         activeSection === option.id ?  'text-blue-700' : 'text-gray-600 '
+                      }${
+                        theme==="dark" ? "text-white" : "text-gray-600" 
                       }`}
                       >
 

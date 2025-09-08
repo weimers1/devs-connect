@@ -1,7 +1,39 @@
 import { assets } from "../../assets/assets";
 import { Icon } from '@iconify/react';
+import API from "../../Service/service";
+import React, { useState, useEffect } from 'react'; // Missing React import
+import { profile } from "console";
+
 
 function UserCard() {
+    const [currentProfileImage, setCurrentProfileImage] = useState('');
+    const [loading, setLoading] = useState(false);
+  // Profile edit data
+  const [profileData, setProfileData] = useState({
+    firstName: '',
+    lastName: '',
+    bio: '',
+    location: '',
+    career: '',
+    school: '',
+    github: '',
+  });
+    useEffect(() => {
+const loadProfileData = async () => {
+    try {
+      const response = await API.getProfileInformation();
+      //Set both current form data and BACKUP
+      setProfileData(response); //Load Data from DB from this page
+      setCurrentProfileImage(response.pfp || '');
+    } catch(error) {
+      console.log("Unable to Fetch settings");
+    } finally {
+      setLoading(false);
+    }
+  }
+  loadProfileData();
+ }, [])
+
     return (
         <div className="w-full bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2"> 
             {/* Banner - Full width on mobile */}
@@ -17,7 +49,7 @@ function UserCard() {
                 {/* Profile Picture - Different positioning for mobile vs desktop */}
                 <div className="absolute -bottom-10 sm:-bottom-12 md:-bottom-16 left-4 sm:left-6 md:left-8">
                     <img 
-                        src={assets.Profile}
+                        src={currentProfileImage || assets.Profile}
                         alt="Profile"
                         className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg object-cover"
                     />
@@ -30,9 +62,9 @@ function UserCard() {
                 <div className="flex flex-col md:flex-row md:justify-between">
                     {/* Left Column - Basic Info */}
                     <div className="md:pr-8">
-                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Ethan McLaughlin</h1>
-                        <p className="text-gray-600 text-sm md:text-base">Student At Southwestern Community College</p>
-                        <p className="text-gray-500 text-xs sm:text-sm">Coos Bay, Oregon, United States</p>
+                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{profileData.firstName + " " + profileData.lastName}</h1>
+                        <p className="text-gray-600 text-sm md:text-base">Student At {profileData.school}</p>
+                        <p className="text-gray-500 text-xs sm:text-sm">{profileData.location}</p>
                         
                         {/* Connections */}
                         <div className="mt-2 flex items-center">
@@ -61,7 +93,7 @@ function UserCard() {
                     <div className="mt-4 md:mt-0 md:ml-4 md:flex-shrink-0">
                         <div className="bg-blue-50 px-3 py-2 rounded-lg">
                             <p className="font-semibold text-sm">Career goal</p>
-                            <p className="text-blue-600 text-sm">Web Development</p>
+                            <p className="text-blue-600 text-sm">{profileData.career}</p>
                         </div>
                     </div>
                 </div>
@@ -75,8 +107,7 @@ function UserCard() {
                         </button>
                     </div>
                     <p className="mt-2 text-sm text-gray-600">
-                        Passionate web developer focused on creating responsive, user-friendly applications.
-                        Currently studying at Southwestern Community College.
+                            {profileData.bio}
                     </p>
                 </div>
             </div>
@@ -85,3 +116,6 @@ function UserCard() {
 }
 
 export default UserCard;
+
+
+

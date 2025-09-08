@@ -98,7 +98,7 @@ const Messages = () => {
      <div className="flex h-screen   bg-gray-50 messages-container 
                   md:mt-4 md:rounded-xl 
                   -mx-3 md:my-0
-                  absolute md:relative inset-3 top-17 md:top-auto w-full md:w-3/4 lg:w-2/3 xl:w-3/5">
+                  absolute md:relative inset-3 top-17 md:top-auto  md:w-3/4 lg:w-2/3 xl:w-4/6">
         <MessageSidebar 
           onMessageSelect={handleMessageSelect}
           selectedMessage={selectedMessage}

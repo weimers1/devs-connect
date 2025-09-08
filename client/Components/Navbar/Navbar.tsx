@@ -4,10 +4,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useDropdown } from '../DropDown/DropDownContext';
 import ProfileDropdown from "../DropDown/ProfileDropDown";
+import { useTheme } from '../../src/ThemeContext';
 
 const Navbar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
+    const { theme } = useTheme();
     const {isProfileDropdownOpen, toggleProfileDropdown} = useDropdown();
 
     const pages = [
@@ -27,16 +29,27 @@ const Navbar: React.FC = () => {
             icon: 'mdi:message-reply-text',
         },
         {
-            route: '/profile',
-            title: 'Profile',
-            icon: 'mdi:account-circle',
-        },
+            route: '/courses',
+            title: 'Courses',
+            icon: 'streamline-freehand:learning-programming-book'
+        
+        },   
+        {
+            route: '/Create',
+            title: 'Create',
+            icon: `oui:ml-create-single-metric-job`,
+        }, 
+
     ];
 
     const isActive = (route: string) => location.pathname === route;
 
     return (
-        <nav className="sticky top-0 z-50 bg-white shadow-lg border-b border-gray-200">
+        <nav className={`sticky top-0 z-50 shadow-lg border-b ${
+            theme === 'dark' 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
+        }`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-18">
                     
@@ -48,7 +61,9 @@ const Navbar: React.FC = () => {
                                 className="h-10 w-auto"
                                 alt="DevConnect Logo"
                             />
-                            <span className="text-xl font-bold text-gray-900 hidden sm:block">
+                            <span className={`text-xl font-bold hidden sm:block ${
+                                theme === 'dark' ? 'text-white' : 'text-gray-900'
+                            }`}>
                                 DevConnect
                             </span>
                         </Link>
@@ -69,21 +84,21 @@ const Navbar: React.FC = () => {
                     </div>
 
                     {/* Desktop Search Bar */}
-                    <div className="hidden md:block flex-1 max-w-lg mx-8">
+                    <div className="hidden md:block flex-1 max-w-sm ml-3   mt-0.5">
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Icon icon="mdi:magnify" className="h-5 w-5 text-gray-400" />
                             </div>
                             <input
                                 type="text"
-                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
-                                placeholder="Search developers, projects, communities..."
+                                className="block  rounded-2xl w-full pl-10 pr-3 py-1.5 border border-black leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
+                                placeholder="Search..."
                             />
                         </div>
                     </div>
 
                     {/* Desktop Navigation Links */}
-                    <div className="hidden md:flex items-center space-x-1">
+                    <div className="hidden md:flex items-center space-x-1 mx-10">
                         {pages.map((page, i) => {
                             const active = isActive(page.route);
                             return (
@@ -107,16 +122,18 @@ const Navbar: React.FC = () => {
                             <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                                 <Icon icon="mdi:bell-outline" className="w-6 h-6" />
                             </button>
-                            <button
-                                onClick={toggleProfileDropdown}
-                                className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
-                            >
-                                <span className="text-white text-sm font-medium">U</span>
-                            </button>
+                            <div className="relative">
+                                <button
+                                    onClick={toggleProfileDropdown}
+                                    className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
+                                >
+                                    <span className="text-white text-sm font-medium">U</span>
+                                </button>
+                                {isProfileDropdownOpen && (
+                                    <ProfileDropdown />
+                                )}
+                            </div>
                         </div>
-                        {isProfileDropdownOpen && (
-                            <ProfileDropdown />
-                        )}
                     </div>
 
                     {/* Mobile menu button */}

@@ -1,5 +1,4 @@
 import User from '../models/User.js';
-import Career from '../models/Career.js';
 import Session from '../models/Session.js';
 
 // get user info
