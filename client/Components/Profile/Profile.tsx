@@ -14,7 +14,6 @@ function Profile() {
   const [showCertModal, setShowCertModal] = React.useState(false); //Certification Modal
   const [showProfModal, setShowProfModal] = React.useState(false) // Profile Modal
   const [certSaving, setCertSaving] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [currentProfileImage, setCurrentProfileImage] = useState('');
   const [certSaveStatus, setCertSaveStatus] = useState(''); // 'success', 'error', ''
@@ -199,10 +198,10 @@ useEffect(() => {
         
         {/* Profile sections - No spacing between sections on mobile */}
         <div className="divide-y-0 divide-transparent">
-          <Skills />
-          <Certifications />
+          {/* <Skills />IN LATER ITERATION THIS WILL BE REDEPLOYED */}
+          {/* <Certifications />  IN LATER ITERATION THIS WILL BE REDEPLOYED*/}
           <Communities />
-        </div>
+        </div>  
         
         {/* Sidebar for desktop only */}
         <div className="hidden lg:block fixed right-4 top-24">
@@ -504,7 +503,4 @@ useEffect(() => {
 
 export default Profile;
 
-function setLoading(arg0: boolean) {
-  throw new Error('Function not implemented.');
-}
 

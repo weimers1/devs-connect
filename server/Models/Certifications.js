@@ -40,7 +40,7 @@ const Certifications = sequelize.define("Certifications", {
     credentialURL: { //Some certs don't have URL
     type: DataTypes.STRING,
     allowNull: true,
-
+    unique: true, 
     }
 })
 

@@ -26,11 +26,11 @@ const Privacy_Security = sequelize.define('Privacy_Security', {
 },
      two_factor_auth: {
     type: DataTypes.STRING,
-    allowNull:  true,
-    validate: {
-        isIn: [['email', 'phone']] // Assuming factor_auth can only be 'email' or 'phone'
-    },
-    defaultValue: 'email'
+    defaultValue: {
+        enabled: false,
+        method: null, // e.g., 'sms', 'email', 'authenticator'
+        secret: null // Store the secret key for 2FA
+    }
 },
     
 })  

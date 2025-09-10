@@ -1,4 +1,4 @@
-import Messages from "../models/MessagesTable.js";
+import Messages from "../Models/MessagesTable.js";
 import User from "../models/User.js"
 import { Op } from 'sequelize';
 

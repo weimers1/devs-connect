@@ -29,7 +29,7 @@ import session from 'express-session';
 
 
 
-const PORT = process.env.PORT || '6969';
+const PORT = process.env.PORT || '8080';
 const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:5173';
 
 const app = express();
@@ -121,7 +121,7 @@ passport.serializeUser((user, done) => {
   }
 });
 
-passport.deserializeUser(async (obj, done) => {
+passport.deserializeUser(async (obj, done) => { //Convert 
   try {
     if (obj.type === 'user') {
       const User = (await import('./models/User.js')).default;

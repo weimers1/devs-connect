@@ -28,7 +28,6 @@ const UserProfile = sequelize.define('UserProfile', {
             len: [0, 3],
             isNumeric: true
         }
-
         },
         gender: {
         type: DataTypes.STRING,

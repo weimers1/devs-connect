@@ -19,10 +19,10 @@ export const testS3Connection = async () => {
     };
     
     const result = await s3.headBucket(params).promise();
-    console.log('✅ S3 connection successful!');
+    console.log('S3 connection successful!');
     return true;
   } catch (error) {
-    console.error('❌ S3 connection failed:', error.message);
+    console.error('S3 connection failed:', error.message);
     return false;
   }
 };

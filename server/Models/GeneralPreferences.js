@@ -20,9 +20,6 @@ const GeneralPreferences = sequelize.define('GeneralPreferences', {
     type: DataTypes.STRING,
     allowNull: false,
      defaultValue: 'English',
-      validate: {
-            isIn: [['English', 'Chinese', 'Indian']]
-        }
 
     }, 
     time_zone: { //Time Zone 
