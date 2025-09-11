@@ -1,3 +1,5 @@
+import { Socket } from "socket.io-client";
+
 // Type definitions for Messages components
 export interface Message {
   id: string;
@@ -30,6 +32,7 @@ export interface MessageSidebarProps {
   messages?: Message[];
   isLoading?: boolean;
   onSearch?: (query: string) => void;
+ 
 }
 
 export interface MessagesContentProps {
@@ -87,4 +90,5 @@ export interface UseChatReturn {
   sendMessage: (content: string) => Promise<void>;
   loadMoreMessages: () => Promise<void>;
   markAsRead: (messageId: string) => Promise<void>;
+  socket: Socket | null;
 }

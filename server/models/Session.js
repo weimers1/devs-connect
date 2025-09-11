@@ -22,7 +22,12 @@ const Session = sequelize.define('Session', {
     isActive: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: true, // Set the default value to true for isActive co
+        defaultValue: true, // Set the default value to true for isActive
+    },
+    isExtended: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false, // Set the default value to false; column will be used to tell whether a session has been extended
     },
     token: {
         // Session tracking and verifies the user is logged and security.
