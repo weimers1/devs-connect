@@ -1,8 +1,9 @@
-{/*InterFace for Interactivity With SideBar */}
+{
+    /*InterFace for Interactivity With SideBar */
+}
 interface SettingSidebarProps {
-  activeSection: string | undefined;
-  onSelectionClick: (sectionId: string) => void;
-  
+    activeSection: string | undefined;
+    onSelectionClick: (sectionId: string) => void;
 }
 
 export default SettingSidebarProps;

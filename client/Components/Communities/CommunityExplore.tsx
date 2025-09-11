@@ -19,7 +19,7 @@ const CommunityExplore = () => {
             category: 'Design',
             color: 'bg-gradient-to-r from-pink-500 to-rose-500',
             icon: 'mdi:palette',
-            tags: ['trending', 'new', 'premium', ],
+            tags: ['trending', 'new', 'premium'],
         },
         {
             name: 'Python Developers',
@@ -55,7 +55,8 @@ const CommunityExplore = () => {
                     Explore Communities
                 </h1>
                 <p className="text-gray-600 text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed">
-                    Discover vibrant communities, connect with like-minded developers, and grow your professional network
+                    Discover vibrant communities, connect with like-minded
+                    developers, and grow your professional network
                 </p>
             </div>
 
@@ -86,7 +87,9 @@ const CommunityExplore = () => {
                         <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
                             Featured Communities
                         </h2>
-                        <p className="text-gray-600">Join the most active developer communities</p>
+                        <p className="text-gray-600">
+                            Join the most active developer communities
+                        </p>
                     </div>
                     <div className="hidden lg:flex items-center space-x-4">
                         <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
@@ -107,18 +110,20 @@ const CommunityExplore = () => {
                         className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 hover:border-blue-300 hover:-translate-y-3 hover:scale-[1.02]"
                     >
                         {/* Enhanced Image Header */}
-                        <div className={`h-48 ${community.color} relative overflow-hidden`}>
+                        <div
+                            className={`h-48 ${community.color} relative overflow-hidden`}
+                        >
                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-                            
+
                             {/* Large Topic Icon */}
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-20">
-                                <Icon 
-                                    icon={community.icon} 
+                                <Icon
+                                    icon={community.icon}
                                     className="w-24 h-24 text-white"
                                 />
                             </div>
-                            
+
                             {/* Floating Tags */}
                             <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                                 {community.tags.map((tagType, i) => (
@@ -128,13 +133,13 @@ const CommunityExplore = () => {
                                     />
                                 ))}
                             </div>
-                            
+
                             {/* Community Title with Icon */}
                             <div className="absolute bottom-4 left-4 right-4">
                                 <div className="flex items-center mb-2">
                                     <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3">
-                                        <Icon 
-                                            icon={community.icon} 
+                                        <Icon
+                                            icon={community.icon}
                                             className="w-5 h-5 text-white"
                                         />
                                     </div>
@@ -149,18 +154,23 @@ const CommunityExplore = () => {
                                 </div>
                             </div>
                         </div>
-                        
+
                         {/* Enhanced Content */}
                         <div className="p-6">
                             <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
-                                Connect with {community.category.toLowerCase()} professionals, share knowledge, and collaborate on exciting projects in this vibrant community.
+                                Connect with {community.category.toLowerCase()}{' '}
+                                professionals, share knowledge, and collaborate
+                                on exciting projects in this vibrant community.
                             </p>
-                            
+
                             {/* Enhanced Stats */}
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center space-x-4">
                                     <span className="flex items-center text-gray-600 text-sm font-medium">
-                                        <Icon icon="mdi:account-group" className="w-4 h-4 mr-1.5 text-blue-500" />
+                                        <Icon
+                                            icon="mdi:account-group"
+                                            className="w-4 h-4 mr-1.5 text-blue-500"
+                                        />
                                         {community.membersTotal}
                                     </span>
                                     <span className="flex items-center text-green-600 text-sm font-medium">
@@ -170,20 +180,29 @@ const CommunityExplore = () => {
                                 </div>
                                 <div className="flex items-center space-x-1">
                                     {[...Array(5)].map((_, i) => (
-                                        <Icon 
-                                            key={i} 
-                                            icon="mdi:star" 
-                                            className={`w-4 h-4 ${i < 4 ? 'text-yellow-400' : 'text-gray-300'}`} 
+                                        <Icon
+                                            key={i}
+                                            icon="mdi:star"
+                                            className={`w-4 h-4 ${
+                                                i < 4
+                                                    ? 'text-yellow-400'
+                                                    : 'text-gray-300'
+                                            }`}
                                         />
                                     ))}
-                                    <span className="text-xs text-gray-500 ml-1">4.8</span>
+                                    <span className="text-xs text-gray-500 ml-1">
+                                        4.8
+                                    </span>
                                 </div>
                             </div>
-                            
+
                             {/* Enhanced Join Button */}
                             <button className="w-full py-3 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 text-white rounded-xl hover:from-blue-700 hover:via-blue-800 hover:to-purple-800 transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl group-hover:scale-105 transform">
                                 <span className="flex items-center justify-center">
-                                    <Icon icon="mdi:plus" className="w-4 h-4 mr-2" />
+                                    <Icon
+                                        icon="mdi:plus"
+                                        className="w-4 h-4 mr-2"
+                                    />
                                     Join Community
                                 </span>
                             </button>
@@ -195,10 +214,15 @@ const CommunityExplore = () => {
             {/* Enhanced Load More Button */}
             <div className="mt-12 lg:mt-16 text-center">
                 <button className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 text-gray-700 rounded-2xl transition-all duration-300 font-semibold text-base shadow-lg hover:shadow-xl border border-gray-200 hover:border-gray-300 group">
-                    <Icon icon="mdi:refresh" className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-500" />
+                    <Icon
+                        icon="mdi:refresh"
+                        className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-500"
+                    />
                     Load More Communities
                 </button>
-                <p className="text-gray-500 text-sm mt-4">Showing 4 of 50+ communities</p>
+                <p className="text-gray-500 text-sm mt-4">
+                    Showing 4 of 50+ communities
+                </p>
             </div>
         </div>
     );
