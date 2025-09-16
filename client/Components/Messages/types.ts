@@ -16,7 +16,7 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   isOwn: boolean;
-  status?: 'sending' | 'sent' | 'delivered' | 'read';
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   type?: 'text' | 'image' | 'file' | 'system';
   metadata?: {
     fileName?: string;

@@ -1,5 +1,5 @@
-import { createContext, useContext } from "react";
-import { useStytchSession } from "@stytch/react";
+import { createContext, useContext } from 'react';
+import { useStytchSession } from '@stytch/react';
 
 // set type for isAuthenticated
 interface AuthContextType {
@@ -16,7 +16,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
     const { session } = useStytchSession();
-    const isAuthenticated = !!session;
+
+    // Validate session exists and is not expired
+    const isAuthenticated =
+        session &&
+        session.expires_at &&
+        new Date(session.expires_at) > new Date();
 
     return (
         <AuthContext.Provider value={{ isAuthenticated }}>
@@ -29,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useAuth = (): AuthContextType => {
     const context = useContext(AuthContext);
     if (!context) {
-        throw new Error("useAuth must be used within an AuthProvider");
+        throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
 };

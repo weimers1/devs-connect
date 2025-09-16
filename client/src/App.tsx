@@ -17,10 +17,7 @@ const App = () => {
                 <Route path="/" element={<Login />} />
                 <Route path="/home" element={<Home />} />
                 <Route path="/login" element={<Login />} />
-               {/* <Route element={<ProtectedRoute />}>    
-                    
-                     </Route>   */}
-                     <Route path="/profile" element={<Profile />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="authenticate" element={<AuthCallBack />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/communities" element={<Communities />} />

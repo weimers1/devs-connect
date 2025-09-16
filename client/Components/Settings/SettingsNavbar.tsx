@@ -25,6 +25,9 @@ function SettingsNavbar() {
                                     src={assets.Logo}
                                     className="h-10 w-auto"
                                     alt="DevConnect Logo"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
                                 />
                             </Link>
                         </div>
@@ -33,6 +36,9 @@ function SettingsNavbar() {
                                 alt="Profile"
                                 src={assets.Profile}
                                 className="w-10 h-10"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                }}
                             />
                         </div>
                     </div>

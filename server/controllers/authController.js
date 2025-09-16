@@ -7,8 +7,12 @@ export const getCsrfToken = (req, res) => {
     try {
         res.status(200).json({ csrfToken: req.csrfToken() });
     } catch (error) {
-        throw Object.assign(new Error('Failed to generate CSRF token'), {
-            status: 500,
+        console.error('CSRF token generation failed:', error);
+        res.status(500).json({
+            error: {
+                status_code: 500,
+                error_message: 'Failed to generate CSRF token',
+            },
         });
     }
 };
@@ -41,10 +45,11 @@ export const loginOrSignup = async (req, res) => {
         }
 
         // Send the magic link email via Stytch
+        const baseUrl = process.env.CLIENT_URL || 'http://localhost:80';
         await stytchClient.magicLinks.email.send({
             email: email,
-            login_magic_link_url: `http://localhost:80/authenticate`,
-            signup_magic_link_url: `http://localhost:80/authenticate`,
+            login_magic_link_url: `${baseUrl}/authenticate`,
+            signup_magic_link_url: `${baseUrl}/authenticate`,
         });
 
         res.status(200).json({ response: message });
@@ -76,6 +81,16 @@ export const verifyMagicLink = async (req, res) => {
         });
 
         // grab their email from the created stytch session
+        if (
+            !session.user ||
+            !session.user.emails ||
+            !session.user.emails[0] ||
+            !session.user.emails[0].email
+        ) {
+            throw Object.assign(new Error('Invalid session data from Stytch'), {
+                status: 400,
+            });
+        }
         const email = session.user.emails[0].email;
 
         // find the user with that email in the database, and assume they exist
@@ -108,10 +123,11 @@ export const verifyMagicLink = async (req, res) => {
             user.save();
         }
 
-        // call the checkSession function in 60 minutes
-        setTimeout(() => {
-            checkSession(dbSession.token);
-        }, 1000 * 60 * 60);
+        // Schedule session cleanup using database-based approach instead of setTimeout
+        // Set expiration time in database for proper session management
+        const expirationTime = new Date(Date.now() + 60 * 60 * 1000); // 60 minutes
+        dbSession.expiresAt = expirationTime;
+        await dbSession.save();
 
         res.status(200).json({ isNewUser, session_token: dbSession.token });
     } catch (error) {
@@ -136,21 +152,18 @@ export const checkSession = (token) => {
             // if the session is not extended, mark it inactive and drop it
             if (!session.isExtended) {
                 session.isActive = false;
-                session.save();
-                return;
+                return session.save();
             }
 
             // if the session is extended, call to checkSession again in 60 min;
             // also mark isExtended false now (since this will be set via the endpoint)
-            setTimeout(() => {
-                checkSession(token);
-            }, 1000 * 60 * 60);
+            // Update expiration time instead of using setTimeout
+            const newExpirationTime = new Date(Date.now() + 60 * 60 * 1000);
+            session.expiresAt = newExpirationTime;
             session.isExtended = false;
-            session.save();
+            return session.save();
         })
         .catch((error) => {
-            throw Object.assign(new Error('Failed to check session'), {
-                status: 500,
-            });
+            console.error('Failed to check session:', error.message);
         });
 };

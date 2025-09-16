@@ -4,7 +4,15 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import SettingSidebarProps from './SettingProps';
 import { useTheme } from '../../src/ThemeContext';
 
-function SettingSidebar({ activeSection, onSelectionClick }) {
+interface SettingSidebarProps {
+    activeSection: string;
+    onSelectionClick: (id: string) => void;
+}
+
+function SettingSidebar({
+    activeSection,
+    onSelectionClick,
+}: SettingSidebarProps) {
     const { theme } = useTheme();
 
     const SettingsOptions = [
@@ -60,8 +68,8 @@ function SettingSidebar({ activeSection, onSelectionClick }) {
                         className={`flex pt-8 justify-start ml-6 ${
                             activeSection === option.id
                                 ? 'text-blue-700'
-                                : 'text-gray-600 '
-                        }${theme === 'dark' ? 'text-white' : 'text-gray-600'}`}
+                                : theme === 'dark' ? 'text-white' : 'text-gray-600'
+                        }`}
                     >
                         <Icon
                             icon={option.icon}

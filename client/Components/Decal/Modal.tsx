@@ -16,15 +16,11 @@ const Modal: React.FC<ModalContent> = ({
 }) => {
     const [isHidden, setIsHidden] = useState(false);
 
-    useEffect(() => {
-        setIsHidden(false);
-    }, [title, children, allowClose]);
-
     return (
         <div
-            className={`${
+            className={`fixed inset-0 flex items-center justify-center p-4 z-50 ${
                 isHidden ? 'hidden' : ''
-            } fixed inset-0 flex items-center justify-center p-4 z-50`}
+            }`}
         >
             <div className="absolute inset-0 bg-slate-900 opacity-50"></div>
             <div className="relative bg-white text-md text-blue-700 p-5 rounded-lg w-full lg:max-w-xl mx-auto z-10">
@@ -32,20 +28,20 @@ const Modal: React.FC<ModalContent> = ({
                     <div className="text-lg font-bold text-blue-700">
                         {title}
                     </div>
-                    <div
-                        className={`cursor-pointer ${
-                            allowClose ? '' : 'hidden'
-                        }`}
-                        onClick={() => {
-                            setIsHidden(true);
-                            onClose?.();
-                        }}
-                    >
-                        <Icon
-                            icon="mdi-close"
-                            className="w-5 h-5 lg:ms-1 text-gray-400"
-                        />
-                    </div>
+                    {allowClose && (
+                        <div
+                            className="cursor-pointer"
+                            onClick={() => {
+                                setIsHidden(true);
+                                onClose?.();
+                            }}
+                        >
+                            <Icon
+                                icon="mdi-close"
+                                className="w-5 h-5 lg:ms-1 text-gray-400"
+                            />
+                        </div>
+                    )}
                 </div>
                 <div className="flex items-center justify-evenly pt-5 min-h-20">
                     {children}

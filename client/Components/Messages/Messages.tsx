@@ -7,6 +7,8 @@ import { useMessages, useChat, useSocket } from './hooks';
 import type { Message } from './types';
 
 const Messages = () => {
+    const CURRENT_USER_ID = '1'; // TODO: Replace with actual user ID from auth
+    
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(
         null
     );
@@ -15,7 +17,7 @@ const Messages = () => {
     const { messages, isLoading, error, searchMessages } = useMessages();
     // Extract other user ID from conversation ID (e.g., "1-2" -> "2")
     const selectedUserId = selectedMessage?.id
-        ? selectedMessage.id.split('-').find((id) => id !== '1') || null
+        ? selectedMessage.id.split('-').find((id) => id !== CURRENT_USER_ID) || null
         : null;
     const {
         chatMessages,
@@ -25,32 +27,32 @@ const Messages = () => {
     } = useChat(selectedUserId);
     //This is building off of the previously established connection in the hooks and allowing us to put it to use with sending messages
 
-    // Debug logging
-    console.log('Selected message:', selectedMessage);
-    console.log('Selected user ID:', selectedUserId);
+    // Remove debug logging for production
 
     //Base Effect Method added (relying on the hook in the hooks which establishes a connection from client to server)
     useEffect(() => {
         if (socket) {
-            console.log(' Socket Connected');
-            socket.emit('test-connection', 'Hello friends');
-
-            socket.on('test-response', (data) => {
-                console.log('Server Responded:', data);
-            });
+            try {
+                socket.emit('test-connection', 'Hello friends');
+                socket.on('test-response', () => {
+                    // Connection confirmed
+                });
+                return () => {
+                    socket.off('test-response');
+                };
+            } catch (error) {
+                console.error('Socket connection error');
+            }
         }
     }, [socket]);
-
-    console.log('Chat messages:', chatMessages);
 
     // Handle responsive behavior
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth >= 768) {
-                setIsMobileView(false);
-            }
+            setIsMobileView(window.innerWidth < 768);
         };
 
+        handleResize(); // Set initial state
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -60,12 +62,13 @@ const Messages = () => {
             setSelectedMessage(message);
 
             if (socket) {
-                console.log('EMITTING JOIN-CHAT:', message.id);
-                socket.emit('user-login', { id: message.id }); //Event to Join A chat with the message ID (Case Sensitive must match the backend)
-            } else {
-                console.log('NO SOCKET AVAILABLE'); //Console Log of not joining
+                try {
+                    socket.emit('user-login', { id: message.id });
+                } catch (error) {
+                    console.error('Failed to join chat');
+                }
             }
-            if (window.innerWidth < 768) {
+            if (!isMobileView) {
                 setIsMobileView(true);
             }
         },
@@ -74,14 +77,16 @@ const Messages = () => {
 
     const handleBackToList = useCallback(() => {
         setIsMobileView(false);
-        if (window.innerWidth < 768) {
-            setSelectedMessage(null);
-        }
+        setSelectedMessage(null);
     }, []);
 
     const handleSendMessage = useCallback(
         async (content: string) => {
-            await sendMessage(content);
+            try {
+                await sendMessage(content);
+            } catch (err) {
+                console.error('Failed to send message:', err);
+            }
         },
         [sendMessage]
     );

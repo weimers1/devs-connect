@@ -1,47 +1,43 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
+interface ThemeContextType {
+  theme: string;
+  toggleTheme: () => void;
+  setTheme: (theme: string) => void;
+  loadUserTheme: () => Promise<void>;
+  resetTheme: () => void;
+}
 
+interface ThemeProviderProps {
+  children: ReactNode;
+}
 
-const ThemeContext = createContext({ 
-  theme: "light", 
-  toggleTheme: () => {}, 
-  setTheme: (theme: string) => {}, 
-  loadUserTheme: async () => {},
-  resetTheme: () => {}
-});
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-
-export const ThemeProvider = ({ children }) => {
+export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
     const loadThemeFromAPI = async () => {
       try {
-        console.log('Attempting to load theme from API...');
-        const response = await fetch('http://localhost:6969/api/settings/display', {
-          credentials: 'include', // Include cookies for authentication
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+        const response = await fetch(`${baseUrl}/api/settings/display`, {
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
         });
         
-        console.log('API response status:', response.status);
-        
         if (response.ok) {
           const data = await response.json();
-          console.log('API response data:', data);
           const savedTheme = data.theme || 'light';
-          console.log('Setting theme from API:', savedTheme);
           setTheme(savedTheme);
           localStorage.setItem("theme", savedTheme);
         } else {
           throw new Error(`API returned ${response.status}`);
         }
       } catch (error) {
-        console.log('API failed, using localStorage:', error);
-        // Fallback to localStorage or default to light
         const storedTheme = localStorage.getItem("theme") || "light";
-        console.log('Using stored theme:', storedTheme);
         setTheme(storedTheme);
         localStorage.setItem("theme", storedTheme);
       }
@@ -58,16 +54,7 @@ export const ThemeProvider = ({ children }) => {
 
   // Apply theme class to document
   useEffect(() => {
-    console.log('Theme changed to:', theme);
-    // Clean all elements first
-    document.documentElement.classList.remove('dark');
-    document.body.classList.remove('dark');
-    document.getElementById('root')?.classList.remove('dark');
-    
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    }
-    console.log('Document classes:', document.documentElement.className);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
   const updateTheme = (newTheme: string) => {
@@ -77,15 +64,12 @@ export const ThemeProvider = ({ children }) => {
 
   const loadUserTheme = async () => {
     try {
-      console.log('Loading user theme after authentication...');
       const sessionToken = localStorage.getItem('session_token');
       
-      if (!sessionToken) {
-        console.log('No session token found');
-        return;
-      }
+      if (!sessionToken) return;
       
-      const response = await fetch('http://localhost:6969/api/settings/display', {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+      const response = await fetch(`${baseUrl}/api/settings/display`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -94,23 +78,18 @@ export const ThemeProvider = ({ children }) => {
         },
       });
       
-      console.log('Theme API response status:', response.status);
-      
       if (response.ok) {
         const data = await response.json();
-      const savedTheme = data.theme || 'light';
+        const savedTheme = data.theme || 'light';
         setTheme(savedTheme);
         localStorage.setItem("theme", savedTheme);
-      } else {
-        console.log('Theme API failed with status:', response.status);
       }
     } catch (error) {
-      console.log('Failed to load user theme:', error);
+      // Silent fail - theme loading is not critical
     }
   };
 
   const resetTheme = () => {
-    console.log('Resetting theme to default (light)');
     setTheme('light');
     localStorage.setItem('theme', 'light');
   };

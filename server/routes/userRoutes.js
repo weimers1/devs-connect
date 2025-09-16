@@ -1,6 +1,6 @@
 import express from 'express';
 import { getProfile, updateProfile } from '../controllers/userController.js';
-import { linkGitHub } from '../controllers/ProfileController.js';
+import { linkGitHub } from '../controllers/profileController.js';
 import authMiddleware, {
     csrfProtection,
 } from '../middleware/authMiddleware.js';

@@ -3,14 +3,14 @@ import { assets } from '../../assets/assets';
 import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useDropdown } from '../DropDown/DropDownContext';
-import ProfileDropdown from "../DropDown/ProfileDropDown";
+import ProfileDropdown from '../DropDown/ProfileDropDown';
 import { useTheme } from '../../src/ThemeContext';
 
 const Navbar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
     const { theme } = useTheme();
-    const {isProfileDropdownOpen, toggleProfileDropdown} = useDropdown();
+    const { isProfileDropdownOpen, toggleProfileDropdown } = useDropdown();
 
     const pages = [
         {
@@ -31,39 +31,45 @@ const Navbar: React.FC = () => {
         {
             route: '/courses',
             title: 'Courses',
-            icon: 'streamline-freehand:learning-programming-book'
-        
-        },   
+            icon: 'streamline-freehand:learning-programming-book',
+        },
         {
             route: '/Create',
             title: 'Create',
             icon: `oui:ml-create-single-metric-job`,
-        }, 
-
+        },
     ];
 
     const isActive = (route: string) => location.pathname === route;
 
     return (
-        <nav className={`sticky top-0 z-50 shadow-lg border-b ${
-            theme === 'dark' 
-                ? 'bg-gray-800 border-gray-700' 
-                : 'bg-white border-gray-200'
-        }`}>
+        <nav
+            className={`sticky top-0 z-50 shadow-lg border-b ${
+                theme === 'dark'
+                    ? 'bg-gray-800 border-gray-700'
+                    : 'bg-white border-gray-200'
+            }`}
+        >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-18">
-                    
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center">
-                        <Link to="/" className="flex items-center space-x-2">
+                        <Link
+                            to="/"
+                            className="flex items-center space-x-2"
+                        >
                             <img
                                 src={assets.Logo}
                                 className="h-10 w-auto"
                                 alt="DevConnect Logo"
                             />
-                            <span className={`text-xl font-bold hidden sm:block ${
-                                theme === 'dark' ? 'text-white' : 'text-gray-900'
-                            }`}>
+                            <span
+                                className={`text-xl font-bold hidden sm:block ${
+                                    theme === 'dark'
+                                        ? 'text-white'
+                                        : 'text-gray-900'
+                                }`}
+                            >
                                 DevConnect
                             </span>
                         </Link>
@@ -73,7 +79,10 @@ const Navbar: React.FC = () => {
                     <div className="md:hidden flex-1 max-w-sm mx-4">
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Icon icon="mdi:magnify" className="h-4 w-4 text-gray-400" />
+                                <Icon
+                                    icon="mdi:magnify"
+                                    className="h-4 w-4 text-gray-400"
+                                />
                             </div>
                             <input
                                 type="text"
@@ -87,7 +96,10 @@ const Navbar: React.FC = () => {
                     <div className="hidden md:block flex-1 max-w-sm ml-3   mt-0.5">
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Icon icon="mdi:magnify" className="h-5 w-5 text-gray-400" />
+                                <Icon
+                                    icon="mdi:magnify"
+                                    className="h-5 w-5 text-gray-400"
+                                />
                             </div>
                             <input
                                 type="text"
@@ -111,27 +123,33 @@ const Navbar: React.FC = () => {
                                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                                     }`}
                                 >
-                                    <Icon icon={page.icon} className="w-5 h-5" />
+                                    <Icon
+                                        icon={page.icon}
+                                        className="w-5 h-5"
+                                    />
                                     <span>{page.title}</span>
                                 </Link>
                             );
                         })}
-                        
+
                         {/* User Profile / DROPDOWN */}
                         <div className="ml-4 flex items-center space-x-3">
                             <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                                <Icon icon="mdi:bell-outline" className="w-6 h-6" />
+                                <Icon
+                                    icon="mdi:bell-outline"
+                                    className="w-6 h-6"
+                                />
                             </button>
                             <div className="relative">
                                 <button
                                     onClick={toggleProfileDropdown}
                                     className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
                                 >
-                                    <span className="text-white text-sm font-medium">U</span>
+                                    <span className="text-white text-sm font-medium">
+                                        U
+                                    </span>
                                 </button>
-                                {isProfileDropdownOpen && (
-                                    <ProfileDropdown />
-                                )}
+                                {isProfileDropdownOpen && <ProfileDropdown />}
                             </div>
                         </div>
                     </div>
@@ -139,11 +157,15 @@ const Navbar: React.FC = () => {
                     {/* Mobile menu button */}
                     <div className="md:hidden">
                         <button
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            onClick={() =>
+                                setIsMobileMenuOpen(!isMobileMenuOpen)
+                            }
                             className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                         >
                             <Icon
-                                icon={isMobileMenuOpen ? 'mdi:close' : 'mdi:menu'}
+                                icon={
+                                    isMobileMenuOpen ? 'mdi:close' : 'mdi:menu'
+                                }
                                 className="w-6 h-6"
                             />
                         </button>
@@ -169,7 +191,10 @@ const Navbar: React.FC = () => {
                                     }`}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                 >
-                                    <Icon icon={page.icon} className="w-6 h-6" />
+                                    <Icon
+                                        icon={page.icon}
+                                        className="w-6 h-6"
+                                    />
                                     <span>{page.title}</span>
                                 </Link>
                             );
@@ -180,11 +205,17 @@ const Navbar: React.FC = () => {
                     <div className="border-t border-gray-200 px-4 py-3">
                         <div className="flex items-center space-x-3">
                             <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                                <span className="text-white font-medium">U</span>
+                                <span className="text-white font-medium">
+                                    U
+                                </span>
                             </div>
                             <div>
-                                <div className="text-base font-medium text-gray-800">User Name</div>
-                                <div className="text-sm text-gray-500">user@example.com</div>
+                                <div className="text-base font-medium text-gray-800">
+                                    User Name
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                    user@example.com
+                                </div>
                             </div>
                         </div>
                     </div>

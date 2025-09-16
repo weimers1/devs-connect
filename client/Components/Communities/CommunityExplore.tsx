@@ -1,45 +1,46 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import Tag from '../../Components/Decal/Tag';
 
+const COMMUNITIES_DATA = [
+    {
+        name: 'React Developers',
+        membersTotal: '2.4k',
+        membersOnline: '1.1k',
+        category: 'Frontend Development',
+        color: 'bg-gradient-to-r from-blue-400 to-cyan-500',
+        icon: 'logos:react',
+        tags: ['trending'],
+    },
+    {
+        name: 'UI/UX Designers',
+        membersTotal: '1.8k',
+        membersOnline: '200',
+        category: 'Design',
+        color: 'bg-gradient-to-r from-pink-500 to-rose-500',
+        icon: 'mdi:palette',
+        tags: ['trending', 'new', 'premium'],
+    },
+    {
+        name: 'Python Developers',
+        membersTotal: '3.2k',
+        membersOnline: '2.5k',
+        category: 'Backend Development',
+        color: 'bg-gradient-to-r from-yellow-400 to-blue-500',
+        icon: 'logos:python',
+        tags: ['new'],
+    },
+    {
+        name: 'DevOps Engineers',
+        membersTotal: '4.1k',
+        membersOnline: '1.2k',
+        category: 'Infrastructure',
+        color: 'bg-gradient-to-r from-gray-700 to-gray-900',
+        icon: 'mdi:server-network',
+        tags: [],
+    },
+];
+
 const CommunityExplore = () => {
-    const communities = [
-        {
-            name: 'React Developers',
-            membersTotal: '2.4k',
-            membersOnline: '1.1k',
-            category: 'Frontend Development',
-            color: 'bg-gradient-to-r from-blue-400 to-cyan-500',
-            icon: 'logos:react',
-            tags: ['trending'],
-        },
-        {
-            name: 'UI/UX Designers',
-            membersTotal: '1.8k',
-            membersOnline: '200',
-            category: 'Design',
-            color: 'bg-gradient-to-r from-pink-500 to-rose-500',
-            icon: 'mdi:palette',
-            tags: ['trending', 'new', 'premium'],
-        },
-        {
-            name: 'Python Developers',
-            membersTotal: '3.2k',
-            membersOnline: '2.5k',
-            category: 'Backend Development',
-            color: 'bg-gradient-to-r from-yellow-400 to-blue-500',
-            icon: 'logos:python',
-            tags: ['new'],
-        },
-        {
-            name: 'DevOps Engineers',
-            membersTotal: '4.1k',
-            membersOnline: '1.2k',
-            category: 'Infrastructure',
-            color: 'bg-gradient-to-r from-gray-700 to-gray-900',
-            icon: 'mdi:server-network',
-            tags: [],
-        },
-    ];
 
     return (
         <div className="py-6">
@@ -104,7 +105,7 @@ const CommunityExplore = () => {
 
             {/*  Grid Layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-                {communities.map((community, index) => (
+                {COMMUNITIES_DATA.map((community, index) => (
                     <div
                         key={index}
                         className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 hover:border-blue-300 hover:-translate-y-3 hover:scale-[1.02]"

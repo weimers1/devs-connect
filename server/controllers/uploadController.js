@@ -1,112 +1,131 @@
 import multer from 'multer';
 import s3 from '../config/aws.js';
 import { testS3Connection } from '../config/aws.js';
-import Session from '../models/Session.js'
-import UserProfile from '../Models/UserProfile.js'
+import UserProfile from '../Models/UserProfile.js';
 
 // Configure multer for memory storage
-const upload = multer({ 
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        // Only allow images
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'), false);
+        }
+    },
 });
 
 // Test endpoint to check S3 connection
 export const testS3 = async (req, res) => {
-  try {
-    const isConnected = await testS3Connection();
-    
-    if (isConnected) {
-      res.json({ 
-        success: true, 
-        message: ' S3 connection successful!' 
-      });
-    } else {
-      res.status(500).json({ 
-        success: false, 
-        message: ' S3 connection failed' 
-      });
+    try {
+        const isConnected = await testS3Connection();
+
+        if (isConnected) {
+            res.json({
+                success: true,
+                message: ' S3 connection successful!',
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                message: ' S3 connection failed',
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
     }
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message 
-    });
-  }
 };
 
 // Upload to S3 function
 export const uploadProfileImage = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        // Generate unique filename
+        const fileName = `profile-images/${Date.now()}-${
+            req.file.originalname
+        }`;
+
+        // Validate AWS bucket name
+        if (!process.env.AWS_BUCKET_NAME) {
+            return res
+                .status(500)
+                .json({ error: 'AWS bucket configuration missing' });
+        }
+
+        // S3 upload parameters
+        const params = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: fileName,
+            Body: req.file.buffer,
+            ContentType: req.file.mimetype,
+        };
+
+        // Upload to S3
+        const result = await s3.upload(params).promise();
+
+        res.json({
+            success: true,
+            imageUrl: result.Location,
+            message: 'Image uploaded successfully!',
+        });
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ error: 'Upload failed' });
     }
-
-    // Generate unique filename
-    const fileName = `profile-images/${Date.now()}-${req.file.originalname}`;
-    
-    // S3 upload parameters
-    const params = {
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: fileName,
-      Body: req.file.buffer,
-      ContentType: req.file.mimetype
-    };
-
-    // Upload to S3
-    const result = await s3.upload(params).promise();
-    
-    res.json({
-      success: true,
-      imageUrl: result.Location,
-      message: 'Image uploaded successfully!'
-    });
-
-  } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ error: 'Upload failed' });
-  }
 };
 
 // Save image URL to database
 export const updateProfileImage = async (req, res) => {
-  console.log(' Update profile image called');
-  console.log(' Request body:', req.body);
-  
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    const session = await Session.findOne({
-      where: {token, isActive: true}
-    });
-    
-    console.log(' Session found:', session ? 'Yes' : 'No');
-    
-    if (!session) {
-      return res.status(401).json({error: 'Invalid session'});
+    try {
+        // Check if user is authenticated (should be set by authMiddleware)
+        if (!req.user || !req.user.userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        const { imageUrl } = req.body;
+
+        // Validate imageUrl format
+        if (!imageUrl || typeof imageUrl !== 'string') {
+            return res.status(400).json({ error: 'Invalid image URL' });
+        }
+
+        // Validate URL format and ensure it's from expected S3 bucket
+        const urlPattern = /^https:\/\/[a-zA-Z0-9.-]+\.amazonaws\.com\/.+/;
+        if (!urlPattern.test(imageUrl)) {
+            return res.status(400).json({ error: 'Invalid image URL format' });
+        }
+
+        // Find or create UserProfile record, then update image URL
+        const [userProfile, created] = await UserProfile.findOrCreate({
+            where: { userId: req.user.userId },
+            defaults: { userId: req.user.userId }
+        });
+        
+        await userProfile.update({ profileImageUrl: imageUrl });
+
+        res.json({
+            success: true,
+            message: 'Profile image updated successfully',
+        });
+    } catch (error) {
+        console.error('Profile image update error:', {
+            message: error.message,
+            stack: error.stack,
+            userId: req.user?.userId,
+            timestamp: new Date().toISOString()
+        });
+        res.status(500).json({ error: 'Failed to update profile image' });
     }
-    
-    const { imageUrl } = req.body;
-    console.log(' Image URL to save:', imageUrl);
-    
-    // Update user's profile image URL
-    const result = await UserProfile.update(
-      { pfp: imageUrl },
-      { where: { id: req.user.userId } }
-    );
-    
-    console.log(' Database update result:', result);
-    
-    res.json({
-      success: true,
-      message: 'Profile image updated successfully'
-    });
-    
-  } catch (error) {
-    console.error(' Error updating profile image:', error);
-    res.status(500).json({error: 'Failed to update profile image'});
-  }
 };
 
 // Export multer middleware

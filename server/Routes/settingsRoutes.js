@@ -1,14 +1,29 @@
-import express from "express";
-import { getProfileSettings, updateProfileSettings, getDisplaySettings, updateDisplaySettings, getGeneralPreferences, updateGeneralPreferences, updatePrivacySecuritySettings, getPrivacySecuritySettings, requestEmailChange, confirmEmailChange, updateVisibilitySettings, getVisibilitySettings } from "../controllers/settingsController.js";
-import authMiddleware from "../middleware/authMiddleware.js";
-import { addCertification} from "../controllers/ProfileController.js";
-import { updateProfileImage } from "../controllers/uploadController.js";
-import { getCertifications } from "../controllers/ProfileController.js"
-import { get } from "http";
-import { getProfile } from "../controllers/userController.js";
-import { updateCertifications, deleteCertification } from "../controllers/ProfileController.js";
+import express from 'express';
+import {
+    getProfileSettings,
+    updateProfileSettings,
+    getDisplaySettings,
+    updateDisplaySettings,
+    getGeneralPreferences,
+    updateGeneralPreferences,
+    updatePrivacySecuritySettings,
+    getPrivacySecuritySettings,
+    requestEmailChange,
+    confirmEmailChange,
+    updateVisibilitySettings,
+    getVisibilitySettings,
+} from '../controllers/settingsController.js';
+import authMiddleware from '../middleware/authMiddleware.js';
+import { addCertification } from '../controllers/profileController.js';
+import { updateProfileImage } from '../controllers/uploadController.js';
+import { getCertifications } from '../controllers/profileController.js';
+import { get } from 'http';
+import { getProfile } from '../controllers/userController.js';
+import {
+    updateCertifications,
+    deleteCertification,
+} from '../controllers/profileController.js';
 const router = express.Router();
-
 
 router.use(authMiddleware);
 //Get Profile Settings
@@ -18,7 +33,7 @@ router.put('/profile', updateProfileSettings);
 //Update || add to profile settings
 router.post('/certifications', addCertification);
 //Get Certs
-router.get('/get-certifications', getCertifications );
+router.get('/get-certifications', getCertifications);
 //Update Certifications
 router.put('/update-certifications/:id', updateCertifications);
 //Delete Certification

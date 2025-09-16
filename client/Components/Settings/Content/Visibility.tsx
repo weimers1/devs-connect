@@ -1,44 +1,46 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useTheme } from '../../../src/ThemeContext';
+
+const VISIBILITY_OPTIONS = [
+    {
+        id: 'profile-visibility',
+        name: 'Profile Visibility',
+        description: 'Control who can see your profile',
+    },
+    {
+        id: 'communities-visibility',
+        name: 'Communities Visibility',
+        description: 'Control who can see your communities',
+    },
+    {
+        id: 'connections-visibility',
+        name: 'Connections Visibility',
+        description: 'Control who can see your connections',
+    },
+];
 
 export default function Visibility() {
     const [openSetting, setOpenSetting] = useState<string | null>(null);
     const { theme } = useTheme();
 
-    const handleSettingClick = (settingId: string) => {
-        setOpenSetting(openSetting === settingId ? null : settingId);
-    };
+    const handleSettingClick = useCallback((settingId: string) => {
+        setOpenSetting(prev => prev === settingId ? null : settingId);
+    }, []);
 
-    const VisibilityOptions = [
-        {
-            id: 'profile-visibility',
-            name: 'Profile Visibility',
-            description: 'Control who can see your profile',
-        },
-        {
-            id: 'communities-visibility',
-            name: 'Communities Visibility',
-            description: 'Control who can see your communities',
-        },
-        {
-            id: 'connections-visibility',
-            name: 'Connections Visibility',
-            description: 'Control who can see your connections',
-        },
-    ];
+    const isDark = theme === 'dark';
 
     return (
         <div>
             <div
                 id="Visibility"
-                className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border border-gray-100"  ${
-                    theme === 'dark' ? 'bg-gray-900' : 'bg-white'
+                className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border border-gray-100 ${
+                    isDark ? 'bg-gray-900' : 'bg-white'
                 }`}
             >
                 <div
                     className={`p-6 border-b border-gray-100 ${
-                        theme === 'dark' ? 'text-white' : 'text-gray-900'
+                        isDark ? 'text-white' : 'text-gray-900'
                     }`}
                 >
                     <h2 className="text-xl font-semibold ">
@@ -49,7 +51,7 @@ export default function Visibility() {
                     </p>
                 </div>
 
-                {VisibilityOptions.map((item, index) => (
+                {VISIBILITY_OPTIONS.map((item, index) => (
                     <div key={item.id}>
                         <div
                             className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer ${
@@ -83,7 +85,7 @@ export default function Visibility() {
 
                         {openSetting === item.id && (
                             <div
-                                className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100${
+                                className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100 ${
                                     theme === 'dark'
                                         ? 'bg-gray-800'
                                         : 'bg-white'
@@ -225,7 +227,7 @@ export default function Visibility() {
                             </div>
                         )}
 
-                        {index !== VisibilityOptions.length - 1 && (
+                        {index !== VISIBILITY_OPTIONS.length - 1 && (
                             <hr className="border-gray-100" />
                         )}
                     </div>

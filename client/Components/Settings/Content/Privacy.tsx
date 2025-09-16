@@ -83,7 +83,7 @@ function Privacy() {
 
                         {openSetting === item.id && (
                             <div
-                                className={`mx-4 mb-4  rounded-lg shadow-sm border border-gray-100${
+                                className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100 ${
                                     theme === 'dark'
                                         ? 'bg-gray-900'
                                         : 'bg-white'

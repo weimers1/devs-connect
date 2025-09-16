@@ -1,6 +1,12 @@
-import express, {Router} from "express";
-import {getConversations, getConversationMessages, sendMessage, sendReply, createTestUsers, markAsRead} from "../controllers/MessagesController.js";
-
+import express, { Router } from 'express';
+import {
+    getConversations,
+    getConversationMessages,
+    sendMessage,
+    sendReply,
+    createTestUsers,
+    markAsRead,
+} from '../controllers/MessagesController.js';
 
 const router = express.Router();
 //Get Messages (SideBar)
@@ -16,6 +22,4 @@ router.post('/mark-read', markAsRead);
 //Create Test Users Route
 router.post('/create-test-users', createTestUsers);
 
-
 export default router;
-
