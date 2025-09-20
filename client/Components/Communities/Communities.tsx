@@ -5,8 +5,10 @@ import CommunityExplore from '../Communities/CommunityExplore';
 const Communities = () => {
     return (
         <Layout>
-            <section className="flex justify-center">
-                <CommunityExplore />
+            <section className="flex w-full">
+                <div className="flex-1 px-4 lg:px-8">
+                    <CommunityExplore />
+                </div>
                 <Sidebar />
             </section>
         </Layout>

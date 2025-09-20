@@ -4,39 +4,45 @@ import { ProtectedRoute } from '../Components/Auth/ProtectedRoute';
 import { PublicRoute } from '../Components/Auth/PublicRoute';
 import AuthCallBack from '../Components/Auth/AuthCallBack';
 import { defaultRoutes, protectedRoutes, publicRoutes } from '../Utils/routes';
+import { ThemeProvider } from './ThemeContext';
 
 const AppRoutes = () => {
     return (
-        <BrowserRouter>
-            <Routes>
-                {defaultRoutes.map((route) => (
+        <ThemeProvider>
+            <BrowserRouter>
+                <Routes>
+                    {defaultRoutes.map((route) => (
+                        <Route
+                            key={route.path}
+                            path={route.path}
+                            element={<route.component />}
+                        />
+                    ))}
+                    <Route element={<ProtectedRoute />}>
+                        {protectedRoutes.map((route) => (
+                            <Route
+                                key={route.path}
+                                path={route.path}
+                                element={<route.component />}
+                            />
+                        ))}
+                    </Route>
+                    <Route element={<PublicRoute />}>
+                        {publicRoutes.map((route) => (
+                            <Route
+                                key={route.path}
+                                path={route.path}
+                                element={<route.component />}
+                            />
+                        ))}
+                    </Route>
                     <Route
-                        key={route.path}
-                        path={route.path}
-                        element={<route.component />}
+                        path="authenticate"
+                        element={<AuthCallBack />}
                     />
-                ))}
-                <Route element={<ProtectedRoute />}>
-                    {protectedRoutes.map((route) => (
-                        <Route
-                            key={route.path}
-                            path={route.path}
-                            element={<route.component />}
-                        />
-                    ))}
-                </Route>
-                <Route element={<PublicRoute />}>
-                    {publicRoutes.map((route) => (
-                        <Route
-                            key={route.path}
-                            path={route.path}
-                            element={<route.component />}
-                        />
-                    ))}
-                </Route>
-                <Route path="authenticate" element={<AuthCallBack />} />
-            </Routes>
-        </BrowserRouter>
+                </Routes>
+            </BrowserRouter>
+        </ThemeProvider>
     );
 };
 

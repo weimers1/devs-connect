@@ -40,6 +40,13 @@ export const loginOrSignup = async (req, res) => {
             message = 'A sign up link has been sent to your email.';
         }
 
+        // Send the magic link email via Stytch
+        await stytchClient.magicLinks.email.send({
+            email: email,
+            login_magic_link_url: `http://localhost:80/authenticate`,
+            signup_magic_link_url: `http://localhost:80/authenticate`,
+        });
+
         res.status(200).json({ response: message });
     } catch (error) {
         // general error catch

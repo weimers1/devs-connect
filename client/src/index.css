@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+/* Global background */
+
 /* Custom styles can go here */
 stytch-ui div {
     text-align: center !important;

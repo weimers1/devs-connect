@@ -6,11 +6,13 @@ import Layout from '../Layout';
 import Typeahead from '../Utils/Typeahead';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useAuth } from './AuthContext';
+import { useTheme } from '../../src/ThemeContext';
 
 const Authenticate: React.FC = () => {
     const [params] = useSearchParams();
     const token = params.get('token');
     const navigate = useNavigate();
+    const { loadUserTheme } = useTheme();
     const calledVerify = useRef(false);
     const { login } = useAuth();
 
@@ -158,6 +160,9 @@ const Authenticate: React.FC = () => {
 
                 login(data.session_token);
 
+                // Load user's theme preference after successful authentication
+                await loadUserTheme();
+
                 if (data.isNewUser) {
                     showModal({
                         icon: 'mdi-emoticon-smile-outline',
@@ -168,7 +173,7 @@ const Authenticate: React.FC = () => {
                     });
                     setIsNewUser(true);
                 } else {
-                    navigate('/');
+                    navigate('/home');
                 }
             } catch (error) {
                 console.error('Authentication failed:', error);

@@ -1,15 +1,16 @@
-import { assets } from '../assets/assets';
 import Login from '../Components/Login';
 import Home from '../Components/Home';
-import Profile from '../Components/Profile';
-import Messages from '../Components/Messages';
+import Profile from '../Components/Profile/Profile';
+import Messages from '../Components/Messages/Messages';
 import Communities from '../Components/Communities/Communities';
+import Settings from '../Components/Settings/Settings';
 
 export interface RouteConfig {
     path: string;
     component: React.ComponentType;
     title: string;
     icon: string;
+    alt: string;
     showInNav: boolean;
 }
 
@@ -18,14 +19,32 @@ export const defaultRoutes: RouteConfig[] = [
         path: '/',
         component: Home,
         title: 'Home',
-        icon: 'mdi:home-outline',
+        icon: 'mdi:home',
+        alt: 'home',
         showInNav: true,
     },
     {
         path: '/communities',
         component: Communities,
         title: 'Communities',
-        icon: 'mdi:account-group-outline',
+        icon: 'mdi:account-group',
+        alt: 'Communities',
+        showInNav: true,
+    },
+    {
+        path: '/courses',
+        component: Home, // Placeholder until Courses component is created
+        title: 'Courses',
+        icon: 'streamline-freehand:learning-programming-book',
+        alt: 'Courses',
+        showInNav: true,
+    },
+    {
+        path: '/create',
+        component: Home, // Placeholder until Create component is created
+        title: 'Create',
+        icon: 'oui:ml-create-single-metric-job',
+        alt: 'Create',
         showInNav: true,
     },
 ];
@@ -36,6 +55,7 @@ export const protectedRoutes: RouteConfig[] = [
         component: Profile,
         title: 'Profile',
         icon: 'mdi:account-circle-outline',
+        alt: 'Profile',
         showInNav: true,
     },
     {
@@ -43,7 +63,16 @@ export const protectedRoutes: RouteConfig[] = [
         component: Messages,
         title: 'Messages',
         icon: 'mdi:message-reply-text-outline',
+        alt: 'Messages',
         showInNav: true,
+    },
+    {
+        path: '/settings',
+        component: Settings,
+        title: 'Settings',
+        icon: 'mdi:cog-outline',
+        alt: 'Settings',
+        showInNav: false,
     },
 ];
 
@@ -53,6 +82,7 @@ export const publicRoutes: RouteConfig[] = [
         component: Login,
         title: 'Login',
         icon: 'mdi:login',
-        showInNav: true,
+        alt: 'Login',
+        showInNav: false,
     },
 ];

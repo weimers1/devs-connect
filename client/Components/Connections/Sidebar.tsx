@@ -1,8 +1,12 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useState } from 'react';
+import { useDropdown } from '../DropDown/DropDownContext';
+import {useTheme} from '../../src/ThemeContext';
+
 
 function Sidebar() {
-    const [isOpen, setIsOpen] = useState(false);
+    const {isSidebarOpen, toggleSidebar} = useDropdown();
+    const {theme} = useTheme();
 
     const connections = [
         {
@@ -98,19 +102,18 @@ function Sidebar() {
     ];
 
     return (
-        <section className="overflow-hidden">
+        <section className='overflow-hidden'>
             {/* buttons for collapsing/opening sidebar */}
             <div
                 className={`fixed right-0 duration-400 ease-in ${
-                    isOpen ? 'translate-x-full' : 'translate-x-0'
+                    isSidebarOpen ? 'translate-x-full' : 'translate-x-0'
                 }`}
             >
                 <button
                     type="button"
-                    className={`border border-gray-200 mt-10 rounded-s-lg bg-white opacity-75 hover:opacity-100 ps-2 pe-1 py-2 lg:ps-3 lg:pe-2 lg:py-4 transition-all cursor-pointer flex `}
-                    onClick={() => {
-                        setIsOpen(true);
-                    }}
+                    className={`border border-gray-200 md:mt-3 mt-15 rounded-s-lg bg-white opacity-75 hover:opacity-100 ps-2 pe-1 py-2 lg:ps-3 lg:pe-2 lg:py-4 transition-all cursor-pointer flex `}
+                    onClick={
+                        toggleSidebar}
                 >
                     <Icon
                         icon="mdi:arrow-left"
@@ -118,25 +121,28 @@ function Sidebar() {
                     />
                     <Icon
                         icon="mdi:account-group-outline"
-                        className="w-6 lg:w-8 h-6 lg:w-8 text-blue-700"
+                        className="w-6 h-6 lg:w-8 text-blue-700"
                     />
                 </button>
             </div>
-            {isOpen && (
-                <div className="fixed left-0 top-0 w-screen h-screen bg-slate-900 opacity-50 z-1"></div>
+            {isSidebarOpen && (
+                <div className="fixed left-0  w-screen h-screen bg-slate-900 opacity-50 z-1 "></div>
             )}
 
+            
             <div
-                className={`fixed right-0 bottom-0 bg-white rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[100vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
-                    isOpen ? 'translate-x-0' : 'translate-x-full'
-                }`}
+                className={`fixed right-0 bottom-0 lg:top-18.5 top-29  md:rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[92vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
+                    isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+                       } ${
+                        theme === "dark" ? "bg-gray-800" : "bg-white"
+                       }`
+                       
+                    }
             >
                 <button
-                    type="button"
+                    type="button"   
                     className="cursor-pointer text-blue-700 p-3"
-                    onClick={() => {
-                        setIsOpen(false);
-                    }}
+                    onClick={toggleSidebar}
                 >
                     <Icon
                         icon="mdi:close"
@@ -145,7 +151,7 @@ function Sidebar() {
                 </button>
 
                 {/* Your Network Section */}
-                <div className="p-4 border-b border-gray-100">
+                <div className="p-4 border-b border-gray-100 ">
                     <h3 className="font-semibold text-gray-900 flex items-center">
                         <Icon
                             icon="mdi:account-group"
@@ -158,7 +164,7 @@ function Sidebar() {
                     </p>
                 </div>
 
-                <div className="p-4 border-b border-gray-100 h-[27vh] lg:h-[35vh] overflow-y-scroll">
+                <div className="p-4 border-b border-gray-100 h-[27vh] lg:h-[35vh]  overflow-y-scroll">
                     <div className="space-y-4">
                         {connections.map((connection, index) => (
                             <div

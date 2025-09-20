@@ -1,6 +1,8 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
+
+
 //User Table
 const User = sequelize.define(
     'User',
@@ -10,7 +12,9 @@ const User = sequelize.define(
             type: DataTypes.INTEGER,
             autoIncrement: true,
             primaryKey: true,
+           
         },
+       
         //Not Allowed To Be Null After Signup if redirected  to a signup page
         firstName: {
             type: DataTypes.STRING,
@@ -39,8 +43,34 @@ const User = sequelize.define(
             type: DataTypes.STRING,
             allowNull: true,
         },
+        isDeleted: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     },
-    {}
+    deletedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+}, 
+    githubId: {
+    type: DataTypes.STRING,
+    allowNull: true
+}, 
+    githubUsername: {
+    type: DataTypes.STRING,
+    allowNull: true
+}, 
+    githubAccessToken: {
+    type: DataTypes.STRING ,
+    allowNull: true
+}, 
+    githubEmail: {
+    type: DataTypes.STRING,
+    allowNull: true
+}, 
+    },
+     {
+            tableName: 'Users'
+        }
 );
 
 console.log(User === sequelize.models.User);
