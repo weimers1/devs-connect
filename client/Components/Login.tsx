@@ -77,7 +77,6 @@ const stytchStyle: StytchStyle = {
     },
 };
 
-// @TODO Need to implement A Register Feature; Just tested The magic link functionality
 const Login = () => {
     const [modalTitle, setModalTitle] = useState('');
     const [modalContent, setModalContent] = useState(<></>);
