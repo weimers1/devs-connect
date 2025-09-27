@@ -2,8 +2,6 @@
 import { StytchLogin } from '@stytch/react';
 import { Products } from '@stytch/vanilla-js';
 import Layout from './Layout';
-import Modal from './Decal/Modal';
-import { useState } from 'react';
 const URL_CLIENT = import.meta.env.VITE_URL_CLIENT;
 
 // Define TypeScript interface for stytchStyle
@@ -78,46 +76,6 @@ const stytchStyle: StytchStyle = {
 };
 
 const Login = () => {
-    const [modalTitle, setModalTitle] = useState('');
-    const [modalContent, setModalContent] = useState(<></>);
-
-    const stytchCallbacks = {
-        onEvent: () => {
-            // grab email
-            const email = (
-                document.getElementById('email-input') as HTMLInputElement
-            )?.value;
-
-            // begin call to log in function
-            fetch('http://localhost:6969/auth/login', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }), // Send email in body
-            })
-                .then((res) => res.json())
-                .then((data) => {
-                    if (data.error) {
-                        // @TODO: display error
-                        console.log(data.error);
-                        setModalTitle('Sign In Error');
-                        setModalContent(
-                            <p>
-                                There was an issue when signing up. If issue
-                                persists, please contact support.
-                            </p>
-                        );
-                        return;
-                    }
-                })
-                .catch((error) => {
-                    console.log(error);
-                });
-        },
-    };
-
     return (
         <Layout>
             <section className="h-175 lg:h-[100vh] flex flex-col items-center justify-center">
@@ -128,12 +86,9 @@ const Login = () => {
                     <StytchLogin
                         config={stytchConfig}
                         styles={stytchStyle}
-                        callbacks={stytchCallbacks}
                     />
                 </div>
             </section>
-
-            <Modal title={modalTitle}>{modalContent}</Modal>
         </Layout>
     );
 };

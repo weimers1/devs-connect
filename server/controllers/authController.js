@@ -78,13 +78,15 @@ export const verifyMagicLink = async (req, res) => {
         // grab their email from the created stytch session
         const email = session.user.emails[0].email;
 
-        // find the user with that email in the database, and assume they exist
-        const user = await User.findOne({ where: { email } });
+        // find or create the user with that email in the database
+        let user = await User.findOne({ where: { email } });
 
-        // if a user does not exist with that email, deny access
         if (!user) {
-            throw Object.assign(new Error('Invalid token or user'), {
-                status: 403,
+            // Create user if they don't exist (Stytch created them)
+            user = await User.create({
+                email,
+                firstName: 'User',
+                lastName: uuidv4(),
             });
         }
 
