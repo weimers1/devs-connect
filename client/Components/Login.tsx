@@ -64,16 +64,16 @@ const stytchStyle: StytchStyle = {
     },
     buttons: {
         primary: {
-            backgroundColor: 'navy',
+            backgroundColor: '#1447e6',
             textColor: 'white',
         },
         secondary: {
             backgroundColor: 'white',
-            textColor: 'navy',
+            textColor: '#1447e6',
         },
     },
     colors: {
-        primary: 'navy',
+        primary: '#1447e6',
     },
 };
 
