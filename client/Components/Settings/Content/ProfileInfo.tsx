@@ -56,6 +56,7 @@ const validateName = (name: string): boolean => {
     return nameRegex.test(name.trim());
 };
 
+//Validate GithubUsername through the githubRegex algorithm 
 const validateGitHubUsername = (username: string): boolean => {
     const githubRegex = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
     return githubRegex.test(username);

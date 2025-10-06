@@ -1,8 +1,10 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
+import { useNavigate } from 'react-router-dom';
 import Tag from '../../Components/Decal/Tag';
 
 const COMMUNITIES_DATA = [
     {
+        id: 'react-developers',
         name: 'React Developers',
         membersTotal: '2.4k',
         membersOnline: '1.1k',
@@ -12,6 +14,7 @@ const COMMUNITIES_DATA = [
         tags: ['trending'],
     },
     {
+        id: 'ui-ux-designers',
         name: 'UI/UX Designers',
         membersTotal: '1.8k',
         membersOnline: '200',
@@ -21,6 +24,7 @@ const COMMUNITIES_DATA = [
         tags: ['trending', 'new', 'premium'],
     },
     {
+        id: 'python-developers',
         name: 'Python Developers',
         membersTotal: '3.2k',
         membersOnline: '2.5k',
@@ -30,6 +34,7 @@ const COMMUNITIES_DATA = [
         tags: ['new'],
     },
     {
+        id: 'devops-engineers',
         name: 'DevOps Engineers',
         membersTotal: '4.1k',
         membersOnline: '1.2k',
@@ -41,6 +46,11 @@ const COMMUNITIES_DATA = [
 ];
 
 const CommunityExplore = () => {
+    const navigate = useNavigate();
+
+    const handleCommunityClick = (communityId: string) => {
+        navigate(`/community/${communityId}`);
+    };
 
     return (
         <div className="py-6">
@@ -108,7 +118,17 @@ const CommunityExplore = () => {
                 {COMMUNITIES_DATA.map((community, index) => (
                     <div
                         key={index}
-                        className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 hover:border-blue-300 hover:-translate-y-3 hover:scale-[1.02]"
+                        onClick={() => handleCommunityClick(community.id)}
+                        className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 hover:border-blue-300 hover:-translate-y-3 hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-blue-500/20"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleCommunityClick(community.id);
+                            }
+                        }}
+                        role="button"
+                        aria-label={`Navigate to ${community.name} community`}
                     >
                         {/* Enhanced Image Header */}
                         <div

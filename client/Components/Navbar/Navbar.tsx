@@ -34,7 +34,7 @@ const Navbar: React.FC = () => {
             icon: 'streamline-freehand:learning-programming-book',
         },
         {
-            route: '/Create',
+            route: '/create-community',
             title: 'Create',
             icon: `oui:ml-create-single-metric-job`,
         },

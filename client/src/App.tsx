@@ -6,6 +6,8 @@ import Profile from "../Components/Profile/Profile";
 import AuthCallBack from "../Components/Auth/AuthCallBack";
 import Messages from "../Components/Messages/Messages";
 import Communities from "../Components/Communities/Communities";
+import CommunityPage from "../Components/Communities/CommunityPage";
+import CreateCommunity from "../Components/Communities/CreateCommunity";
 import Setting from "../Components/Settings/Settings";
 import { ThemeProvider }  from "./ThemeContext"
 
@@ -21,6 +23,8 @@ const App = () => {
                 <Route path="authenticate" element={<AuthCallBack />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/communities" element={<Communities />} />
+                <Route path="/community/:communityId" element={<CommunityPage />} />
+                <Route path="/create-community" element={<CreateCommunity />} />
                 <Route path="/settings" element={<Setting/>} />
             </Routes>
         </BrowserRouter>

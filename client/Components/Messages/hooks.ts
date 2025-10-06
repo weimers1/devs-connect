@@ -3,23 +3,29 @@ import type { Message, ChatMessage, UseMessagesReturn, UseChatReturn } from './t
 import {io, Socket} from "socket.io-client";
 import messageApi from '../../Service/service';
 
-// Security utilities
+// Security utilities || Without sanitization  for Example 
+// an attack can send a script fetch /api/user/delete, {method: 'POST}
+//Result: Script executes, deletes user account
 const sanitizeContent = (content: string): string => {
   if (typeof content !== 'string') return '';
   return content
     .replace(/[<>"'&\/\\]/g, (match) => {
       const entities: { [key: string]: string } = {
-        '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;',
-        '&': '&amp;', '/': '&#x2F;', '\\': '&#x5C;'
+        '<': 
+        '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;',
+        '&': '&amp;', 
+        '/': '&#x2F;', //Prevents path traversal
+        '\\': '&#x5C;' //Prevents escape sequences 
       };
       return entities[match];
     })
-    .replace(/javascript:/gi, '')
-    .replace(/data:/gi, '')
-    .replace(/vbscript:/gi, '')
+    .replace(/javascript:/gi, '') // Blocks JS execution
+    .replace(/data:/gi, '') //Blocks data URLS
+    .replace(/vbscript:/gi, '') //Blocks VBScript
     .slice(0, 1000); // Max message length
 };
 
+//Validates the URL to make sure the URL is legit
 const validateUrl = (url: string): boolean => {
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url);
 };
@@ -35,7 +41,8 @@ const validateTimestamp = (timestamp: any): Date => {
   return date;
 };
 
-// Rate limiting
+
+// Rate limiting to combat against DDOS attacks
 const messageRateLimit = new Map<number, { count: number; lastReset: number }>();
 const MAX_MESSAGES_PER_MINUTE = 30;
 
@@ -79,6 +86,7 @@ const getCurrentUserId = (): number => {
   }
 };
 
+//Validate Messaging for message content 
 const validateMessageContent = (content: string): boolean => {
   if (!content || typeof content !== 'string') return false;
   if (content.length > 1000 || content.trim().length === 0) return false;
