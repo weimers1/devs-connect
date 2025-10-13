@@ -84,7 +84,6 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                         </p>
                     </div>
                 ) : (
-                    {/* UI CLEANUP: Improved conversation list styling and spacing */}
                     <div>
                         {messages.map((message) => (
                             <button
