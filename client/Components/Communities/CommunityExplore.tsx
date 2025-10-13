@@ -1,52 +1,27 @@
+import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useNavigate } from 'react-router-dom';
 import Tag from '../../Components/Decal/Tag';
-
-const COMMUNITIES_DATA = [
-    {
-        id: 'react-developers',
-        name: 'React Developers',
-        membersTotal: '2.4k',
-        membersOnline: '1.1k',
-        category: 'Frontend Development',
-        color: 'bg-gradient-to-r from-blue-400 to-cyan-500',
-        icon: 'logos:react',
-        tags: ['trending'],
-    },
-    {
-        id: 'ui-ux-designers',
-        name: 'UI/UX Designers',
-        membersTotal: '1.8k',
-        membersOnline: '200',
-        category: 'Design',
-        color: 'bg-gradient-to-r from-pink-500 to-rose-500',
-        icon: 'mdi:palette',
-        tags: ['trending', 'new', 'premium'],
-    },
-    {
-        id: 'python-developers',
-        name: 'Python Developers',
-        membersTotal: '3.2k',
-        membersOnline: '2.5k',
-        category: 'Backend Development',
-        color: 'bg-gradient-to-r from-yellow-400 to-blue-500',
-        icon: 'logos:python',
-        tags: ['new'],
-    },
-    {
-        id: 'devops-engineers',
-        name: 'DevOps Engineers',
-        membersTotal: '4.1k',
-        membersOnline: '1.2k',
-        category: 'Infrastructure',
-        color: 'bg-gradient-to-r from-gray-700 to-gray-900',
-        icon: 'mdi:server-network',
-        tags: [],
-    },
-];
+import API from '../../Service/service';
 
 const CommunityExplore = () => {
     const navigate = useNavigate();
+    const [communities, setCommunities] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCommunities = async () => {
+            try {
+                const data = await API.getCommunities();
+                setCommunities(data);
+            } catch (error) {
+                console.error('Failed to fetch communities:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCommunities();
+    }, []);
 
     const handleCommunityClick = (communityId: string) => {
         navigate(`/community/${communityId}`);
@@ -115,7 +90,17 @@ const CommunityExplore = () => {
 
             {/*  Grid Layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-                {COMMUNITIES_DATA.map((community, index) => (
+                {loading ? (
+                    <div className="col-span-full text-center py-12">
+                        <Icon icon="mdi:loading" className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
+                        <p className="text-gray-600">Loading communities...</p>
+                    </div>
+                ) : communities.length === 0 ? (
+                    <div className="col-span-full text-center py-12">
+                        <Icon icon="mdi:account-group-outline" className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                        <p className="text-gray-600">No communities found</p>
+                    </div>
+                ) : communities.map((community, index) => (
                     <div
                         key={index}
                         onClick={() => handleCommunityClick(community.id)}
@@ -132,27 +117,29 @@ const CommunityExplore = () => {
                     >
                         {/* Enhanced Image Header */}
                         <div
-                            className={`h-48 ${community.color} relative overflow-hidden`}
+                            className={`h-48 ${community.color || 'bg-gradient-to-r from-blue-400 to-cyan-500'} relative overflow-hidden`}
+                            style={community.image ? {
+                                backgroundImage: `url(${community.image})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center'
+                            } : {}}
                         >
                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
 
                             {/* Large Topic Icon */}
-                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-20">
-                                <Icon
-                                    icon={community.icon}
-                                    className="w-24 h-24 text-white"
-                                />
-                            </div>
+                            {!community.image && (
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-20">
+                                    <Icon
+                                        icon={community.icon || 'mdi:account-group'}
+                                        className="w-24 h-24 text-white"
+                                    />
+                                </div>
+                            )}
 
                             {/* Floating Tags */}
                             <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                                {community.tags.map((tagType, i) => (
-                                    <Tag
-                                        key={index + '-' + i}
-                                        type={tagType}
-                                    />
-                                ))}
+                                <Tag type="new" />
                             </div>
 
                             {/* Community Title with Icon */}
@@ -160,7 +147,7 @@ const CommunityExplore = () => {
                                 <div className="flex items-center mb-2">
                                     <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3">
                                         <Icon
-                                            icon={community.icon}
+                                            icon={community.icon || 'mdi:account-group'}
                                             className="w-5 h-5 text-white"
                                         />
                                     </div>
@@ -169,7 +156,7 @@ const CommunityExplore = () => {
                                             {community.name}
                                         </h3>
                                         <p className="text-white/90 text-sm font-medium">
-                                            {community.category}
+                                            {community.memberCount} members
                                         </p>
                                     </div>
                                 </div>
@@ -179,9 +166,7 @@ const CommunityExplore = () => {
                         {/* Enhanced Content */}
                         <div className="p-6">
                             <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
-                                Connect with {community.category.toLowerCase()}{' '}
-                                professionals, share knowledge, and collaborate
-                                on exciting projects in this vibrant community.
+                                {community.description || 'Join this community to connect with like-minded developers.'}
                             </p>
 
                             {/* Enhanced Stats */}
@@ -192,11 +177,11 @@ const CommunityExplore = () => {
                                             icon="mdi:account-group"
                                             className="w-4 h-4 mr-1.5 text-blue-500"
                                         />
-                                        {community.membersTotal}
+                                        {community.memberCount}
                                     </span>
                                     <span className="flex items-center text-green-600 text-sm font-medium">
                                         <div className="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse"></div>
-                                        {community.membersOnline} online
+                                        Active
                                     </span>
                                 </div>
                                 <div className="flex items-center space-x-1">

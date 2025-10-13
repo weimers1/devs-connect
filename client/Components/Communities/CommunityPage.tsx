@@ -5,85 +5,7 @@ import CommunityHeader from './CommunityHeader';
 import CommunityActionBar from './CommunityActionBar';
 import CommunityTabs from './CommunityTabs';
 import CommunitySidebar from './CommunitySidebar';
-
-const COMMUNITY_DATA = {
-    'react-developers': {
-        id: 'react-developers',
-        name: 'React Developers',
-        description: 'A vibrant community of React developers sharing knowledge, best practices, and building amazing applications together.',
-        membersTotal: '2.4k',
-        membersOnline: '1.1k',
-        category: 'Frontend Development',
-        color: 'bg-gradient-to-r from-blue-400 to-cyan-500',
-        icon: 'logos:react',
-        tags: ['trending'],
-        coverImage: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=400&fit=crop',
-        createdDate: '2023-01-15',
-        rules: [
-            'Be respectful and professional',
-            'No spam or self-promotion without permission',
-            'Share knowledge and help others learn',
-            'Use appropriate channels for discussions'
-        ]
-    },
-    'ui-ux-designers': {
-        id: 'ui-ux-designers',
-        name: 'UI/UX Designers',
-        description: 'Creative professionals focused on user experience design, interface design, and creating beautiful digital experiences.',
-        membersTotal: '1.8k',
-        membersOnline: '200',
-        category: 'Design',
-        color: 'bg-gradient-to-r from-pink-500 to-rose-500',
-        icon: 'mdi:palette',
-        tags: ['trending', 'new', 'premium'],
-        coverImage: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=1200&h=400&fit=crop',
-        createdDate: '2023-03-20',
-        rules: [
-            'Share constructive feedback only',
-            'Credit original designers when sharing work',
-            'No portfolio spam',
-            'Help junior designers grow'
-        ]
-    },
-    'python-developers': {
-        id: 'python-developers',
-        name: 'Python Developers',
-        description: 'Python enthusiasts building everything from web applications to machine learning models and automation scripts.',
-        membersTotal: '3.2k',
-        membersOnline: '2.5k',
-        category: 'Backend Development',
-        color: 'bg-gradient-to-r from-yellow-400 to-blue-500',
-        icon: 'logos:python',
-        tags: ['new'],
-        coverImage: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=1200&h=400&fit=crop',
-        createdDate: '2023-02-10',
-        rules: [
-            'Follow PEP 8 style guidelines in code examples',
-            'Provide context when asking for help',
-            'Share learning resources',
-            'Be patient with beginners'
-        ]
-    },
-    'devops-engineers': {
-        id: 'devops-engineers',
-        name: 'DevOps Engineers',
-        description: 'Infrastructure and deployment specialists focused on CI/CD, cloud platforms, and automation technologies.',
-        membersTotal: '4.1k',
-        membersOnline: '1.2k',
-        category: 'Infrastructure',
-        color: 'bg-gradient-to-r from-gray-700 to-gray-900',
-        icon: 'mdi:server-network',
-        tags: [],
-        coverImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&h=400&fit=crop',
-        createdDate: '2022-11-05',
-        rules: [
-            'Share infrastructure best practices',
-            'No production credentials in posts',
-            'Help with troubleshooting',
-            'Discuss security considerations'
-        ]
-    }
-};
+import API from '../../Service/service';
 
 
 
@@ -92,47 +14,133 @@ const CommunityPage: React.FC = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('posts');
     const [isJoined, setIsJoined] = useState(false);
+    const [community, setCommunity] = useState<any>(null);
+    const [members, setMembers] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    
 
-    const community = communityId ? COMMUNITY_DATA[communityId as keyof typeof COMMUNITY_DATA] : null;
 
     useEffect(() => {
-        if (!community) {
-            navigate('/communities');
-        }
-    }, [community, navigate]);
+        const fetchCommunity = async () => {
+            // SECURITY: Removed console.log statements that exposed community and member data
+            if (!communityId) {
+                navigate('/communities');
+                return;
+            }
+            
+            try {
+                const communityData = await API.getCommunityById(communityId);
+                setCommunity(communityData);
+                setIsJoined(communityData.isOwner || communityData.isMember || false);
+                
+                // Fetch members after community loads
+                try {
+                    const membersData = await API.getCommunityMembers(communityId);
 
-    if (!community) {
-        return null;
+                    setMembers(membersData);
+                } catch (memberError) {
+                    console.warn('Failed to fetch members:', memberError);
+                    setMembers([]);
+                }
+            } catch (error) {
+                console.error('Failed to fetch community:', error);
+                setCommunity(null);
+            } finally {
+
+                setLoading(false);
+            }
+        };
+        
+        fetchCommunity();
+    }, [communityId, navigate]);
+
+    if (loading) {
+        return (
+            <Layout>
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-gray-600">Loading community...</p>
+                    </div>
+                </div>
+            </Layout>
+        );
     }
 
-    const handleJoinCommunity = () => {
-        setIsJoined(!isJoined);
+    if (!community) {
+        return (
+            <Layout>
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <div className="text-center">
+                        <p className="text-red-600">Community not found</p>
+                        <button onClick={() => navigate('/communities')} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+                            Back to Communities
+                        </button>
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
+
+    const handleJoinCommunity = async () => {
+        if (!communityId) return;
+        try {
+            await API.joinCommunity(communityId);
+            setIsJoined(!isJoined);
+            const [updatedCommunity, updatedMembers] = await Promise.all([
+                API.getCommunityById(communityId),
+                API.getCommunityMembers(communityId)
+            ]);
+            setCommunity(updatedCommunity);
+            setMembers(updatedMembers);
+        } catch (error) {
+            console.error('Failed to join community:', error);
+        }
     };
 
     const handleTabChange = (tab: string) => {
         setActiveTab(tab);
     };
 
+    // Transform community data to match expected format
+    const transformedCommunity = {
+        ...community,
+        membersTotal: members.length > 0 ? members.length.toString() : (community.memberCount?.toString() || '1'),
+        membersOnline: members.length > 0 ? members.filter(m => m.isOnline).length.toString() : '0',
+        category: 'Development',
+        coverImage: community.image || 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=400&fit=crop',
+        tags: [],
+        createdDate: community.createdAt,
+        members: members,
+        rules: [
+            'Be respectful and professional',
+            'No spam or self-promotion without permission',
+            'Share knowledge and help others learn',
+            'Use appropriate channels for discussions'
+        ]
+    };
+
     return (
         <Layout>
             <div className="min-h-screen bg-gray-50">
-                <CommunityHeader community={community} />
+                <CommunityHeader community={transformedCommunity} />
                 
                 <div className="max-w-7xl mx-auto px-4 py-8">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2">
                             <CommunityActionBar 
-                                community={community} 
+                                community={transformedCommunity} 
                                 isJoined={isJoined} 
                                 onJoinToggle={handleJoinCommunity} 
                             />
                             <CommunityTabs 
                                 activeTab={activeTab} 
-                                onTabChange={setActiveTab} 
+                                onTabChange={setActiveTab}
+                                communityId={communityId!}
                             />
                         </div>
                         
-                        <CommunitySidebar community={community} />
+                        <CommunitySidebar community={transformedCommunity} />
                     </div>
                 </div>
             </div>

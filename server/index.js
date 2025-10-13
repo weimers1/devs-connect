@@ -11,6 +11,11 @@ import './models/GeneralPreferences.js';
 import './models/Privacy-Security.js';
 import './models/VisibilitySettings.js';
 import './models/Certifications.js';
+import './Models/Communites.js';
+import './Models/UserCommunity.js';
+import './Models/Post.js';
+import './Models/PostLike.js';
+import './Models/PostComment.js';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import messageRoutes from './Routes/MessageRoutes.js';
@@ -24,6 +29,7 @@ import sessionRouter from './routes/sessionRoutes.js';
 import settingsRouter from './Routes/settingsRoutes.js';
 import uploadRoutes from './Routes/uploadRoutes.js';
 import githubRoutes from './Routes/github.js';
+import communityRoutes from './Routes/communityRoutes.js';
 import passport from 'passport';
 import session from 'express-session';
 
@@ -188,6 +194,10 @@ app.use('/utils', utilsRouter); //Utility Routes
 app.use('/api/settings', settingsRouter); //Settings Routes
 //Upload Profile Photos
 app.use('/api/upload', uploadRoutes);
+//Community Routes
+app.use('/api/communities', communityRoutes);
+//User Routes
+app.use('/api/users', userRouter);
 
 // Error handling middleware
 app.use(errorHandler);
@@ -234,7 +244,7 @@ async function cleanUpEmailIndexes() {
 // Database sync for development
 if (process.env.STAGE_ENV !== 'production') {
     cleanUpEmailIndexes()
-        .then(() => sequelize.sync({ alter: true }))
+        .then(() => sequelize.sync({ alter: true, force: false }))
         .then(() => console.log('Database synced'))
         .catch((err) => console.error('Sync error:', err));
 }

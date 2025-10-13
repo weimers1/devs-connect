@@ -6,6 +6,7 @@ interface CommunitySidebarProps {
         membersOnline: string;
         category: string;
         rules: string[];
+        members?: any[];
     };
 }
 
@@ -46,27 +47,35 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community }) => {
 
             {/* Active Members */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Active Members</h3>
+                <h3 className="font-semibold text-gray-900 mb-4">Community Members</h3>
                 <div className="space-y-3">
-                    {[
-                        { name: 'Alex Johnson', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face', status: 'online' },
-                        { name: 'Maria Garcia', avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face', status: 'online' },
-                        { name: 'David Kim', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face', status: 'away' }
-                    ].map((member, index) => (
-                        <div key={index} className="flex items-center space-x-3">
-                            <div className="relative">
-                                <img
-                                    src={member.avatar}
-                                    alt={member.name}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                />
-                                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
-                                    member.status === 'online' ? 'bg-green-400' : 'bg-yellow-400'
-                                }`}></div>
+                    {community.members && community.members.length > 0 ? (
+                        community.members.slice(0, 5).map((member, index) => (
+                            <div key={index} className="flex items-center space-x-3">
+                                <div className="relative">
+                                    <img
+                                        src={member.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.firstName + ' ' + member.lastName)}&background=random`}
+                                        alt={`${member.firstName} ${member.lastName}`}
+                                        className="w-8 h-8 rounded-full object-cover"
+                                    />
+                                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                                        member.isOnline ? 'bg-green-400' : 'bg-gray-400'
+                                    }`}></div>
+                                </div>
+                                <div className="flex-1">
+                                    <span className="text-sm text-gray-700">{member.firstName} {member.lastName}</span>
+                                    {member.role === 'admin' && (
+                                        <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Admin</span>
+                                    )}
+                                </div>
                             </div>
-                            <span className="text-sm text-gray-700">{member.name}</span>
-                        </div>
-                    ))}
+                        ))
+                    ) : (
+                        <p className="text-gray-500 text-sm">No members yet</p>
+                    )}
+                    {community.members && community.members.length > 5 && (
+                        <p className="text-xs text-gray-500 mt-2">+{community.members.length - 5} more members</p>
+                    )}
                 </div>
             </div>
         </div>

@@ -28,11 +28,11 @@ const Navbar: React.FC = () => {
             title: 'Messages',
             icon: 'mdi:message-reply-text',
         },
-        {
-            route: '/courses',
-            title: 'Courses',
-            icon: 'streamline-freehand:learning-programming-book',
-        },
+        // { WILL IMPLEMENT LATER ON NOT FOR MVP
+        //     route: '/courses',
+        //     title: 'Courses',
+        //     icon: 'streamline-freehand:learning-programming-book',
+        // },
         {
             route: '/create-community',
             title: 'Create',

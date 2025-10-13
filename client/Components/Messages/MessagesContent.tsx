@@ -13,14 +13,32 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
     const [newMessage, setNewMessage] = useState(''); //Stores the text user is currently typing
     const messagesEndRef = useRef<HTMLDivElement>(null); //Reference to invisible div at bottom of messages | Autoscroll to show newest messages
     const inputRef = useRef<HTMLTextAreaElement>(null); //Reference to the message input textarea | Purpose: to focus management and potential future features
-    //Automatically scrolls to newest message when new messages arrive | user will always see latest message without having to scroll
     const scrollToBottom = useCallback(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: `auto` });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, []);
 
+    // UX FIX: Prevent auto-scroll when clicking on conversations
+    // Only scroll when new messages are added, not when loading existing messages
+    const prevMessagesLength = useRef(0);
+    const isInitialLoad = useRef(true);
+    
     useEffect(() => {
-        scrollToBottom();
+        if (isInitialLoad.current) {
+            isInitialLoad.current = false;
+            prevMessagesLength.current = messages.length;
+            return;
+        }
+        
+        if (messages.length > prevMessagesLength.current) {
+            scrollToBottom();
+        }
+        prevMessagesLength.current = messages.length;
     }, [messages, scrollToBottom]);
+
+    // Reset initial load flag when conversation changes
+    useEffect(() => {
+        isInitialLoad.current = true;
+    }, [selectedMessage?.id]);
     //Handles sending new messages  | User types -> presses send -> clears input -> calls API
     const handleSendMessage = useCallback(async () => {
         if (!newMessage.trim() || !selectedMessage || !onSendMessage) return;
@@ -55,9 +73,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
 
     if (!selectedMessage) {
         return (
-            <div
-                className={`flex-1 flex items-center justify-center rounded-r-xl overflow-hidden  bg-gray-100 ${className}`}
-            >
+            <div className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}>
                 <div className="text-center">
                     <Icon
                         icon="mdi:message-outline"
@@ -75,21 +91,16 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
     }
 
     return (
-        <div
-            className={`flex-1   flex flex-col rounded-r-xl overflow-hidden  ${className}`}
-        >
-            {/* Header */}
-            <div className="flex-shrink-0 px-4 py-4 border-b border-gray-200 bg-white">
+        <div className={`flex-1 flex flex-col bg-white ${className}`}>
+            {/* UI CLEANUP: Simplified header, removed unnecessary call/video buttons */}
+            <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200">
                 <div className="flex items-center space-x-3">
                     <button
                         onClick={onBackToList}
                         className="md:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                         aria-label="Back to messages"
                     >
-                        <Icon
-                            icon="mdi:arrow-left"
-                            className="w-5 h-5"
-                        />
+                        <Icon icon="mdi:arrow-left" className="w-5 h-5" />
                     </button>
 
                     <div className="relative">
@@ -99,85 +110,46 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                             className="w-10 h-10 rounded-full object-cover"
                         />
                         {selectedMessage.isOnline && (
-                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
                         )}
                     </div>
 
                     <div className="flex-1">
-                        <h2 className="text-lg font-semibold text-gray-900">
+                        <h2 className="text-base font-semibold text-gray-900">
                             {selectedMessage.name}
                         </h2>
-                        <p className="text-sm text-gray-500">
-                            {selectedMessage.isOnline
-                                ? 'Active now'
-                                : 'Last seen recently'}
+                        <p className="text-xs text-gray-500">
+                            {selectedMessage.isOnline ? 'Active now' : 'Last seen recently'}
                         </p>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                        <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                            <Icon
-                                icon="mdi:phone"
-                                className="w-5 h-5"
-                            />
-                        </button>
-                        <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                            <Icon
-                                icon="mdi:video"
-                                className="w-5 h-5"
-                            />
-                        </button>
-                        <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                            <Icon
-                                icon="mdi:dots-vertical"
-                                className="w-5 h-5"
-                            />
-                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 scrollbar-hide  ">
+            {/* UI CLEANUP: Improved message bubble styling and spacing */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
                 {messages.map((message) => (
                     <div
                         key={message.id}
-                        className={`flex ${
-                            message.isOwn ? 'justify-end' : 'justify-start'
-                        }`}
+                        className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
                     >
                         <div
-                            className={`max-w-xs lg:max-w-md xl:max-w-lg ${
+                            className={`max-w-xs lg:max-w-md px-3 py-2 rounded-2xl ${
                                 message.isOwn
-                                    ? 'bg-blue-500 text-white rounded-l-2xl rounded-tr-2xl rounded-br-md'
-                                    : 'bg-gray-100 text-gray-900 rounded-r-2xl rounded-tl-2xl rounded-bl-md'
-                            } px-4 py-2 shadow-sm`}
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-100 text-gray-900'
+                            }`}
                         >
-                            <p className="text-sm leading-relaxed">
-                                {message.content}
-                            </p>
-                            <div
-                                className={`flex items-center justify-end mt-1 space-x-1 ${
-                                    message.isOwn
-                                        ? 'text-blue-100'
-                                        : 'text-gray-500'
-                                }`}
-                            >
+                            <p className="text-sm">{message.content}</p>
+                            <div className={`flex items-center justify-end mt-1 space-x-1 ${
+                                message.isOwn ? 'text-blue-100' : 'text-gray-500'
+                            }`}>
                                 <span className="text-xs">
                                     {formatTime(message.timestamp)}
                                 </span>
                                 {message.isOwn && (
                                     <Icon
-                                        icon={
-                                            message.status === 'read'
-                                                ? 'mdi:check-all'
-                                                : 'mdi:check'
-                                        }
-                                        className={`w-3 h-3 ${
-                                            message.status === 'read'
-                                                ? 'text-blue-200'
-                                                : 'text-blue-300'
-                                        }`}
+                                        icon={message.status === 'read' ? 'mdi:check-all' : 'mdi:check'}
+                                        className="w-3 h-3"
                                     />
                                 )}
                             </div>
@@ -206,17 +178,10 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Message Input */}
-            <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200 bg-white">
-                <div className="flex items-end space-x-3">
-                    <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                        <Icon
-                            icon="mdi:attachment"
-                            className="w-5 h-5"
-                        />
-                    </button>
-
-                    <div className="flex-1 relative">
+            {/* UI CLEANUP: Simplified input area, removed attachment button */}
+            <div className="flex-shrink-0 p-4 border-t border-gray-200">
+                <div className="flex items-center space-x-3">
+                    <div className="flex-1">
                         <textarea
                             ref={inputRef}
                             value={newMessage}
@@ -224,24 +189,20 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                             onKeyPress={handleKeyPress}
                             placeholder="Type a message..."
                             rows={1}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm leading-relaxed"
-                            style={{ minHeight: '44px', maxHeight: '120px' }}
+                            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-full resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                            style={{ minHeight: '40px', maxHeight: '120px' }}
                         />
                     </div>
-
                     <button
                         onClick={handleSendMessage}
                         disabled={!newMessage.trim()}
-                        className={`p-3 rounded-full transition-all ${
+                        className={`p-2 rounded-full transition-all ${
                             newMessage.trim()
-                                ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md'
-                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }`}
                     >
-                        <Icon
-                            icon="mdi:send"
-                            className="w-5 h-5"
-                        />
+                        <Icon icon="mdi:send" className="w-4 h-4" />
                     </button>
                 </div>
             </div>

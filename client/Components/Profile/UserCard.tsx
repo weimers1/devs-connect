@@ -1,46 +1,22 @@
 import { assets } from '../../assets/assets';
 import { Icon } from '@iconify/react';
+import { useNavigate } from 'react-router-dom';
 import API from '../../Service/service';
-import React, { useState, useEffect } from 'react'; // Missing React import
-import { profile } from 'console';
+import React, { useState, useEffect } from 'react';
 
-function UserCard() {
+interface UserCardProps {
+    userId?: string;
+    isOwnProfile: boolean;
+    profileData: any;
+}
+
+function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
+    const navigate = useNavigate();
     const [currentProfileImage, setCurrentProfileImage] = useState('');
-    const [loading, setLoading] = useState(false);
-    // Profile edit data
-    const [profileData, setProfileData] = useState({
-        firstName: '',
-        lastName: '',
-        bio: '',
-        location: '',
-        career: '',
-        school: '',
-        github: '',
-    });
+    
     useEffect(() => {
-        const loadProfileData = async () => {
-            try {
-                const response = await API.getProfileInformation();
-                //Set both current form data and BACKUP
-                setProfileData(response); //Load Data from DB from this page
-                setCurrentProfileImage(response.pfp || '');
-            } catch (error) {
-                console.error('Failed to load profile data:', error);
-                setProfileData({
-                    firstName: 'Unknown',
-                    lastName: 'User',
-                    bio: 'Unable to load profile information',
-                    location: '',
-                    career: '',
-                    school: '',
-                    github: '',
-                });
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadProfileData();
-    }, []);
+        setCurrentProfileImage(profileData.pfp || '');
+    }, [profileData]);
 
     return (
         <div className="w-full bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2">
@@ -91,32 +67,37 @@ function UserCard() {
                             </span>
                         </div>
 
-                        {/* Action Buttons - Full width on mobile, normal on desktop */}
-                        <div className="flex flex-col sm:flex-row mt-3 sm:mt-4 sm:space-x-2 space-y-2 sm:space-y-0">
-                            <button className="w-full sm:w-auto rounded-full bg-blue-600 text-white px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-blue-700">
-                                <Icon
-                                    icon="mdi:account-plus"
-                                    className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5"
-                                />
-                                <span className="font-medium text-sm">
-                                    Connect
-                                </span>
-                            </button>
-                            <button className="w-full sm:w-auto rounded-full bg-white border border-gray-400 text-gray-700 px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-gray-50">
-                                <Icon
-                                    icon="mdi:message-reply-text"
-                                    className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5"
-                                />
-                                <span className="font-medium text-sm">
-                                    Message
-                                </span>
-                            </button>
-                            <button className="w-full sm:w-auto rounded-full bg-white border border-gray-400 text-gray-700 px-3 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-gray-50">
-                                <span className="font-medium text-sm">
-                                    More
-                                </span>
-                            </button>
-                        </div>
+                        {/* Action Buttons - Only show for other users */}
+                        {!isOwnProfile && (
+                            <div className="flex flex-col sm:flex-row mt-3 sm:mt-4 sm:space-x-2 space-y-2 sm:space-y-0">
+                                <button className="w-full sm:w-auto rounded-full bg-blue-600 text-white px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-blue-700">
+                                    <Icon
+                                        icon="mdi:account-plus"
+                                        className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5"
+                                    />
+                                    <span className="font-medium text-sm">
+                                        Connect
+                                    </span>
+                                </button>
+                                <button 
+                                    onClick={() => navigate(`/messages?user=${userId}`)}
+                                    className="w-full sm:w-auto rounded-full bg-white border border-gray-400 text-gray-700 px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-gray-50"
+                                >
+                                    <Icon
+                                        icon="mdi:message-reply-text"
+                                        className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5"
+                                    />
+                                    <span className="font-medium text-sm">
+                                        Message
+                                    </span>
+                                </button>
+                                <button className="w-full sm:w-auto rounded-full bg-white border border-gray-400 text-gray-700 px-3 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-gray-50">
+                                    <span className="font-medium text-sm">
+                                        More
+                                    </span>
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right Column - Career Goal (Moves below on mobile) */}
@@ -136,12 +117,14 @@ function UserCard() {
                         <p className="text-sm font-medium text-gray-900">
                             About
                         </p>
-                        <button className="text-gray-400">
-                            <Icon
-                                icon="mdi:pencil"
-                                className="w-5 h-5"
-                            />
-                        </button>
+                        {isOwnProfile && (
+                            <button className="text-gray-400">
+                                <Icon
+                                    icon="mdi:pencil"
+                                    className="w-5 h-5"
+                                />
+                            </button>
+                        )}
                     </div>
                     <p className="mt-2 text-sm text-gray-600">
                         {profileData.bio}

@@ -4,6 +4,8 @@ import {
     uploadProfileImage,
     testS3,
     updateProfileImage,
+    uploadCommunityImage,
+    uploadCommunityMiddleware,
 } from '../controllers/uploadController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
@@ -21,5 +23,8 @@ router.post('/profile-image', uploadMiddleware, uploadProfileImage);
 
 // Save image URL to database
 router.put('/profile-image', authMiddleware, updateProfileImage);
+
+// Upload community image
+router.post('/community-image', uploadCommunityMiddleware, uploadCommunityImage);
 
 export default router;

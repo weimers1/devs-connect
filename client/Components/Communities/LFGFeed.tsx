@@ -1,77 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CreatePost from './CreatePost';
 import PostCard, { Post } from './PostTypes';
+import API from '../../Service/service';
 
-const LFG_POSTS: Post[] = [
-    {
-        id: 1,
-        type: 'lfg',
-        author: 'Mike Rodriguez',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
-        timestamp: '5 hours ago',
-        content: 'Looking for 2-3 developers to join an exciting e-commerce project. We\'re building a modern marketplace with React, Node.js, and PostgreSQL. Great opportunity to learn and build something amazing together!',
-        likes: 18,
-        comments: 12,
-        tags: ['collaboration', 'project'],
-        projectType: 'E-commerce Marketplace',
-        skillsNeeded: ['React', 'Node.js', 'PostgreSQL', 'TypeScript'],
-        duration: '3-4 months'
-    },
-    {
-        id: 2,
-        type: 'lfg',
-        author: 'Jessica Park',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face',
-        timestamp: '1 day ago',
-        content: 'Starting a mobile app for fitness tracking. Need someone passionate about health tech and React Native. This could turn into something big!',
-        likes: 25,
-        comments: 8,
-        tags: ['mobile', 'startup'],
-        projectType: 'Fitness Mobile App',
-        skillsNeeded: ['React Native', 'Firebase', 'UI/UX Design'],
-        duration: '2-3 months'
-    },
-    {
-        id: 3,
-        type: 'lfg',
-        author: 'David Chen',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face',
-        timestamp: '2 days ago',
-        content: 'Open source project for developer productivity tools. Looking for contributors who want to make a difference in the dev community!',
-        likes: 42,
-        comments: 15,
-        tags: ['opensource', 'productivity'],
-        projectType: 'Developer Tools',
-        skillsNeeded: ['JavaScript', 'Node.js', 'Electron'],
-        duration: 'Ongoing'
-    }
-];
+interface LFGFeedProps {
+    communityId: string;
+}
 
-const LFGFeed: React.FC = () => {
-    const [posts, setPosts] = useState<Post[]>(LFG_POSTS);
+const LFGFeed: React.FC<LFGFeedProps> = ({ communityId }) => {
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const handlePostCreate = (postData: any) => {
+    useEffect(() => {
+        const fetchPosts = async () => {
+            try {
+                const postsData = await API.getCommunityPosts(communityId, 'lfg');
+                setPosts(postsData);
+            } catch (error) {
+                console.error('Failed to fetch LFG posts:', error);
+                setPosts([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPosts();
+    }, [communityId]);
+
+    const handlePostCreate = async (postData: any) => {
         if (postData.type !== 'lfg') return;
         
-        const newPost: Post = {
-            id: posts.length + 1,
-            author: 'You',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
-            timestamp: 'Just now',
-            likes: 0,
-            comments: 0,
-            ...postData
-        };
-        setPosts([newPost, ...posts]);
+        try {
+            await API.createCommunityPost(communityId, postData);
+            // Refresh posts after creating
+            const updatedPosts = await API.getCommunityPosts(communityId, 'lfg');
+            setPosts(updatedPosts);
+        } catch (error) {
+            console.error('Failed to create LFG post:', error);
+        }
     };
+
+    const handlePostDelete = (postId: number) => {
+        setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+    };
+
+    if (loading) {
+        return (
+            <div className="space-y-6">
+                <CreatePost onPostCreate={handlePostCreate} />
+                <div className="text-center py-8">
+                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                    <p className="text-gray-500">Loading LFG posts...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
             <CreatePost onPostCreate={handlePostCreate} />
             
-            {posts.map((post) => (
-                <PostCard key={post.id} post={post} />
-            ))}
+            {posts.length > 0 ? (
+                posts.map((post) => (
+                    <PostCard 
+                        key={post.id} 
+                        post={post} 
+                        onPostUpdate={() => {
+                            // Refresh posts when interactions happen
+                            API.getCommunityPosts(communityId, 'lfg').then(setPosts).catch(console.error);
+                        }}
+                        onPostDelete={handlePostDelete}
+                    />
+                ))
+            ) : (
+                <div className="text-center py-12">
+                    <p className="text-gray-500 mb-4">No LFG posts yet</p>
+                    <p className="text-sm text-gray-400">Be the first to start a collaboration!</p>
+                </div>
+            )}
         </div>
     );
 };

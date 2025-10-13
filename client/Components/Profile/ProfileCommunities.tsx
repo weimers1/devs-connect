@@ -2,7 +2,12 @@
 import React from 'react';
 import { Icon } from '@iconify/react';
 
-function Communities() {
+interface CommunitiesProps {
+    userId?: string;
+}
+
+function Communities({ userId }: CommunitiesProps) {
+    const isOwnProfile = !userId;
     // Sample communities data - replace with your actual data
     const communities = [
         {
@@ -33,12 +38,14 @@ function Communities() {
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-800">Communities</h2>
-                <button className="text-blue-600 hover:text-blue-800">
-                    <Icon
-                        icon="mdi:plus"
-                        className="w-5 h-5"
-                    />
-                </button>
+                {isOwnProfile && (
+                    <button className="text-blue-600 hover:text-blue-800">
+                        <Icon
+                            icon="mdi:plus"
+                            className="w-5 h-5"
+                        />
+                    </button>
+                )}
             </div>
 
             <div className="space-y-4">
@@ -95,13 +102,15 @@ function Communities() {
                     />
                 </button>
 
-                <button className="text-blue-600 font-medium text-sm hover:text-blue-800 flex items-center">
-                    Discover new
-                    <Icon
-                        icon="mdi:arrow-right"
-                        className="w-4 h-4 ml-1"
-                    />
-                </button>
+                {isOwnProfile && (
+                    <button className="text-blue-600 font-medium text-sm hover:text-blue-800 flex items-center">
+                        Discover new
+                        <Icon
+                            icon="mdi:arrow-right"
+                            className="w-4 h-4 ml-1"
+                        />
+                    </button>
+                )}
             </div>
         </div>
     );

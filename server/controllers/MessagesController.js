@@ -6,7 +6,9 @@ import { Op } from 'sequelize';
 //  GET CONVERSATIONS LIST
 export const getConversations = async (req, res) => {
     try {
-        const currentUserId = 1; // Hardcode user ID 1 for testing | This is Hard coded until we obtain the currentUserId from the auth middleware
+        // SECURITY FIX: Use authenticated user ID instead of hardcoded value
+        // This prevents messages from being shown to wrong users
+        const currentUserId = req.user.userId; // Get authenticated user ID from auth middleware
 
         // Get all messages involving current user  from the DB
         const result = await Messages.findAll({
@@ -23,49 +25,61 @@ export const getConversations = async (req, res) => {
         // Group by conversation and get latest message per conversation
         const conversationsMap = new Map();
 
+        // FEATURE: Fetch real user data instead of generating fake names
+        // This shows actual user names like "John Doe" instead of "User3 Test"
+        const otherUserIds = [...new Set(result.map(message => 
+            message.sender_id === currentUserId ? message.receiver_id : message.sender_id
+        ))];
+
+        // Fetch user data for all other users
+        const otherUsers = await User.findAll({
+            where: { id: otherUserIds },
+            attributes: ['id', 'firstName', 'lastName', 'email']
+        });
+
+        const userMap = new Map(otherUsers.map(user => [user.id, user]));
+
         result.forEach((message) => {
             const conversationId = message.conversation_id;
 
             if (!conversationsMap.has(conversationId)) {
-                // For now, create basic conversation data without user joins
                 const otherUserId =
                     message.sender_id === currentUserId
                         ? message.receiver_id
                         : message.sender_id;
 
+                const otherUser = userMap.get(otherUserId);
+
                 // Count unread messages in this conversation
                 const unreadCount = result.filter(
                     (msg) =>
-                        msg.conversation_id === conversationId && //This is how we determine how many unread messages they're are
+                        msg.conversation_id === conversationId &&
                         msg.receiver_id === currentUserId &&
                         msg.status !== 'read'
                 ).length;
 
                 conversationsMap.set(conversationId, {
-                    //This will add a new entry to the Map with conversationId as the key
-                    conversation_id: conversationId, //Frontend uses this to identify the conversation
+                    conversation_id: conversationId,
                     otherUser: {
-                        //This Creates Info About the Person you're chatting with
                         id: otherUserId,
-                        firstName: `User${otherUserId}`, //So This will create if otherUserid = 2, then this will be User2 Test
-                        lastName: 'Test',
-                        email: `user${otherUserId}@test.com`, //This Creates A fixed email
+                        firstName: otherUser?.firstName || `User${otherUserId}`,
+                        lastName: otherUser?.lastName || 'Test',
+                        email: otherUser?.email || `user${otherUserId}@test.com`,
                     },
                     lastMessage: {
-                        //This will store the most recent message in the sidebar
-                        content: message.content, //EX:Hey There
-                        createdAt: message.createdAt, //EX: 2 min ago
+                        content: message.content,
+                        createdAt: message.createdAt,
                         sender_id: message.sender_id,
                     },
-                    unreadCount: unreadCount, //This is the number of unread message in the conversation
-                    isOnline: false, //Set this as false for now @TODO: in the future update via Socket.io presence
+                    unreadCount: unreadCount,
+                    isOnline: false,
                 });
             }
         });
 
         const conversations = Array.from(conversationsMap.values()); //This will convert the Map Data Structure into an array thats why we're extracting the values so we can use res.json
 
-        console.log('Found conversations:', conversations.length);
+
         res.json({ success: true, data: conversations }); //Makes this serializable so the frontend can consume it
     } catch (error) {
         console.error('Error:', error);
@@ -90,7 +104,7 @@ export const getConversationMessages = async (req, res) => {
             return res.status(400).json({ error: 'Invalid user ID' });
         }
 
-        const currentUserId = 1; // Hardcode user ID 1 for testing
+        const currentUserId = req.user.userId; // Get authenticated user ID from auth middleware
 
         //Create Conversation_id (Smaller Id First) | creates Array With both users ID's, converts Userid to number
         const conversationId = [currentUserId, parsedUserId] //Ensures Consistent Conversation_id regardless of who sends first
@@ -224,7 +238,7 @@ export const sendReply = async (req, res) => {
         // Get the io instance and emit to conversation room
         const io = req.app.get('io'); //This will help with the simulation of a PostMan Request so that we can have the socket pickup on the Postman Request
         io.to(`user-${receiver_id}`).emit('receiver-message', messageData);
-        console.log(`REPLY EMITTED TO ROOM: ${conversationId}`, messageData);
+
 
         res.json({ success: true, data: message });
     } catch (error) {
@@ -236,8 +250,6 @@ export const sendReply = async (req, res) => {
 // CREATE TEST USERS (for testing only)
 export const createTestUsers = async (req, res) => {
     try {
-        console.log('Creating test users...');
-
         const testUsers = [
             {
                 firstName: 'John',
@@ -259,13 +271,9 @@ export const createTestUsers = async (req, res) => {
             },
         ];
 
-        console.log('Test users data:', testUsers);
-
         const users = await User.bulkCreate(testUsers, {
             ignoreDuplicates: true,
         });
-
-        console.log('Users created successfully:', users.length);
         res.json({ success: true, message: 'Test users created', data: users });
     } catch (error) {
         console.error('Detailed error:', error.message);

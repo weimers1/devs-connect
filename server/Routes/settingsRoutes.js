@@ -12,13 +12,15 @@ import {
     confirmEmailChange,
     updateVisibilitySettings,
     getVisibilitySettings,
+    getGitHubConnection,
+    getGitHubInformation,
 } from '../controllers/settingsController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 import { addCertification } from '../controllers/profileController.js';
 import { updateProfileImage } from '../controllers/uploadController.js';
 import { getCertifications } from '../controllers/profileController.js';
 import { get } from 'http';
-import { getProfile } from '../controllers/userController.js';
+
 import {
     updateCertifications,
     deleteCertification,
@@ -60,5 +62,9 @@ router.get('/visibility', getVisibilitySettings);
 router.put('/visibility', updateVisibilitySettings);
 //Update Profile Image URL
 router.put('/profile-image', updateProfileImage);
+//Get GitHub Connection Status
+router.get('/github', getGitHubConnection);
+//Get GitHub Username
+router.get('/github-info', getGitHubInformation);
 
 export default router;

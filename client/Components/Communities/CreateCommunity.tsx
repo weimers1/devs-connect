@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import Layout from '../Layout';
+import API from '../../Service/service';
 
 const CreateCommunity: React.FC = () => {
     const navigate = useNavigate();
@@ -15,6 +16,8 @@ const CreateCommunity: React.FC = () => {
     });
     const [selectedIcon, setSelectedIcon] = useState('mdi:account-group');
     const [selectedColor, setSelectedColor] = useState('bg-gradient-to-r from-blue-400 to-cyan-500');
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     const categories = [
         'Frontend Development',
@@ -61,16 +64,35 @@ const CreateCommunity: React.FC = () => {
         }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedImage(file);
+            const reader = new FileReader();
+            reader.onload = () => setImagePreview(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Here you would typically send the data to your backend
-        console.log('Creating community:', {
-            ...formData,
-            icon: selectedIcon,
-            color: selectedColor
-        });
-        // Navigate back to communities page
-        navigate('/communities');
+        try {
+            let imageUrl = null;
+            if (selectedImage) {
+                const uploadResult = await API.uploadCommunityImage(selectedImage);
+                imageUrl = uploadResult.imageUrl;
+            }
+            
+            const result = await API.createCommunity({
+                ...formData,
+                icon: selectedIcon,
+                color: selectedColor,
+                image: imageUrl
+            });
+            navigate(`/community/${result.community.id}`);
+        } catch (error) {
+            console.error('Failed to create community:', error);
+        }
     };
 
     return (
@@ -163,62 +185,91 @@ const CreateCommunity: React.FC = () => {
 
                         {/* Appearance */}
                         <div className="bg-white rounded-xl shadow-sm border p-6">
-                            <h2 className="text-xl font-semibold text-gray-900 mb-6">Appearance</h2>
+                            <h2 className="text-xl font-semibold text-gray-900 mb-6">Community Appearance</h2>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Custom Image Upload */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-4">
-                                        Community Icon
+                                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                                        Custom Image (Optional)
                                     </label>
-                                    <div className="grid grid-cols-5 gap-3">
-                                        {iconOptions.map(icon => (
-                                            <button
-                                                key={icon}
-                                                type="button"
-                                                onClick={() => setSelectedIcon(icon)}
-                                                className={`p-3 rounded-lg border-2 transition-colors ${
-                                                    selectedIcon === icon
-                                                        ? 'border-blue-500 bg-blue-50'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                            >
-                                                <Icon icon={icon} className="w-6 h-6 text-gray-700" />
-                                            </button>
-                                        ))}
-                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                                    />
+                                    {imagePreview && (
+                                        <div className="w-24 h-24 rounded-lg overflow-hidden border">
+                                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
                                 </div>
 
+                                {/* Preset Options */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-4">
-                                        Color Theme
+                                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                                        Or Choose Preset
                                     </label>
-                                    <div className="grid grid-cols-4 gap-3">
-                                        {colorOptions.map(color => (
-                                            <button
-                                                key={color}
-                                                type="button"
-                                                onClick={() => setSelectedColor(color)}
-                                                className={`h-12 rounded-lg border-2 transition-all ${color} ${
-                                                    selectedColor === color
-                                                        ? 'border-gray-800 scale-105'
-                                                        : 'border-gray-200 hover:scale-105'
-                                                }`}
-                                            />
-                                        ))}
+                                    
+                                    {/* Icon Selection */}
+                                    <div className="mb-4">
+                                        <p className="text-xs text-gray-500 mb-2">Icon</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {iconOptions.slice(0, 6).map(icon => (
+                                                <button
+                                                    key={icon}
+                                                    type="button"
+                                                    onClick={() => setSelectedIcon(icon)}
+                                                    className={`p-2 rounded-lg border transition-colors ${
+                                                        selectedIcon === icon
+                                                            ? 'border-blue-500 bg-blue-50'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                                >
+                                                    <Icon icon={icon} className="w-5 h-5 text-gray-700" />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Color Selection */}
+                                    <div>
+                                        <p className="text-xs text-gray-500 mb-2">Color</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {colorOptions.slice(0, 6).map(color => (
+                                                <button
+                                                    key={color}
+                                                    type="button"
+                                                    onClick={() => setSelectedColor(color)}
+                                                    className={`w-8 h-8 rounded-lg border-2 transition-all ${color} ${
+                                                        selectedColor === color
+                                                            ? 'border-gray-800 scale-110'
+                                                            : 'border-gray-200 hover:scale-105'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Preview */}
-                            <div className="mt-6">
-                                <label className="block text-sm font-medium text-gray-700 mb-4">
+                            <div className="mt-6 pt-6 border-t">
+                                <label className="block text-sm font-medium text-gray-700 mb-3">
                                     Preview
                                 </label>
-                                <div className="bg-gray-50 rounded-lg p-4">
+                                <div className="bg-gray-50 rounded-lg p-4 max-w-sm">
                                     <div className="flex items-center space-x-3">
-                                        <div className={`w-12 h-12 ${selectedColor} rounded-xl flex items-center justify-center`}>
-                                            <Icon icon={selectedIcon} className="w-6 h-6 text-white" />
-                                        </div>
+                                        {imagePreview ? (
+                                            <div className="w-12 h-12 rounded-xl overflow-hidden">
+                                                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                            </div>
+                                        ) : (
+                                            <div className={`w-12 h-12 ${selectedColor} rounded-xl flex items-center justify-center`}>
+                                                <Icon icon={selectedIcon} className="w-6 h-6 text-white" />
+                                            </div>
+                                        )}
                                         <div>
                                             <h3 className="font-semibold text-gray-900">
                                                 {formData.name || 'Community Name'}
@@ -232,42 +283,7 @@ const CreateCommunity: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Community Rules */}
-                        <div className="bg-white rounded-xl shadow-sm border p-6">
-                            <h2 className="text-xl font-semibold text-gray-900 mb-6">Community Guidelines</h2>
-                            
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Community Rules
-                                </label>
-                                <textarea
-                                    name="rules"
-                                    value={formData.rules}
-                                    onChange={handleInputChange}
-                                    placeholder="Enter each rule on a new line..."
-                                    rows={6}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                                />
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Write one rule per line. These will help maintain a positive community environment.
-                                </p>
-                            </div>
 
-                            <div className="mt-6">
-                                <label className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        name="isPrivate"
-                                        checked={formData.isPrivate}
-                                        onChange={handleInputChange}
-                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                    />
-                                    <span className="ml-2 text-sm text-gray-700">
-                                        Make this community private (invite-only)
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
 
                         {/* Submit Buttons */}
                         <div className="flex justify-end space-x-4">

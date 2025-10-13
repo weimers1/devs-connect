@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../Layout';
 import UserCard from './UserCard';
 import Sidebar from '../Connections/Sidebar';
@@ -24,6 +25,9 @@ const MONTHS = [
 ];
 
 function Profile() {
+    const { userId } = useParams<{ userId: string }>();
+    const navigate = useNavigate();
+    const isOwnProfile = !userId;
     const [showCertModal, setShowCertModal] = React.useState(false); //Certification Modal
     const [showProfModal, setShowProfModal] = React.useState(false); // Profile Modal
     const [certSaving, setCertSaving] = useState(false);
@@ -149,13 +153,13 @@ function Profile() {
     useEffect(() => {
         const loadProfileData = async () => {
             try {
-                const response = await API.getProfileInformation();
-                //Set both current form data and BACKUP
+                const response = isOwnProfile 
+                    ? await API.getProfileInformation()
+                    : await API.getUserProfile(userId!);
                 setProfileData(response);
                 setCurrentProfileImage(response.pfp || '');
             } catch (error) {
                 console.error('Failed to load profile data:', error);
-                // Set fallback data to prevent UI errors
                 setProfileData({
                     firstName: '',
                     lastName: '',
@@ -168,7 +172,7 @@ function Profile() {
             }
         };
         loadProfileData();
-    }, []);
+    }, [userId, isOwnProfile]);
     //Check Url For modal trigger so the form for certifications and profile  can pop up
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -275,22 +279,22 @@ function Profile() {
     const sortedYears = [...years].sort((a, b) => b - a); //Sort Years from most recent to oldest
     return (
         <Layout>
-            {/* Main container with full width on mobile */}
-            <div className="bg-gradient-to-b  min-h-screen md:mr-7 md:w-183">
-                {/* User Profile Card - Full width on mobile */}
-                <UserCard />
+            {/* Main container - centered for other users, full width for own profile */}
+            <div className={`bg-gradient-to-b min-h-screen ${isOwnProfile ? 'md:mr-7 md:w-183' : 'max-w-4xl mx-auto px-4'}`}>
+                {/* User Profile Card */}
+                <UserCard userId={userId} isOwnProfile={isOwnProfile} profileData={profileData} />
 
-                {/* Profile sections - No spacing between sections on mobile */}
+                {/* Profile sections */}
                 <div className="divide-y-0 divide-transparent">
-                    {/* <Skills />IN LATER ITERATION THIS WILL BE REDEPLOYED */}
-                    {/* <Certifications />  IN LATER ITERATION THIS WILL BE REDEPLOYED*/}
-                    <Communities />
+                    <Communities userId={userId} />
                 </div>
 
-                {/* Sidebar for desktop only */}
-                <div className="hidden lg:block fixed right-4 top-24">
-                    <Sidebar />
-                </div>
+                {/* Sidebar for desktop only - only show for own profile */}
+                {isOwnProfile && (
+                    <div className="hidden lg:block fixed right-4 top-24">
+                        <Sidebar />
+                    </div>
+                )}
             </div>
             {/*  Before closing Layout */}
             {showCertModal && (

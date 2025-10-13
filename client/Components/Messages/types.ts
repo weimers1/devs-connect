@@ -83,12 +83,12 @@ export interface UseMessagesReturn {
   refreshMessages: () => Promise<void>;
 }
 
+// TYPE FIX: Added fetchChatMessages to interface for TypeScript compatibility
 export interface UseChatReturn {
   chatMessages: ChatMessage[];
   isLoading: boolean;
   error: string | null;
   sendMessage: (content: string) => Promise<void>;
-  loadMoreMessages: () => Promise<void>;
-  markAsRead: (messageId: string) => Promise<void>;
+  fetchChatMessages: (userId: string) => Promise<void>;
   socket: Socket | null;
 }

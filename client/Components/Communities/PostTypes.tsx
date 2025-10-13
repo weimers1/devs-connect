@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react/dist/iconify.js';
+import API from '../../Service/service';
 
 export interface Post {
     id: number;
+    userId?: number;
     type: 'programming' | 'lfg' | 'qa';
     author: string;
     avatar: string;
@@ -11,6 +14,7 @@ export interface Post {
     likes: number;
     comments: number;
     tags: string[];
+    canDelete?: boolean;
     // Programming post specific
     codeSnippet?: string;
     language?: string;
@@ -26,9 +30,100 @@ export interface Post {
 
 interface PostCardProps {
     post: Post;
+    onPostUpdate?: () => void;
+    onPostDelete?: (postId: number) => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete }) => {
+    const navigate = useNavigate();
+    const [isLiked, setIsLiked] = useState(false);
+    const [likes, setLikes] = useState(post.likes || 0);
+    const [showComments, setShowComments] = useState(false);
+    const [comments, setComments] = useState<any[]>([]);
+    const [newComment, setNewComment] = useState('');
+    const [loadingComments, setLoadingComments] = useState(false);
+    
+    const handleProfileClick = async () => {
+        if (!post.userId) return;
+        
+        try {
+            const currentUser = await API.getCurrentUser();
+            if (post.userId.toString() === currentUser.id.toString()) {
+                navigate('/profile');
+            } else {
+                navigate(`/profile/${post.userId}`);
+            }
+        } catch (error) {
+            console.error('Failed to get current user:', error);
+            // Fallback to other user profile
+            navigate(`/profile/${post.userId}`);
+        }
+    };
+
+    const handleLike = async () => {
+        try {
+            const result = await API.likePost(post.id.toString());
+            setIsLiked(result.liked);
+            setLikes(prev => result.liked ? prev + 1 : prev - 1);
+        } catch (error) {
+            console.error('Failed to like post:', error);
+        }
+    };
+
+    const handleComment = async () => {
+        if (!newComment.trim()) return;
+        
+        try {
+            await API.commentOnPost(post.id.toString(), newComment);
+            setNewComment('');
+            loadComments();
+            onPostUpdate?.();
+        } catch (error) {
+            console.error('Failed to comment:', error);
+        }
+    };
+
+    const handleInterest = async () => {
+        try {
+            await API.expressInterest(post.id.toString());
+            loadComments();
+            onPostUpdate?.();
+        } catch (error) {
+            console.error('Failed to express interest:', error);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!confirm('Are you sure you want to delete this post?')) return;
+        
+        try {
+            await API.deletePost(post.id.toString());
+            onPostDelete?.(post.id);
+        } catch (error) {
+            console.error('Failed to delete post:', error);
+        }
+    };
+
+    const loadComments = async () => {
+        if (loadingComments) return;
+        
+        setLoadingComments(true);
+        try {
+            const commentsData = await API.getPostComments(post.id.toString());
+            setComments(commentsData);
+        } catch (error) {
+            console.error('Failed to load comments:', error);
+        } finally {
+            setLoadingComments(false);
+        }
+    };
+
+    const toggleComments = () => {
+        setShowComments(!showComments);
+        if (!showComments && comments.length === 0) {
+            loadComments();
+        }
+    };
     const getPostTypeIcon = () => {
         switch (post.type) {
             case 'programming':
@@ -46,19 +141,37 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
             {/* Post Header */}
             <div className="flex items-start space-x-3 mb-4">
-                <img
-                    src={post.avatar}
-                    alt={post.author}
-                    className="w-10 h-10 rounded-full object-cover"
-                />
+                <button onClick={handleProfileClick}>
+                    <img
+                        src={post.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author)}&background=random`}
+                        alt={post.author}
+                        className="w-10 h-10 rounded-full object-cover hover:ring-2 hover:ring-blue-500 transition-all"
+                    />
+                </button>
                 <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                        <h4 className="font-semibold text-gray-900">{post.author}</h4>
-                        <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeInfo.bg} ${typeInfo.color}`}>
-                            <Icon icon={typeInfo.icon} className="w-3 h-3 mr-1" />
-                            {post.type.toUpperCase()}
+                    <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center space-x-2">
+                            <button 
+                                onClick={handleProfileClick}
+                                className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                            >
+                                {post.author}
+                            </button>
+                            <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeInfo.bg} ${typeInfo.color}`}>
+                                <Icon icon={typeInfo.icon} className="w-3 h-3 mr-1" />
+                                {post.type.toUpperCase()}
+                            </div>
+                            <span className="text-gray-500 text-sm">{post.timestamp}</span>
                         </div>
-                        <span className="text-gray-500 text-sm">{post.timestamp}</span>
+                        {post.canDelete && (
+                            <button 
+                                onClick={handleDelete}
+                                className="text-gray-400 hover:text-red-600 transition-colors"
+                                title="Delete post"
+                            >
+                                <Icon icon="mdi:delete" className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
                     
                     {/* Post Content */}
@@ -136,25 +249,92 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     
                     {/* Post Actions */}
                     <div className="flex items-center space-x-6 text-gray-500">
-                        <button className="flex items-center space-x-1 hover:text-blue-600 transition-colors">
-                            <Icon icon="mdi:heart-outline" className="w-4 h-4" />
-                            <span className="text-sm">{post.likes}</span>
+                        <button 
+                            onClick={handleLike}
+                            className={`flex items-center space-x-1 transition-colors ${
+                                isLiked ? 'text-red-600' : 'hover:text-red-600'
+                            }`}
+                        >
+                            <Icon icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} className="w-4 h-4" />
+                            <span className="text-sm">{likes}</span>
                         </button>
-                        <button className="flex items-center space-x-1 hover:text-blue-600 transition-colors">
+                        <button 
+                            onClick={toggleComments}
+                            className="flex items-center space-x-1 hover:text-blue-600 transition-colors"
+                        >
                             <Icon icon="mdi:comment-outline" className="w-4 h-4" />
-                            <span className="text-sm">{post.comments}</span>
+                            <span className="text-sm">{comments.length || post.comments || 0}</span>
                         </button>
                         <button className="flex items-center space-x-1 hover:text-blue-600 transition-colors">
                             <Icon icon="mdi:share-outline" className="w-4 h-4" />
                             <span className="text-sm">Share</span>
                         </button>
                         {post.type === 'lfg' && (
-                            <button className="flex items-center space-x-1 hover:text-green-600 transition-colors ml-auto">
+                            <button 
+                                onClick={handleInterest}
+                                className="flex items-center space-x-1 hover:text-green-600 transition-colors ml-auto"
+                            >
                                 <Icon icon="mdi:hand-heart" className="w-4 h-4" />
                                 <span className="text-sm font-medium">Interested</span>
                             </button>
                         )}
                     </div>
+                    
+                    {/* Comments Section */}
+                    {showComments && (
+                        <div className="mt-4 border-t pt-4">
+                            {/* Add Comment */}
+                            <div className="flex space-x-3 mb-4">
+                                <img
+                                    src="https://ui-avatars.com/api/?name=You&background=random"
+                                    alt="You"
+                                    className="w-8 h-8 rounded-full"
+                                />
+                                <div className="flex-1">
+                                    <textarea
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                        placeholder="Write a comment..."
+                                        className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows={2}
+                                    />
+                                    <button
+                                        onClick={handleComment}
+                                        disabled={!newComment.trim()}
+                                        className="mt-2 px-4 py-1 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Comment
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {/* Comments List */}
+                            {loadingComments ? (
+                                <div className="text-center py-4">
+                                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {comments.map((comment, index) => (
+                                        <div key={index} className="flex space-x-3">
+                                            <img
+                                                src={comment.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.author)}&background=random`}
+                                                alt={comment.author}
+                                                className="w-8 h-8 rounded-full"
+                                            />
+                                            <div className="flex-1 bg-gray-50 rounded-lg p-3">
+                                                <div className="flex items-center space-x-2 mb-1">
+                                                    <span className="font-medium text-sm">{comment.author}</span>
+                                                    <span className="text-gray-500 text-xs">{comment.timestamp}</span>
+                                                </div>
+                                                <p className="text-sm text-gray-700">{comment.content}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

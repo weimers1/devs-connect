@@ -64,24 +64,23 @@ const checkRateLimit = (userId: number): boolean => {
   return true;
 };
 
-// Get current user ID from session token with error handling
-const getCurrentUserId = (): number => {
+// Get current user ID from API
+const getCurrentUserId = async (): Promise<number> => {
   try {
-    const token = localStorage.getItem('session_token');
-    if (!token) {
-      throw new Error('No authentication token found');
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:6969'}/api/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('session_token')}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to get current user');
     }
     
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const userId = payload.user_id || payload.sub || payload.id;
-    
-    if (!userId || isNaN(Number(userId)) || Number(userId) <= 0) {
-      throw new Error('Invalid user ID in token');
-    }
-    
-    return Number(userId);
+    const user = await response.json();
+    return Number(user.id);
   } catch (error) {
-    console.error('Token validation failed');
+    console.error('Failed to get current user ID:', error);
     throw new Error('Authentication failed');
   }
 };
@@ -219,6 +218,7 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
 
   //calls the backend API and gets all messages between current user and selected user
   const fetchChatMessages = useCallback(async (id: string) => {
+    // SECURITY: Removed console.log statements that exposed user IDs and API responses
     // Validate and sanitize user ID
     if (!id || typeof id !== 'string') {
       throw new Error('Invalid user ID');
@@ -233,7 +233,6 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
     const sanitizedId = String(numericId);
     // Sanitize user ID for logging to prevent log injection
     const logSafeId = sanitizedId.replace(/[\r\n\t\x00-\x1F\x7F-\x9F\u0080-\u009F\u2000-\u200F\u2028-\u202F]/g, '_');
-    console.log('Fetching chat messages for user ID:', logSafeId);
     setIsLoading(true);
     setError(null);
     
@@ -247,10 +246,8 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
       // Sanitize response data for logging to prevent log injection
       const logSafeStatus = String(sanitizedResponse.status).replace(/[\r\n\t\x00-\x1F\x7F-\x9F\u0080-\u009F\u2000-\u200F\u2028-\u202F]/g, '_');
       const logSafeLength = String(sanitizedResponse.dataLength).replace(/[\r\n\t\x00-\x1F\x7F-\x9F\u0080-\u009F\u2000-\u200F\u2028-\u202F]/g, '_');
-      console.log('Chat API response status:', logSafeStatus);
-      console.log('Response data length:', logSafeLength);
         //This will Transform database format to the UI format
-      const currentUserId = getCurrentUserId();
+      const currentUserId = await getCurrentUserId();
       const transformedMessages: ChatMessage[] = response.data.map((msg: any) => ({
         id: msg.id.toString(),
         content: sanitizeContent(msg.content || ''),
@@ -279,7 +276,7 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
     // Get current user ID with error handling
     let currentUserId: number;
     try {
-      currentUserId = getCurrentUserId();
+      currentUserId = await getCurrentUserId();
     } catch (error) {
       setError('Authentication failed');
       return;
@@ -305,7 +302,7 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
 
     try {
       // Saves the messages to database
-      const messageApiUrl = import.meta.env.VITE_MESSAGE_API_URL || 'http://localhost:8080';
+      const messageApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
       
       // Validate API URL to prevent SSRF
       if (!validateUrl(messageApiUrl)) {
@@ -363,6 +360,7 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
       );
 
     } catch (err) {
+      // SECURITY: Kept error logging for debugging, removed data exposure
       console.error('Send message error:', err);
       // Update message status to failed
       setChatMessages(prev => 
@@ -389,7 +387,7 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
         throw new Error('No authentication token found');
       }
       
-      const messageApiUrl = import.meta.env.VITE_MESSAGE_API_URL || 'http://localhost:8080';
+      const messageApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
       
       // Validate API URL
       if (!validateUrl(messageApiUrl)) {
@@ -413,7 +411,8 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
     isLoading,
     error,
     fetchChatMessages,
-    sendMessage
+    sendMessage,
+    socket
   };
 };
 
@@ -425,7 +424,7 @@ export const useSocket = () => {
 
   useEffect(() => {
     try {
-      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:8080';
+      const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
       
       // Validate socket URL
       if (!validateUrl(socketUrl)) {

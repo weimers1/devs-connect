@@ -56,7 +56,7 @@ const validateName = (name: string): boolean => {
     return nameRegex.test(name.trim());
 };
 
-//Validate GithubUsername through the githubRegex algorithm 
+//Validate GithubUsername through the githubRegex algorithm
 const validateGitHubUsername = (username: string): boolean => {
     const githubRegex = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
     return githubRegex.test(username);
@@ -157,6 +157,11 @@ function ProfileInfo() {
     }, []);
     //Side Effect
     useEffect(() => {
+        if (API.getGitHubConnection != null) {
+            setGithubConnected(true);
+        } else {
+            return;
+        }
         // Secure GitHub OAuth parameter handling with validation
         const allowedParams = [
             'github',
@@ -237,26 +242,17 @@ function ProfileInfo() {
         const loadProfileData = async () => {
             try {
                 const response = await API.getProfileInformation();
+                const responseGitInfo = await API.getGitHubInfo();
 
                 //Set both current form data and BACKUP
                 setProfileSettings(response);
                 setOriginalData(response);
 
-                // Securely check GitHub connection from database
+                // Check GitHub connection from database
                 if (response.githubUsername && response.githubEmail) {
-                    const sanitizedEmail = sanitizeInput(response.githubEmail);
-                    const sanitizedUsername = sanitizeInput(
-                        response.githubUsername
-                    );
-
-                    if (
-                        validateEmail(sanitizedEmail) &&
-                        validateGitHubUsername(sanitizedUsername)
-                    ) {
-                        setGithubConnected(true);
-                        setGithubEmail(sanitizedEmail);
-                        setGithubUsername(sanitizedUsername);
-                    }
+                    setGithubConnected(true);
+                    setGithubEmail(responseGitInfo.githubEmail);
+                    setGithubUsername(response.githubUsername);
                 } else {
                     setGithubConnected(false);
                 }
@@ -720,7 +716,7 @@ function ProfileInfo() {
                                                                 Email Verified
                                                             </span>
                                                             <p className="text-sm text-gray-600">
-                                                                ethanmclaughlin24@gmail.com
+                                                                {profileSettings.email || 'No email found'}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -758,11 +754,7 @@ function ProfileInfo() {
                                                             </span>
                                                             <p className="text-sm text-gray-600">
                                                                 {githubConnected
-                                                                    ? `Connected: ${sanitizeInput(
-                                                                          githubEmail
-                                                                      )} (@${sanitizeInput(
-                                                                          githubUsername
-                                                                      )})`
+                                                                    ? `Connected: ${githubEmail} (@${githubUsername})`
                                                                     : 'Connect your GitHub profile'}
                                                             </p>
                                                         </div>

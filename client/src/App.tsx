@@ -8,6 +8,7 @@ import Messages from "../Components/Messages/Messages";
 import Communities from "../Components/Communities/Communities";
 import CommunityPage from "../Components/Communities/CommunityPage";
 import CreateCommunity from "../Components/Communities/CreateCommunity";
+import EditCommunity from "../Components/Communities/EditCommunity";
 import Setting from "../Components/Settings/Settings";
 import { ThemeProvider }  from "./ThemeContext"
 
@@ -20,11 +21,13 @@ const App = () => {
                 <Route path="/home" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/:userId" element={<Profile />} />
                 <Route path="authenticate" element={<AuthCallBack />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/communities" element={<Communities />} />
                 <Route path="/community/:communityId" element={<CommunityPage />} />
                 <Route path="/create-community" element={<CreateCommunity />} />
+                <Route path="/edit-community/:communityId" element={<EditCommunity />} />
                 <Route path="/settings" element={<Setting/>} />
             </Routes>
         </BrowserRouter>

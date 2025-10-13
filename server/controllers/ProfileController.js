@@ -28,7 +28,12 @@ export const linkGitHub = async (req, res) => {
         }
 
         // Validate email format if provided using literal regex
-        if (githubEmail && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(githubEmail)) {
+        if (
+            githubEmail &&
+            !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(
+                githubEmail
+            )
+        ) {
             return res.status(400).json({ error: 'Invalid email format' });
         }
 

@@ -2,6 +2,7 @@ import multer from 'multer';
 import s3 from '../config/aws.js';
 import { testS3Connection } from '../config/aws.js';
 import UserProfile from '../Models/UserProfile.js';
+import Community from '../Models/Communites.js';
 
 // Configure multer for memory storage
 const upload = multer({
@@ -128,5 +129,35 @@ export const updateProfileImage = async (req, res) => {
     }
 };
 
+// Upload community image
+export const uploadCommunityImage = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const fileName = `community-images/${Date.now()}-${req.file.originalname}`;
+
+        const params = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: fileName,
+            Body: req.file.buffer,
+            ContentType: req.file.mimetype,
+        };
+
+        const result = await s3.upload(params).promise();
+
+        res.json({
+            success: true,
+            imageUrl: result.Location,
+            message: 'Community image uploaded successfully!',
+        });
+    } catch (error) {
+        console.error('Community image upload error:', error);
+        res.status(500).json({ error: 'Upload failed' });
+    }
+};
+
 // Export multer middleware
 export const uploadMiddleware = upload.single('profileImage');
+export const uploadCommunityMiddleware = upload.single('communityImage');

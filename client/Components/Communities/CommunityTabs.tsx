@@ -7,9 +7,10 @@ import QAFeed from './QAFeed';
 interface CommunityTabsProps {
     activeTab: string;
     onTabChange: (tab: string) => void;
+    communityId: string;
 }
 
-const CommunityTabs: React.FC<CommunityTabsProps> = ({ activeTab, onTabChange }) => {
+const CommunityTabs: React.FC<CommunityTabsProps> = ({ activeTab, onTabChange, communityId }) => {
     return (
         <div className="bg-white rounded-xl shadow-sm border mb-6">
             <div className="flex border-b overflow-x-auto">
@@ -36,11 +37,11 @@ const CommunityTabs: React.FC<CommunityTabsProps> = ({ activeTab, onTabChange })
             </div>
 
             <div className="p-6">
-                {activeTab === 'posts' && <PostsFeed />}
+                {activeTab === 'posts' && <PostsFeed communityId={communityId} />}
                 
-                {activeTab === 'lfg' && <LFGFeed />}
+                {activeTab === 'lfg' && <LFGFeed communityId={communityId} />}
                 
-                {activeTab === 'qa' && <QAFeed />}
+                {activeTab === 'qa' && <QAFeed communityId={communityId} />}
 
                 {activeTab === 'events' && (
                     <div className="text-center py-12">

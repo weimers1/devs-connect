@@ -1,3 +1,5 @@
+import { getGitHubEmail } from "../../server/controllers/settingsController";
+
 // Backend API service
 const validateUrl = (url: string): boolean => {
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url);
@@ -116,6 +118,184 @@ deleteCertification: async (certId: number) => {
     headers: getAuthHeaders()
   });
   if(!response.ok) throw new Error('Failed to delete certification');
+  return response.json();
+},
+
+//Get GitHub Connection Status
+getGitHubConnection: async () => {
+  const response = await fetch(`${API_SETTINGS}/github`, {
+    headers: getAuthHeaders()
+  });
+  if(!response.ok) throw new Error('Failed to fetch GitHub connection');
+  return response.json();
+},
+
+//Get GitHub Username
+getGitHubInfo: async () => {
+  const response = await fetch(`${API_SETTINGS}/github-info`, {
+    headers: getAuthHeaders()
+  });
+  if(!response.ok) throw new Error('Failed to fetch GitHub username');
+  return response.json();
+},
+
+//Get User Profile by ID
+getUserProfile: async (userId: string) => {
+  const response = await fetch(`${BASE_URL}/api/users/${userId}/profile`, {
+    headers: getAuthHeaders()
+  });
+  if(!response.ok) throw new Error('Failed to fetch user profile');
+  return response.json();
+},
+
+//Create Community
+createCommunity: async (communityData: object) => {
+  const response = await fetch(`${BASE_URL}/api/communities/create`, {
+    method: 'POST',
+    headers: getAuthHeaders(true),
+    body: JSON.stringify(communityData)
+  });
+  if(!response.ok) throw new Error('Failed to create community');
+  return response.json();
+},
+
+//Get Communities
+getCommunities: async () => {
+  const response = await fetch(`${BASE_URL}/api/communities`, {
+    headers: getAuthHeaders()
+  });
+  if(!response.ok) throw new Error('Failed to fetch communities');
+  return response.json();
+},
+
+//Get Community by ID
+getCommunityById: async (id: string) => {
+  const response = await fetch(`${BASE_URL}/api/communities/${id}`, {
+    headers: getAuthHeaders()
+  });
+  if(!response.ok) throw new Error('Failed to fetch community');
+  return response.json();
+},
+
+//Upload Community Image
+uploadCommunityImage: async (file: File) => {
+  const formData = new FormData();
+  formData.append('communityImage', file);
+  const response = await fetch(`${BASE_URL}/api/upload/community-image`, {
+    method: 'POST',
+    body: formData
+  });
+  if(!response.ok) throw new Error('Failed to upload community image');
+  return response.json();
+},
+
+//Update Community
+updateCommunity: async (id: string, communityData: object) => {
+  const response = await fetch(`${BASE_URL}/api/communities/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(true),
+    body: JSON.stringify(communityData)
+  });
+  if(!response.ok) throw new Error('Failed to update community');
+  return response.json();
+},
+
+//Get Community Members
+getCommunityMembers: async (id: string) => {
+  const response = await fetch(`${BASE_URL}/api/communities/${id}/members`, {
+    headers: getAuthHeaders()
+  });
+  if(!response.ok) throw new Error('Failed to fetch community members');
+  return response.json();
+},
+
+//Get Community Posts
+getCommunityPosts: async (id: string, type?: string) => {
+  const url = type ? `${BASE_URL}/api/communities/${id}/posts?type=${type}` : `${BASE_URL}/api/communities/${id}/posts`;
+  const response = await fetch(url, {
+    headers: getAuthHeaders()
+  });
+  if(!response.ok) throw new Error('Failed to fetch community posts');
+  return response.json();
+},
+
+//Create Community Post
+createCommunityPost: async (communityId: string, postData: object) => {
+  const response = await fetch(`${BASE_URL}/api/communities/${communityId}/posts`, {
+    method: 'POST',
+    headers: getAuthHeaders(true),
+    body: JSON.stringify(postData)
+  });
+  if(!response.ok) throw new Error('Failed to create post');
+  return response.json();
+},
+
+//Join Community
+joinCommunity: async (communityId: string) => {
+  const response = await fetch(`${BASE_URL}/api/communities/${communityId}/join`, {
+    method: 'POST',
+    headers: getAuthHeaders(true)
+  });
+  if(!response.ok) throw new Error('Failed to join community');
+  return response.json();
+},
+
+//Like Post
+likePost: async (postId: string) => {
+  const response = await fetch(`${BASE_URL}/api/communities/posts/${postId}/like`, {
+    method: 'POST',
+    headers: getAuthHeaders(true)
+  });
+  if(!response.ok) throw new Error('Failed to like post');
+  return response.json();
+},
+
+//Comment on Post
+commentOnPost: async (postId: string, content: string) => {
+  const response = await fetch(`${BASE_URL}/api/communities/posts/${postId}/comment`, {
+    method: 'POST',
+    headers: getAuthHeaders(true),
+    body: JSON.stringify({ content })
+  });
+  if(!response.ok) throw new Error('Failed to comment on post');
+  return response.json();
+},
+
+//Get Post Comments
+getPostComments: async (postId: string) => {
+  const response = await fetch(`${BASE_URL}/api/communities/posts/${postId}/comments`, {
+    headers: getAuthHeaders()
+  });
+  if(!response.ok) throw new Error('Failed to get comments');
+  return response.json();
+},
+
+//Express Interest
+expressInterest: async (postId: string) => {
+  const response = await fetch(`${BASE_URL}/api/communities/posts/${postId}/interest`, {
+    method: 'POST',
+    headers: getAuthHeaders(true)
+  });
+  if(!response.ok) throw new Error('Failed to express interest');
+  return response.json();
+},
+
+//Delete Post
+deletePost: async (postId: string) => {
+  const response = await fetch(`${BASE_URL}/api/communities/posts/${postId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  if(!response.ok) throw new Error('Failed to delete post');
+  return response.json();
+},
+
+//Get Current User
+getCurrentUser: async () => {
+  const response = await fetch(`${BASE_URL}/api/users/me`, {
+    headers: getAuthHeaders()
+  });
+  if(!response.ok) throw new Error('Failed to get current user');
   return response.json();
 },
 

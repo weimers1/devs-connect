@@ -1,90 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CreatePost from './CreatePost';
 import PostCard, { Post } from './PostTypes';
+import API from '../../Service/service';
 
-const QA_POSTS: Post[] = [
-    {
-        id: 1,
-        type: 'qa',
-        author: 'Emma Thompson',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face',
-        timestamp: '1 day ago',
-        content: 'I\'ve been struggling with this for hours. Any help would be greatly appreciated!',
-        likes: 45,
-        comments: 15,
-        tags: ['question', 'help'],
-        question: 'How do I properly handle async operations in React useEffect?',
-        isAnswered: true,
-        bestAnswer: 'You should create an async function inside useEffect and call it immediately, or use .then() with promises. Never make useEffect itself async.'
-    },
-    {
-        id: 2,
-        type: 'qa',
-        author: 'Carlos Martinez',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face',
-        timestamp: '3 hours ago',
-        content: 'I\'m getting this error and can\'t figure out what\'s causing it. Has anyone encountered this before?',
-        likes: 12,
-        comments: 6,
-        tags: ['error', 'debugging'],
-        question: 'Why am I getting "Cannot read property of undefined" in my React component?',
-        isAnswered: false
-    },
-    {
-        id: 3,
-        type: 'qa',
-        author: 'Lisa Wang',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face',
-        timestamp: '6 hours ago',
-        content: 'Looking for best practices and recommendations from the community.',
-        likes: 28,
-        comments: 11,
-        tags: ['bestpractices', 'architecture'],
-        question: 'What\'s the best way to structure a large React application?',
-        isAnswered: true,
-        bestAnswer: 'Use feature-based folder structure, implement proper state management with Context/Redux, and follow component composition patterns. Keep components small and focused.'
-    },
-    {
-        id: 4,
-        type: 'qa',
-        author: 'Tom Johnson',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
-        timestamp: '2 days ago',
-        content: 'New to React and trying to understand the fundamentals. This concept is confusing me.',
-        likes: 35,
-        comments: 18,
-        tags: ['beginner', 'concepts'],
-        question: 'What\'s the difference between props and state in React?',
-        isAnswered: true,
-        bestAnswer: 'Props are read-only data passed from parent to child components. State is mutable data that belongs to a component and can change over time, triggering re-renders when updated.'
-    }
-];
+interface QAFeedProps {
+    communityId: string;
+}
 
-const QAFeed: React.FC = () => {
-    const [posts, setPosts] = useState<Post[]>(QA_POSTS);
+const QAFeed: React.FC<QAFeedProps> = ({ communityId }) => {
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const handlePostCreate = (postData: any) => {
+    useEffect(() => {
+        const fetchPosts = async () => {
+            try {
+                const postsData = await API.getCommunityPosts(communityId, 'qa');
+                setPosts(postsData);
+            } catch (error) {
+                console.error('Failed to fetch Q&A posts:', error);
+                setPosts([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPosts();
+    }, [communityId]);
+
+    const handlePostCreate = async (postData: any) => {
         if (postData.type !== 'qa') return;
         
-        const newPost: Post = {
-            id: posts.length + 1,
-            author: 'You',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
-            timestamp: 'Just now',
-            likes: 0,
-            comments: 0,
-            ...postData
-        };
-        setPosts([newPost, ...posts]);
+        try {
+            await API.createCommunityPost(communityId, postData);
+            // Refresh posts after creating
+            const updatedPosts = await API.getCommunityPosts(communityId, 'qa');
+            setPosts(updatedPosts);
+        } catch (error) {
+            console.error('Failed to create Q&A post:', error);
+        }
     };
+
+    const handlePostDelete = (postId: number) => {
+        setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+    };
+
+    if (loading) {
+        return (
+            <div className="space-y-6">
+                <CreatePost onPostCreate={handlePostCreate} />
+                <div className="text-center py-8">
+                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                    <p className="text-gray-500">Loading Q&A posts...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
             <CreatePost onPostCreate={handlePostCreate} />
             
-            {posts.map((post) => (
-                <PostCard key={post.id} post={post} />
-            ))}
+            {posts.length > 0 ? (
+                posts.map((post) => (
+                    <PostCard 
+                        key={post.id} 
+                        post={post} 
+                        onPostUpdate={() => {
+                            // Refresh posts when interactions happen
+                            API.getCommunityPosts(communityId, 'qa').then(setPosts).catch(console.error);
+                        }}
+                        onPostDelete={handlePostDelete}
+                    />
+                ))
+            ) : (
+                <div className="text-center py-12">
+                    <p className="text-gray-500 mb-4">No Q&A posts yet</p>
+                    <p className="text-sm text-gray-400">Be the first to ask a question!</p>
+                </div>
+            )}
         </div>
     );
 };

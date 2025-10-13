@@ -80,7 +80,10 @@ export const updateProfileSettings = async (req, res) => {
         }
 
         // Validate email format using literal regex
-        if (email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+        if (
+            email &&
+            !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)
+        ) {
             return res.status(400).json({ error: 'Invalid email format' });
         }
 
@@ -291,7 +294,7 @@ export const updatePrivacySecuritySettings = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-        
+
         if (user.email !== req.body.email) {
             //If the email is different from the user's email then return an error
             return res.status(400).json({ error: 'Email cannot be changed' });
@@ -453,5 +456,41 @@ export const deleteAccount = async (req, res) => {
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete account' });
+    }
+};
+
+//Get GitHub Connection Status
+export const getGitHubConnection = async (req, res) => {
+    try {
+        const user = await User.findOne({
+            where: { id: req.user.userId },
+        });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({
+            isConnected: !!(user.githubId && user.githubUsername),
+            githubUsername: user.githubUsername || null,
+            githubEmail: user.githubEmail || null,
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get GitHub connection' });
+    }
+};
+//Get Github Information
+export const getGitHubInformation = async (req, res) => {
+    try {
+        const username = await User.findOne({
+            where: { id: req.user.userId },
+        });
+        if (!username) {
+            return res.status(404).json({ error: 'Username not found' });
+        }
+        res.json({
+            githubEmail: username?.githubEmail || null,
+            githubUsername: username?.githubUsername || null,
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get username' });
     }
 };
