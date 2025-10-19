@@ -1,36 +1,73 @@
-import { createContext, useContext } from 'react';
-import { useStytchSession } from '@stytch/react';
+import {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    type ReactNode,
+} from 'react';
+import { validateSession, extendSession } from '../../Utils/Session';
 
-// set type for isAuthenticated
 interface AuthContextType {
     isAuthenticated: boolean;
+    isLoading: boolean;
+    login: (sessionToken: string) => void;
+    logout: () => void;
 }
 
-// create a context to provide other components with auth state
 export const AuthContext = createContext<AuthContextType | undefined>(
     undefined
 );
 
-// wrapper for providing isAuthenticated status
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     children,
 }) => {
-    const { session } = useStytchSession();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Validate session exists and is not expired
-    const isAuthenticated =
-        session &&
-        session.expires_at &&
-        new Date(session.expires_at) > new Date();
+    const login = (sessionToken: string) => {
+        localStorage.setItem('session_token', sessionToken);
+        setIsAuthenticated(true);
+    };
+
+    const logout = () => {
+        localStorage.removeItem('session_token');
+        setIsAuthenticated(false);
+    };
+
+    useEffect(() => {
+        const checkSession = async () => {
+            const sessionToken = localStorage.getItem('session_token');
+
+            if (!sessionToken) {
+                setIsLoading(false);
+                return;
+            }
+
+            const isValid = await validateSession(sessionToken);
+
+            if (isValid) {
+                setIsAuthenticated(true);
+                // Extend session for returning users
+                await extendSession(sessionToken);
+            } else {
+                logout();
+            }
+
+            setIsLoading(false);
+        };
+
+        checkSession();
+    }, []);
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated }}>
+        <AuthContext.Provider
+            value={{ isAuthenticated, isLoading, login, logout }}
+        >
             {children}
         </AuthContext.Provider>
     );
 };
 
-// function for using authenticated status
 export const useAuth = (): AuthContextType => {
     const context = useContext(AuthContext);
     if (!context) {

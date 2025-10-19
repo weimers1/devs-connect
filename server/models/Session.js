@@ -1,7 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
-//User Table
 const Session = sequelize.define('Session', {
     //Increment ID Upon Being Added to the DB
     id: {

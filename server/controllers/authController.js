@@ -77,7 +77,7 @@ export const verifyMagicLink = async (req, res) => {
         // authenticate the magic link with stytch and create a session within stytch
         const session = await stytchClient.magicLinks.authenticate({
             token: token,
-            session_duration_minutes: 60,
+            session_duration_minutes: 5, // temporarily using 1 minute for testing
         });
 
         // grab their email from the created stytch session
@@ -93,13 +93,15 @@ export const verifyMagicLink = async (req, res) => {
         }
         const email = session.user.emails[0].email;
 
-        // find the user with that email in the database, and assume they exist
-        const user = await User.findOne({ where: { email } });
+        // find or create the user with that email in the database
+        let user = await User.findOne({ where: { email } });
 
-        // if a user does not exist with that email, deny access
         if (!user) {
-            throw Object.assign(new Error('Invalid token or user'), {
-                status: 403,
+            // Create user if they don't exist (Stytch created them)
+            user = await User.create({
+                email,
+                firstName: 'User',
+                lastName: uuidv4(),
             });
         }
 
@@ -111,10 +113,18 @@ export const verifyMagicLink = async (req, res) => {
             isNewUser = true;
         }
 
+        // mark all previous sessions as inactive for a user to ensure there are no duplicate active sessions
+        await Session.update(
+            { isActive: false },
+            { where: { userId: user.id, isActive: true } }
+        );
+
         // create a session for them in the database
         const dbSession = await Session.create({
             userId: user.id,
             token: session.session_token,
+            isActive: true,
+            isExtended: false, // setting to false: manageSessionLifecycle happens in 60 min; by then, session should be extended
         });
 
         // if they're a new user, mark them as verified
@@ -123,11 +133,10 @@ export const verifyMagicLink = async (req, res) => {
             user.save();
         }
 
-        // Schedule session cleanup using database-based approach instead of setTimeout
-        // Set expiration time in database for proper session management
-        const expirationTime = new Date(Date.now() + 60 * 60 * 1000); // 60 minutes
-        dbSession.expiresAt = expirationTime;
-        await dbSession.save();
+        // call the manageSessionLifecycle function in 60 minutes
+        setTimeout(() => {
+            manageSessionLifecycle(dbSession.token);
+        }, 1000 * 60 * 5); // temporarily using 1 minute for testing
 
         res.status(200).json({ isNewUser, session_token: dbSession.token });
     } catch (error) {
@@ -141,9 +150,9 @@ export const verifyMagicLink = async (req, res) => {
     }
 };
 
-export const checkSession = (token) => {
+export const manageSessionLifecycle = (token) => {
     // check if the session has been extended (via the isExtended column in the session record);
-    // if it has, start a countdown to checkSession again; but if it hasn't been extended, mark it inactive
+    // if it has, start a countdown to manageSessionLifecycle again; but if it hasn't been extended, mark it inactive
     // and log them out
     Session.findOne({ where: { token } })
         .then((session) => {
@@ -155,11 +164,11 @@ export const checkSession = (token) => {
                 return session.save();
             }
 
-            // if the session is extended, call to checkSession again in 60 min;
+            // if the session is extended, call to manageSessionLifecycle again in 60 min;
             // also mark isExtended false now (since this will be set via the endpoint)
-            // Update expiration time instead of using setTimeout
-            const newExpirationTime = new Date(Date.now() + 60 * 60 * 1000);
-            session.expiresAt = newExpirationTime;
+            setTimeout(() => {
+                manageSessionLifecycle(token);
+            }, 1000 * 60 * 5); // temporarily using 1 minute for testing
             session.isExtended = false;
             return session.save();
         })

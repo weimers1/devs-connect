@@ -16,6 +16,11 @@ const Modal: React.FC<ModalContent> = ({
 }) => {
     const [isHidden, setIsHidden] = useState(false);
 
+    useEffect(() => {
+        // if there is no title or children, hide the modal; otherwise show it if any of the props change
+        setIsHidden(!title || !children ? true : false);
+    }, [title, children, allowClose]);
+
     return (
         <div
             className={`fixed inset-0 flex items-center justify-center p-4 z-50 ${

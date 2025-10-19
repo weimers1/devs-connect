@@ -150,6 +150,18 @@ function Profile() {
     });
     const [profileSaving, setProfileSaving] = useState(false);
     const [profileSaveStatus, setProfileSaveStatus] = useState('');
+    // Profile edit data
+    const [profileData, setProfileData] = useState({
+        firstName: '',
+        lastName: '',
+        bio: '',
+        location: '',
+        career: '',
+        school: '',
+        github: '',
+    });
+    const [profileSaving, setProfileSaving] = useState(false);
+    const [profileSaveStatus, setProfileSaveStatus] = useState('');
     useEffect(() => {
         const loadProfileData = async () => {
             try {
@@ -215,7 +227,86 @@ function Profile() {
             await API.addCertifications(certPayload);
             setCertSaveStatus('success');
             console.log('Certification saved:', certPayload);
+    //Handle Save for updating
+    const handleSave = async () => {
+        setCertSaving(true);
+        setCertSaveStatus('');
+        try {
+            // Combine the date fields before sending
+            const certPayload = {
+                certName: certData.certName,
+                issuer: certData.issuer,
+                dateEarned: combineDateFields(
+                    certData.issuedMonth,
+                    certData.issuedYear
+                ),
+                dateExpiration: combineDateFields(
+                    certData.expiryMonth,
+                    certData.expiryYear
+                ),
+                credentialID: certData.credentialID,
+                credentialURL: certData.credentialURL,
+            };
 
+            await API.addCertifications(certPayload);
+            setCertSaveStatus('success');
+            console.log('Certification saved:', certPayload);
+
+            setTimeout(() => {
+                setShowCertModal(false);
+                setCertSaving(false);
+                setCertSaveStatus('');
+                // Re-enable scrolling
+                document.body.style.overflow = 'auto';
+                document.documentElement.style.overflow = 'auto';
+            }, 1500);
+        } catch (error) {
+            console.error('Error saving certification:', error);
+            setCertSaveStatus('error');
+            setCertSaving(false);
+        }
+    };
+    //Handle Change for certData
+    const handleChange = (field: string, value: string) => {
+        setCertData((prevData) => ({
+            ...prevData,
+            [field]: value,
+        }));
+        setHasChanges(true);
+    };
+
+    // Handle Change for profile data
+    const handleProfileChange = (field: string, value: string) => {
+        setProfileData((prevData) => ({
+            ...prevData,
+            [field]: value,
+        }));
+        setHasChanges(true);
+    };
+
+    // Handle Profile Save
+    const handleProfileSave = async () => {
+        setProfileSaving(true);
+        setProfileSaveStatus('');
+        try {
+            await API.updateProfileSettings(profileData);
+            setProfileSaveStatus('success');
+            console.log('Profile saved:', profileData);
+
+            setTimeout(() => {
+                setShowProfModal(false);
+                setProfileSaving(false);
+                setProfileSaveStatus('');
+                document.body.style.overflow = 'auto';
+                document.documentElement.style.overflow = 'auto';
+            }, 1500);
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            setProfileSaveStatus('error');
+            setProfileSaving(false);
+        }
+    };
+    const currentYear = new Date().getFullYear();
             setTimeout(() => {
                 setShowCertModal(false);
                 setCertSaving(false);
@@ -359,6 +450,12 @@ function Profile() {
                                     handleChange('issuedYear', e.target.value)
                                 }
                                 value={certData.issuedYear}
+                            <select
+                                className="rounded-xl focus:outline-none focus:ring-1 border-1 py-1"
+                                onChange={(e) =>
+                                    handleChange('issuedYear', e.target.value)
+                                }
+                                value={certData.issuedYear}
                             >
                                 <option value="">Year</option>
                                 {sortedYears.map(
@@ -373,7 +470,31 @@ function Profile() {
                                         </option>
                                     )
                                 )}
+                                <option value="">Year</option>
+                                {sortedYears.map(
+                                    (
+                                        year //to map the years for the licenses/certifications
+                                    ) => (
+                                        <option
+                                            key={year}
+                                            value={year}
+                                        >
+                                            {year}
+                                        </option>
+                                    )
+                                )}
                             </select>
+                        </div>
+                        <label className="block text-sm font-medium mt-2 mb-2">
+                            Expiration Date
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <select
+                                className="rounded-xl focus:outline-none focus:ring-1 border-1 py-1"
+                                onChange={(e) =>
+                                    handleChange('expiryMonth', e.target.value)
+                                }
+                                value={certData.expiryMonth}
                         </div>
                         <label className="block text-sm font-medium mt-2 mb-2">
                             Expiration Date
@@ -402,6 +523,12 @@ function Profile() {
                                     handleChange('expiryYear', e.target.value)
                                 }
                                 value={certData.expiryYear}
+                            <select
+                                className="rounded-xl focus:outline-none focus:ring-1 border-1 py-1"
+                                onChange={(e) =>
+                                    handleChange('expiryYear', e.target.value)
+                                }
+                                value={certData.expiryYear}
                             >
                                 <option value="">Year</option>
                                 {sortedYears.map(
@@ -416,7 +543,104 @@ function Profile() {
                                         </option>
                                     )
                                 )}
+                                <option value="">Year</option>
+                                {sortedYears.map(
+                                    (
+                                        year //to map the years for the licenses/certifications
+                                    ) => (
+                                        <option
+                                            key={year}
+                                            value={year}
+                                        >
+                                            {year}
+                                        </option>
+                                    )
+                                )}
                             </select>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
+                            <label className="block text-sm font-medium  mt-2">
+                                Credential ID
+                            </label>
+                            <input
+                                type="text"
+                                value={certData.credentialID}
+                                onChange={(e) =>
+                                    handleChange('credentialID', e.target.value)
+                                }
+                                className="w-full px-3 py-1 border border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <label className="block text-sm font-medium  mt-2">
+                                Credential URL
+                            </label>
+                            <input
+                                type="text"
+                                value={certData.credentialURL}
+                                onChange={(e) =>
+                                    handleChange(
+                                        'credentialURL',
+                                        e.target.value
+                                    )
+                                }
+                                className="w-full px-3 py-1 border border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+
+                        <div className="flex justify-end space-x-2 mt-4">
+                            <button onClick={() => setShowCertModal(false)}>
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={certSaving}
+                                className={`px-3 py-1.5 rounded-lg font-medium transition-all duration-200 ${
+                                    certSaveStatus === 'success'
+                                        ? 'bg-green-600 text-white'
+                                        : certSaveStatus === 'error'
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                                }`}
+                            >
+                                {certSaving ? (
+                                    <>
+                                        <Icon
+                                            icon="mdi:loading"
+                                            className="animate-spin w-4 h-4 mr-2"
+                                        />
+                                        Saving...
+                                    </>
+                                ) : certSaveStatus === 'success' ? (
+                                    <>
+                                        <Icon
+                                            icon="mdi:check"
+                                            className="w-4 h-4 mr-2"
+                                        />
+                                        Saved!
+                                    </>
+                                ) : certSaveStatus === 'error' ? (
+                                    <>
+                                        <Icon
+                                            icon="mdi:alert"
+                                            className="w-4 h-4 mr-2"
+                                        />
+                                        Error
+                                    </>
+                                ) : (
+                                    'Save'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showProfModal && (
+                <div
+                    className="fixed inset-0 flex items-start justify-center pt-8 z-[9999]"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                >
+                    <div className="bg-white w-170 mr-12 max-h-[90vh] overflow-y-auto rounded-xl p-6 mx-4">
+                        <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
+                        <hr className="mb-6" />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
                             <label className="block text-sm font-medium  mt-2">

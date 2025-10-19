@@ -5,6 +5,7 @@ import Modal from '../Decal/Modal';
 import Layout from '../Layout';
 import Typeahead from '../Utils/Typeahead';
 import { Icon } from '@iconify/react/dist/iconify.js';
+import { useAuth } from './AuthContext';
 import { useTheme } from '../../src/ThemeContext';
 
 const Authenticate: React.FC = () => {
@@ -13,9 +14,7 @@ const Authenticate: React.FC = () => {
     const navigate = useNavigate();
     const { loadUserTheme } = useTheme();
     const calledVerify = useRef(false);
-    
-    // Extract base URL to prevent repeated computation
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+    const { login } = useAuth();
 
     const [modalInfo, setModalInfo] = useState<{
         title: string;
@@ -91,8 +90,7 @@ const Authenticate: React.FC = () => {
             showModal({
                 icon: 'mdi-emoticon-outline',
                 title: 'All Set!',
-                message:
-                    'Account setup complete. Now you can start connecting 🧩',
+                message: 'Account setup complete! 🧩',
                 allowClose: true,
             });
         } catch (error) {
@@ -113,6 +111,7 @@ const Authenticate: React.FC = () => {
             return;
         }
 
+        // avoid duplicate calls
         if (calledVerify.current) return;
         calledVerify.current = true;
 
@@ -170,7 +169,7 @@ const Authenticate: React.FC = () => {
                     return;
                 }
 
-                localStorage.setItem('session_token', data.session_token);
+                login(data.session_token);
 
                 // Load user's theme preference after successful authentication
                 await loadUserTheme();
