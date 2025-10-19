@@ -179,6 +179,8 @@ export const getGeneralPreferences = async (req, res) => {
     }
 };
 
+
+//WILL BE IMPLEMENTED IN FUTURE ITERATION
 //Delete Skill From The List
 // export const deleteSkill = async(req, res) => {
 

@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useTheme } from '../../src/ThemeContext';
+import API from '../../Service/service';
+import { assets } from '../../assets/assets';
 
 function ProfileDropdown() {
+    const [userProfile, setUserProfile] = useState('');
+    const [email, setEmail] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [loading, setLoading] = useState(true);
+
     const navigate = useNavigate();
     const { resetTheme, theme } = useTheme();
 
@@ -12,6 +20,35 @@ function ProfileDropdown() {
         resetTheme();
         navigate('/login');
     };
+    useEffect(() => {
+        const loadProfileData = async () => {
+            try {
+                const response = API.getProfileInformation();
+                const name = API.getProfileInformation();
+                //First Name Of USER
+                name.then((firstName) => {
+                    setFirstName(firstName.firstName);
+                });
+                //LAST NAME OF USER
+                name.then((lastName) => {
+                    setLastName(lastName.lastName);
+                });
+                //EMAIL OF USER
+                name.then((Email) => {
+                    setEmail(Email.email);
+                });
+                //PROFILE PICTURE OF USER
+                response.then((data) => {
+                    setUserProfile(data.pfp);
+                });
+            } catch (error) {
+                console.log('ERROR WITH GETTING PROF');
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadProfileData();
+    }, []);
 
     const menuItems = [
         {
@@ -46,9 +83,18 @@ function ProfileDropdown() {
                 }`}
             >
                 <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                    {userProfile ? (
+                        <img
+                            alt="Profile"
+                            src={userProfile || assets.Profile}
+                            className="w-8 h-8 rounded-3xl"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                            }}
+                        />
+                    ) : (
                         <span className="text-white font-medium">U</span>
-                    </div>
+                    )}
                     <div className="flex-1 min-w-0">
                         <p
                             className={`text-sm font-medium truncate ${
@@ -57,7 +103,7 @@ function ProfileDropdown() {
                                     : 'text-gray-900'
                             }`}
                         >
-                            User Name
+                            {firstName} {lastName}
                         </p>
                         <p
                             className={`text-xs truncate ${
@@ -66,7 +112,7 @@ function ProfileDropdown() {
                                     : 'text-gray-500'
                             }`}
                         >
-                            user@example.com
+                            {email}
                         </p>
                     </div>
                 </div>

@@ -1,16 +1,38 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { assets } from '../../assets/assets';
 import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useDropdown } from '../DropDown/DropDownContext';
 import ProfileDropdown from '../DropDown/ProfileDropDown';
 import { useTheme } from '../../src/ThemeContext';
+import API from '../../Service/service';
 
 const Navbar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
     const { theme } = useTheme();
     const { isProfileDropdownOpen, toggleProfileDropdown } = useDropdown();
+    const [userProfile, setUserProfile] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadProfileData = async () => {
+            try {
+                const response = await API.getProfileInformation();
+
+                if (response.pfp) {
+                    setUserProfile(response.pfp);
+                } else {
+                    setUserProfile('');
+                }
+            } catch (error) {
+                console.error('Failed to Load UserProfile', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadProfileData();
+    }, []);
 
     const pages = [
         {
@@ -143,11 +165,23 @@ const Navbar: React.FC = () => {
                             <div className="relative">
                                 <button
                                     onClick={toggleProfileDropdown}
-                                    className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
+                                    className="h-8 w-8 mt-1 rounded-full bg-gradient-to-r items-center justify-center"
                                 >
-                                    <span className="text-white text-sm font-medium">
-                                        U
-                                    </span>
+                                    {userProfile ? (
+                                        <img
+                                            alt="Profile"
+                                            src={userProfile || assets.Profile}
+                                            className="w-8 h-8 rounded-3xl"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display =
+                                                    'none';
+                                            }}
+                                        />
+                                    ) : (
+                                        <span className="text-white font-medium">
+                                            U
+                                        </span>
+                                    )}
                                 </button>
                                 {isProfileDropdownOpen && <ProfileDropdown />}
                             </div>

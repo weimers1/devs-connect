@@ -301,5 +301,4 @@ getCurrentUser: async () => {
 
 }
 
-
 export default API;

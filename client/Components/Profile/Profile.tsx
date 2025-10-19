@@ -47,7 +47,8 @@ function Profile() {
         credentialID: '',
         credentialURL: '',
     });
-    const validateImageUrl = (url) => {
+    // TYPE FIX: Added explicit string type for URL validation parameter
+    const validateImageUrl = (url: string) => {
         try {
             const parsedUrl = new URL(url);
             const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com'];
@@ -61,7 +62,8 @@ function Profile() {
         }
     };
 
-    const handleImageUpload = async (file) => {
+    // TYPE FIX: Added explicit File type to prevent TypeScript implicit any error
+    const handleImageUpload = async (file: File) => {
         setImageUploading(true);
 
         try {
@@ -185,8 +187,9 @@ function Profile() {
         }
     }, []);
 
+    // TYPE FIX: Added explicit string types for date combination parameters
     // Combine month and year into date string
-    const combineDateFields = (month, year) => {
+    const combineDateFields = (month: string, year: string) => {
         if (!month || !year) return '';
         return `${month}-${year}`;
     };
