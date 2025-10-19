@@ -15,12 +15,15 @@ const Navbar: React.FC = () => {
     const { isProfileDropdownOpen, toggleProfileDropdown } = useDropdown();
     const { isAuthenticated } = useAuth();
 
-    // Combine routes based on auth status
-    const availableRoutes = isAuthenticated 
-        ? [...defaultRoutes, ...protectedRoutes.filter(route => route.showInNav)]
-        : defaultRoutes;
+    // Combine routes based on auth status and filter by showInNav
+    const availableRoutes = isAuthenticated
+        ? [
+              ...defaultRoutes.filter((route) => route.showInNav),
+              ...protectedRoutes.filter((route) => route.showInNav),
+          ]
+        : defaultRoutes.filter((route) => route.showInNav);
 
-    const pages = availableRoutes.map(route => ({
+    const pages = availableRoutes.map((route) => ({
         route: route.path,
         title: route.title,
         icon: route.icon,
@@ -117,8 +120,8 @@ const Navbar: React.FC = () => {
                                                 ? 'bg-blue-900 text-blue-300 shadow-sm'
                                                 : 'bg-blue-100 text-blue-700 shadow-sm'
                                             : theme === 'dark'
-                                                ? 'text-gray-300 hover:text-white hover:bg-gray-700'
-                                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                            ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                                     }`}
                                 >
                                     <Icon
@@ -129,23 +132,30 @@ const Navbar: React.FC = () => {
                                 </Link>
                             );
                         })}
-                        
+
                         {/* User Profile / DROPDOWN - Only show if authenticated */}
                         {isAuthenticated && (
                             <div className="ml-4 flex items-center space-x-3">
-                                <button className={`p-2 rounded-lg transition-colors ${
-                                    theme === 'dark'
-                                        ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
-                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                                }`}>
-                                    <Icon icon="mdi:bell-outline" className="w-6 h-6" />
+                                <button
+                                    className={`p-2 rounded-lg transition-colors ${
+                                        theme === 'dark'
+                                            ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
+                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    <Icon
+                                        icon="mdi:bell-outline"
+                                        className="w-6 h-6"
+                                    />
                                 </button>
                                 <div className="relative">
                                     <button
                                         onClick={toggleProfileDropdown}
                                         className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
                                     >
-                                        <span className="text-white text-sm font-medium">U</span>
+                                        <span className="text-white text-sm font-medium">
+                                            U
+                                        </span>
                                     </button>
                                     {isProfileDropdownOpen && (
                                         <ProfileDropdown />
@@ -153,7 +163,7 @@ const Navbar: React.FC = () => {
                                 </div>
                             </div>
                         )}
-                        
+
                         {/* Login button for unauthenticated users */}
                         {!isAuthenticated && (
                             <div className="ml-4">
@@ -170,7 +180,9 @@ const Navbar: React.FC = () => {
                     {/* Mobile menu button */}
                     <div className="md:hidden">
                         <button
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            onClick={() =>
+                                setIsMobileMenuOpen(!isMobileMenuOpen)
+                            }
                             className={`p-2 rounded-lg transition-colors ${
                                 theme === 'dark'
                                     ? 'text-gray-300 hover:text-white hover:bg-gray-700'
@@ -190,11 +202,13 @@ const Navbar: React.FC = () => {
 
             {/* Mobile menu */}
             {isMobileMenuOpen && (
-                <div className={`md:hidden border-t ${
-                    theme === 'dark'
-                        ? 'border-gray-700 bg-gray-800'
-                        : 'border-gray-200 bg-white'
-                }`}>
+                <div
+                    className={`md:hidden border-t ${
+                        theme === 'dark'
+                            ? 'border-gray-700 bg-gray-800'
+                            : 'border-gray-200 bg-white'
+                    }`}
+                >
                     {/* Mobile Navigation Links */}
                     <div className="px-2 pt-2 pb-3 space-y-1">
                         {pages.map((page, i) => {
@@ -209,8 +223,8 @@ const Navbar: React.FC = () => {
                                                 ? 'bg-blue-900 text-blue-300'
                                                 : 'bg-blue-100 text-blue-700'
                                             : theme === 'dark'
-                                                ? 'text-gray-300 hover:text-white hover:bg-gray-700'
-                                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                            ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                                     }`}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                 >
@@ -226,26 +240,40 @@ const Navbar: React.FC = () => {
 
                     {/* Mobile User Section */}
                     {isAuthenticated ? (
-                        <div className={`border-t px-4 py-3 ${
-                            theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
-                        }`}>
+                        <div
+                            className={`border-t px-4 py-3 ${
+                                theme === 'dark'
+                                    ? 'border-gray-700'
+                                    : 'border-gray-200'
+                            }`}
+                        >
                             <div className="flex items-center space-x-3">
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                                    <span className="text-white font-medium">U</span>
+                                    <span className="text-white font-medium">
+                                        U
+                                    </span>
                                 </div>
                                 <div className="flex-1">
-                                    <div className={`text-base font-medium ${
-                                        theme === 'dark' ? 'text-white' : 'text-gray-900'
-                                    }`}>
+                                    <div
+                                        className={`text-base font-medium ${
+                                            theme === 'dark'
+                                                ? 'text-white'
+                                                : 'text-gray-900'
+                                        }`}
+                                    >
                                         User Profile
                                     </div>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className={`border-t px-4 py-3 ${
-                            theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
-                        }`}>
+                        <div
+                            className={`border-t px-4 py-3 ${
+                                theme === 'dark'
+                                    ? 'border-gray-700'
+                                    : 'border-gray-200'
+                            }`}
+                        >
                             <Link
                                 to="/login"
                                 className="w-full flex justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
+import { useAuthRedirect } from '../Auth/useAuthRedirect';
 
 interface CreatePostProps {
     onPostCreate: (postData: any) => void;
 }
 
 const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
+    const { requireAuth } = useAuthRedirect();
     const [postType, setPostType] = useState<'programming' | 'lfg' | 'qa'>('programming');
     const [content, setContent] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
@@ -82,7 +84,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
                         type="text"
                         placeholder="Share something with the community..."
                         className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                        onClick={() => setIsExpanded(true)}
+                        onClick={() => requireAuth(() => setIsExpanded(true))}
                         readOnly
                     />
                 </div>
@@ -193,7 +195,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
                             Cancel
                         </button>
                         <button
-                            onClick={handleSubmit}
+                            onClick={() => requireAuth(handleSubmit)}
                             disabled={!content.trim() || (postType === 'qa' && !question.trim())}
                             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >

@@ -20,8 +20,9 @@ const router = express.Router();
 
 router.get('/', getCommunities);
 router.get('/:id', getCommunityById);
-router.get('/:id/members', authMiddleware, getCommunityMembers);
-router.get('/:id/posts', authMiddleware, getCommunityPosts);
+router.get('/:id/posts', getCommunityPosts);
+router.get('/:id/members', getCommunityMembers);
+router.get('/:id/posts', getCommunityPosts);
 router.post('/:id/posts', authMiddleware, createCommunityPost);
 router.post('/:id/join', authMiddleware, joinCommunity);
 router.post('/create', authMiddleware, createCommunity);

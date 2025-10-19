@@ -22,6 +22,9 @@ const getAuthHeaders = (includeContentType = false, requireAuth = true) => {
     if (requireAuth) {
         if (!token) throw new Error('No authentication token found');
         headers['Authorization'] = `Bearer ${token}`;
+    } else if (token) {
+        // Include token if available, but don't require it
+        headers['Authorization'] = `Bearer ${token}`;
     }
 
     if (includeContentType) {
@@ -179,7 +182,7 @@ const API = {
     //Get Community by ID
     getCommunityById: async (id: string) => {
         const response = await fetch(`${BASE_URL}/api/communities/${id}`, {
-            headers: getAuthHeaders(),
+            headers: getAuthHeaders(false, false),
         });
         if (!response.ok) throw new Error('Failed to fetch community');
         return response.json();
@@ -213,7 +216,7 @@ const API = {
         const response = await fetch(
             `${BASE_URL}/api/communities/${id}/members`,
             {
-                headers: getAuthHeaders(),
+                headers: getAuthHeaders(false, false),
             }
         );
         if (!response.ok) throw new Error('Failed to fetch community members');
@@ -226,7 +229,7 @@ const API = {
             ? `${BASE_URL}/api/communities/${id}/posts?type=${type}`
             : `${BASE_URL}/api/communities/${id}/posts`;
         const response = await fetch(url, {
-            headers: getAuthHeaders(),
+            headers: getAuthHeaders(false, false),
         });
         if (!response.ok) throw new Error('Failed to fetch community posts');
         return response.json();

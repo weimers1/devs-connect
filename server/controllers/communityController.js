@@ -74,19 +74,23 @@ export const getCommunityById = async (req, res) => {
             where: { communityId: id },
         });
 
-        // Check if current user is the owner
-        const isOwner = community.createdBy === req.user.userId;
+        // Check if current user is the owner (only if authenticated)
+        const isOwner = req.user ? community.createdBy === req.user.userId : false;
 
-        // Check if current user is a member
-        const isMember = await UserCommunity.findOne({
-            where: { userId: req.user.userId, communityId: id },
-        });
+        // Check if current user is a member (only if authenticated)
+        let isMember = false;
+        if (req.user) {
+            const memberRecord = await UserCommunity.findOne({
+                where: { userId: req.user.userId, communityId: id },
+            });
+            isMember = !!memberRecord;
+        }
 
         res.json({
             ...community.toJSON(),
             memberCount,
             isOwner,
-            isMember: !!isMember,
+            isMember,
         });
     } catch (error) {
         console.error('Error fetching community:', error);
@@ -203,7 +207,7 @@ export const getCommunityPosts = async (req, res) => {
     try {
         const { id } = req.params;
         const { type } = req.query;
-        const currentUserId = req.user.userId;
+        const currentUserId = req.user ? req.user.userId : null;
 
         const whereClause = { communityId: id };
         if (type) {

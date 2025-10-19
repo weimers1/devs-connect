@@ -6,12 +6,14 @@ import CommunityActionBar from './CommunityActionBar';
 import CommunityTabs from './CommunityTabs';
 import CommunitySidebar from './CommunitySidebar';
 import API from '../../Service/service';
+import { useAuthRedirect } from '../Auth/useAuthRedirect';
 
 
 
 const CommunityPage: React.FC = () => {
     const { communityId } = useParams<{ communityId: string }>();
     const navigate = useNavigate();
+    const { requireAuth } = useAuthRedirect();
     const [activeTab, setActiveTab] = useState('posts');
     const [isJoined, setIsJoined] = useState(false);
     const [community, setCommunity] = useState<any>(null);
@@ -83,19 +85,21 @@ const CommunityPage: React.FC = () => {
     }
 
     const handleJoinCommunity = async () => {
-        if (!communityId) return;
-        try {
-            await API.joinCommunity(communityId);
-            setIsJoined(!isJoined);
-            const [updatedCommunity, updatedMembers] = await Promise.all([
-                API.getCommunityById(communityId),
-                API.getCommunityMembers(communityId)
-            ]);
-            setCommunity(updatedCommunity);
-            setMembers(updatedMembers);
-        } catch (error) {
-            console.error('Failed to join community:', error);
-        }
+        requireAuth(async () => {
+            if (!communityId) return;
+            try {
+                await API.joinCommunity(communityId);
+                setIsJoined(!isJoined);
+                const [updatedCommunity, updatedMembers] = await Promise.all([
+                    API.getCommunityById(communityId),
+                    API.getCommunityMembers(communityId)
+                ]);
+                setCommunity(updatedCommunity);
+                setMembers(updatedMembers);
+            } catch (error) {
+                console.error('Failed to join community:', error);
+            }
+        });
     };
 
     const handleTabChange = (tab: string) => {

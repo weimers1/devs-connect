@@ -4,6 +4,7 @@ import Profile from '../Components/Profile/Profile';
 import Messages from '../Components/Messages/Messages';
 import Communities from '../Components/Communities/Communities';
 import Settings from '../Components/Settings/Settings';
+import Create from '../Components/Create';
 
 export interface RouteConfig {
     path: string;
@@ -37,33 +38,34 @@ export const defaultRoutes: RouteConfig[] = [
         title: 'Courses',
         icon: 'streamline-freehand:learning-programming-book',
         alt: 'Courses',
-        showInNav: true,
+        showInNav: false, // REMOVED: Hide courses from navbar as requested
     },
-    {
-        path: '/create',
-        component: Home, // Placeholder until Create component is created
-        title: 'Create',
-        icon: 'oui:ml-create-single-metric-job',
-        alt: 'Create',
-        showInNav: true,
-    },
+
 ];
 
 export const protectedRoutes: RouteConfig[] = [
-    {
-        path: '/profile',
-        component: Profile,
-        title: 'Profile',
-        icon: 'mdi:account-circle-outline',
-        alt: 'Profile',
-        showInNav: true,
-    },
     {
         path: '/messages',
         component: Messages,
         title: 'Messages',
         icon: 'mdi:message-reply-text-outline',
         alt: 'Messages',
+        showInNav: true,
+    },
+    {
+        path: '/Create',
+        component: Create,
+        title: 'Create',
+        icon: 'oui:ml-create-single-metric-job',
+        alt: 'Create',
+        showInNav: true,
+    },
+    {
+        path: '/profile',
+        component: Profile,
+        title: 'Profile',
+        icon: 'mdi:account-circle-outline',
+        alt: 'Profile',
         showInNav: true,
     },
     {

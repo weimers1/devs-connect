@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import API from '../../Service/service';
+import { useAuthRedirect } from '../Auth/useAuthRedirect';
 
 export interface Post {
     id: number;
@@ -36,6 +37,7 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete }) => {
     const navigate = useNavigate();
+    const { requireAuth } = useAuthRedirect();
     const [isLiked, setIsLiked] = useState(false);
     const [likes, setLikes] = useState(post.likes || 0);
     const [showComments, setShowComments] = useState(false);
@@ -61,36 +63,42 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     };
 
     const handleLike = async () => {
-        try {
-            const result = await API.likePost(post.id.toString());
-            setIsLiked(result.liked);
-            setLikes(prev => result.liked ? prev + 1 : prev - 1);
-        } catch (error) {
-            console.error('Failed to like post:', error);
-        }
+        requireAuth(async () => {
+            try {
+                const result = await API.likePost(post.id.toString());
+                setIsLiked(result.liked);
+                setLikes(prev => result.liked ? prev + 1 : prev - 1);
+            } catch (error) {
+                console.error('Failed to like post:', error);
+            }
+        });
     };
 
     const handleComment = async () => {
         if (!newComment.trim()) return;
         
-        try {
-            await API.commentOnPost(post.id.toString(), newComment);
-            setNewComment('');
-            loadComments();
-            onPostUpdate?.();
-        } catch (error) {
-            console.error('Failed to comment:', error);
-        }
+        requireAuth(async () => {
+            try {
+                await API.commentOnPost(post.id.toString(), newComment);
+                setNewComment('');
+                loadComments();
+                onPostUpdate?.();
+            } catch (error) {
+                console.error('Failed to comment:', error);
+            }
+        });
     };
 
     const handleInterest = async () => {
-        try {
-            await API.expressInterest(post.id.toString());
-            loadComments();
-            onPostUpdate?.();
-        } catch (error) {
-            console.error('Failed to express interest:', error);
-        }
+        requireAuth(async () => {
+            try {
+                await API.expressInterest(post.id.toString());
+                loadComments();
+                onPostUpdate?.();
+            } catch (error) {
+                console.error('Failed to express interest:', error);
+            }
+        });
     };
 
     const handleDelete = async () => {
@@ -294,6 +302,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                                     <textarea
                                         value={newComment}
                                         onChange={(e) => setNewComment(e.target.value)}
+                                        onFocus={() => requireAuth()}
                                         placeholder="Write a comment..."
                                         className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         rows={2}

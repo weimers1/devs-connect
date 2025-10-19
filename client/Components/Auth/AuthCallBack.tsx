@@ -8,6 +8,9 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import { useAuth } from './AuthContext';
 import { useTheme } from '../../src/ThemeContext';
 
+// BUG FIX: Define baseUrl that was missing and causing ReferenceError
+const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+
 const Authenticate: React.FC = () => {
     const [params] = useSearchParams();
     const token = params.get('token');
@@ -184,7 +187,8 @@ const Authenticate: React.FC = () => {
                     });
                     setIsNewUser(true);
                 } else {
-                    navigate('/home');
+                    // BUG FIX: Navigate to root path '/' instead of '/home' since that's the actual home route
+                    navigate('/');
                 }
             } catch (error) {
                 console.error('Authentication failed:', error);

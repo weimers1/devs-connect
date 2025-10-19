@@ -43,6 +43,19 @@ const AppRoutes = () => {
                         path="authenticate"
                         element={<AuthCallBack />}
                     />
+                    {/* ROUTE FIX: Added missing community dynamic routes */}
+                    <Route
+                        path="/community/:communityId"
+                        element={<CommunityPage />}
+                    />
+                    <Route
+                        path="/communities/create"
+                        element={<CreateCommunity />}
+                    />
+                    <Route
+                        path="/community/:communityId/edit"
+                        element={<EditCommunity />}
+                    />
                 </Routes>
             </BrowserRouter>
         </ThemeProvider>
