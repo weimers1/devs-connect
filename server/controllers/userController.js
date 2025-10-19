@@ -1,5 +1,6 @@
 import User from '../models/User.js';
-import Session from '../models/Session.js';
+import Session from '../models/Session.js'; // Idk how imports with 'models' folder (as opposed to 'Models' folder) are even working rn
+import Career from '../Models/Career.js';
 
 // get user info
 export const getProfile = async (req, res) => {

@@ -17,7 +17,8 @@ const Modal: React.FC<ModalContent> = ({
     const [isHidden, setIsHidden] = useState(false);
 
     useEffect(() => {
-        setIsHidden(false);
+        // if there is no title or children, hide the modal; otherwise show it if any of the props change
+        setIsHidden(!title || !children ? true : false);
     }, [title, children, allowClose]);
 
     return (

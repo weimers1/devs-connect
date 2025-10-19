@@ -1,33 +1,56 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ProtectedRoute } from "../Components/Auth/ProtectedRoute";
-import Login from "../Components/Login";
-import Home from "../Components/Home";
-import Profile from "../Components/Profile/Profile";
-import AuthCallBack from "../Components/Auth/AuthCallBack";
-import Messages from "../Components/Messages/Messages";
-import Communities from "../Components/Communities/Communities";
-import Setting from "../Components/Settings/Settings";
-import { ThemeProvider }  from "./ThemeContext"
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from '../Components/Auth/AuthContext';
+import { ProtectedRoute } from '../Components/Auth/ProtectedRoute';
+import { PublicRoute } from '../Components/Auth/PublicRoute';
+import AuthCallBack from '../Components/Auth/AuthCallBack';
+import { defaultRoutes, protectedRoutes, publicRoutes } from '../Utils/routes';
+import { ThemeProvider } from './ThemeContext';
+
+const AppRoutes = () => {
+    return (
+        <ThemeProvider>
+            <BrowserRouter>
+                <Routes>
+                    {defaultRoutes.map((route) => (
+                        <Route
+                            key={route.path}
+                            path={route.path}
+                            element={<route.component />}
+                        />
+                    ))}
+                    <Route element={<ProtectedRoute />}>
+                        {protectedRoutes.map((route) => (
+                            <Route
+                                key={route.path}
+                                path={route.path}
+                                element={<route.component />}
+                            />
+                        ))}
+                    </Route>
+                    <Route element={<PublicRoute />}>
+                        {publicRoutes.map((route) => (
+                            <Route
+                                key={route.path}
+                                path={route.path}
+                                element={<route.component />}
+                            />
+                        ))}
+                    </Route>
+                    <Route
+                        path="authenticate"
+                        element={<AuthCallBack />}
+                    />
+                </Routes>
+            </BrowserRouter>
+        </ThemeProvider>
+    );
+};
 
 const App = () => {
     return (
-        <ThemeProvider>
-        <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<Login />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-               {/* <Route element={<ProtectedRoute />}>    
-                    
-                     </Route>   */}
-                     <Route path="/profile" element={<Profile />} />
-                <Route path="authenticate" element={<AuthCallBack />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/communities" element={<Communities />} />
-                <Route path="/settings" element={<Setting/>} />
-            </Routes>
-        </BrowserRouter>
-        </ThemeProvider>
+        <AuthProvider>
+            <AppRoutes />
+        </AuthProvider>
     );
 };
 

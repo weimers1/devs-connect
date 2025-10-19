@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
-import Navbar from '../Navbar/Navbar';
+import React, { useRef } from 'react';
 import SettingsNavbar from './SettingsNavbar';
 import SettingSidebar from './SettingSidebar';
 import SettingsContent from './SettingsContent';
