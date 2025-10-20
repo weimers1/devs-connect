@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { assets } from '../../assets/assets';
 import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
@@ -7,6 +7,7 @@ import ProfileDropdown from '../DropDown/ProfileDropDown';
 import { useTheme } from '../../src/ThemeContext';
 import { useAuth } from '../Auth/AuthContext';
 import { defaultRoutes, protectedRoutes } from '../../Utils/routes';
+import API from '../../Service/service';
 
 const Navbar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -14,6 +15,30 @@ const Navbar: React.FC = () => {
     const { theme } = useTheme();
     const { isProfileDropdownOpen, toggleProfileDropdown } = useDropdown();
     const { isAuthenticated } = useAuth();
+    const [userProfile, setUserProfile] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadProfileData = async () => {
+            if (!isAuthenticated) {
+                setLoading(false);
+                return;
+            }
+            try {
+                const response = await API.getProfileInformation();
+                if (response.pfp) {
+                    setUserProfile(response.pfp);
+                } else {
+                    setUserProfile('');
+                }
+            } catch (error) {
+                console.error('Failed to Load UserProfile', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadProfileData();
+    }, [isAuthenticated]);
 
     // Combine routes based on auth status and filter by showInNav
     const availableRoutes = isAuthenticated
@@ -153,9 +178,20 @@ const Navbar: React.FC = () => {
                                         onClick={toggleProfileDropdown}
                                         className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
                                     >
-                                        <span className="text-white text-sm font-medium">
-                                            U
-                                        </span>
+                                        {userProfile ? (
+                                            <img
+                                                alt="Profile"
+                                                src={userProfile}
+                                                className="w-8 h-8 rounded-full object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                }}
+                                            />
+                                        ) : (
+                                            <span className="text-white text-sm font-medium">
+                                                U
+                                            </span>
+                                        )}
                                     </button>
                                     {isProfileDropdownOpen && (
                                         <ProfileDropdown />

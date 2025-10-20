@@ -58,7 +58,7 @@ function SettingsNavbar() {
                             <img
                                 alt="Profile"
                                 src={userProfile || assets.Profile}
-                                className="w-9 h-9 rounded-3xl"
+                                className="w-8 h-8 rounded-3xl"
                                 onError={(e) => {
                                     e.currentTarget.style.display = 'none';
                                 }}

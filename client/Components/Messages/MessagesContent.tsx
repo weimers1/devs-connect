@@ -21,14 +21,14 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
     // Only scroll when new messages are added, not when loading existing messages
     const prevMessagesLength = useRef(0);
     const isInitialLoad = useRef(true);
-    
+
     useEffect(() => {
         if (isInitialLoad.current) {
             isInitialLoad.current = false;
             prevMessagesLength.current = messages.length;
             return;
         }
-        
+
         if (messages.length > prevMessagesLength.current) {
             scrollToBottom();
         }
@@ -73,7 +73,9 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
 
     if (!selectedMessage) {
         return (
-            <div className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}>
+            <div
+                className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}
+            >
                 <div className="text-center">
                     <Icon
                         icon="mdi:message-outline"
@@ -100,7 +102,10 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                         className="md:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                         aria-label="Back to messages"
                     >
-                        <Icon icon="mdi:arrow-left" className="w-5 h-5" />
+                        <Icon
+                            icon="mdi:arrow-left"
+                            className="w-5 h-5"
+                        />
                     </button>
 
                     <div className="relative">
@@ -119,7 +124,9 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                             {selectedMessage.name}
                         </h2>
                         <p className="text-xs text-gray-500">
-                            {selectedMessage.isOnline ? 'Active now' : 'Last seen recently'}
+                            {selectedMessage.isOnline
+                                ? 'Active now'
+                                : 'Last seen recently'}
                         </p>
                     </div>
                 </div>
@@ -130,7 +137,9 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                 {messages.map((message) => (
                     <div
                         key={message.id}
-                        className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
+                        className={`flex ${
+                            message.isOwn ? 'justify-end' : 'justify-start'
+                        }`}
                     >
                         <div
                             className={`max-w-xs lg:max-w-md px-3 py-2 rounded-2xl ${
@@ -140,15 +149,23 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                             }`}
                         >
                             <p className="text-sm">{message.content}</p>
-                            <div className={`flex items-center justify-end mt-1 space-x-1 ${
-                                message.isOwn ? 'text-blue-100' : 'text-gray-500'
-                            }`}>
+                            <div
+                                className={`flex items-center justify-end mt-1 space-x-1 ${
+                                    message.isOwn
+                                        ? 'text-blue-100'
+                                        : 'text-gray-500'
+                                }`}
+                            >
                                 <span className="text-xs">
                                     {formatTime(message.timestamp)}
                                 </span>
                                 {message.isOwn && (
                                     <Icon
-                                        icon={message.status === 'read' ? 'mdi:check-all' : 'mdi:check'}
+                                        icon={
+                                            message.status === 'read'
+                                                ? 'mdi:check-all'
+                                                : 'mdi:check'
+                                        }
                                         className="w-3 h-3"
                                     />
                                 )}
@@ -178,7 +195,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* UI CLEANUP: Simplified input area, removed attachment button */}
+            {/* UI CLEANUP: Simplified input area, removed attachment button  Made it simpler for user interaction*/}
             <div className="flex-shrink-0 p-4 border-t border-gray-200">
                 <div className="flex items-center space-x-3">
                     <div className="flex-1">
@@ -202,7 +219,10 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }`}
                     >
-                        <Icon icon="mdi:send" className="w-4 h-4" />
+                        <Icon
+                            icon="mdi:send"
+                            className="w-4 h-4"
+                        />
                     </button>
                 </div>
             </div>
