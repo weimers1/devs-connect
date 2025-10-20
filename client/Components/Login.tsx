@@ -2,6 +2,7 @@
 import { StytchLogin } from '@stytch/react';
 import { Products } from '@stytch/vanilla-js';
 import Layout from './Layout';
+import { useMemo } from 'react';
 const URL_CLIENT = import.meta.env.VITE_URL_CLIENT;
 
 // Define TypeScript interface for stytchStyle

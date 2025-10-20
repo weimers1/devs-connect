@@ -1,27 +1,25 @@
-// tailwind.config.js
 module.exports = {
-  darkMode: "class", // Enable dark mode via class strategy
+  darkMode: "class",
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
-      // You can define custom colors here for both light and dark modes
       colors: {
-        light: { // Light mode palette
-          primary: '#FFFFFF', // White background
-          secondary: '#F8F8F8', // Lighter background for surfaces
-          text: '#1F2937', // Dark gray for text
-          muted: '#6B7280', // Muted gray for secondary text
-          accent: '#4C51BF', // A primary accent color
+        light: {
+          primary: '#FFFFFF',
+          secondary: '#F8F8F8',
+          text: '#1F2937',
+          muted: '#6B7280',
+          accent: '#4C51BF',
         },
-        dark: { // Dark mode palette
-          primary: '#121212', // Very dark gray for main background
-          secondary: '#1F2937', // Slightly lighter dark gray for surfaces
-          text: '#E5E7EB', // Off-white for text
-          muted: '#9CA3AF', // Lighter muted gray for secondary text
-          accent: '#6D28D9', // A vibrant purple accent
+        dark: {
+          primary: '#121212',
+          secondary: '#1F2937',
+          text: '#E5E7EB',
+          muted: '#9CA3AF',
+          accent: '#6D28D9',
         },
       },
     },

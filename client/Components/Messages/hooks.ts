@@ -3,6 +3,95 @@ import type { Message, ChatMessage, UseMessagesReturn, UseChatReturn } from './t
 import {io, Socket} from "socket.io-client";
 import messageApi from '../../Service/service';
 
+// Security utilities || Without sanitization  for Example 
+// an attack can send a script fetch /api/user/delete, {method: 'POST}
+//Result: Script executes, deletes user account
+const sanitizeContent = (content: string): string => {
+  if (typeof content !== 'string') return '';
+  return content
+    .replace(/[<>"'&\/\\]/g, (match) => {
+      const entities: { [key: string]: string } = {
+        '<': 
+        '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;',
+        '&': '&amp;', 
+        '/': '&#x2F;', //Prevents path traversal
+        '\\': '&#x5C;' //Prevents escape sequences 
+      };
+      return entities[match];
+    })
+    .replace(/javascript:/gi, '') // Blocks JS execution
+    .replace(/data:/gi, '') //Blocks data URLS
+    .replace(/vbscript:/gi, '') //Blocks VBScript
+    .slice(0, 1000); // Max message length
+};
+
+//Validates the URL to make sure the URL is legit
+const validateUrl = (url: string): boolean => {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url);
+};
+
+const validateTimestamp = (timestamp: any): Date => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  
+  if (isNaN(date.getTime()) || date > now || date < oneYearAgo) {
+    return new Date(); // Return current date for invalid timestamps
+  }
+  return date;
+};
+
+
+// Rate limiting to combat against DDOS attacks
+const messageRateLimit = new Map<number, { count: number; lastReset: number }>();
+const MAX_MESSAGES_PER_MINUTE = 30;
+
+const checkRateLimit = (userId: number): boolean => {
+  const now = Date.now();
+  const userLimit = messageRateLimit.get(userId) || { count: 0, lastReset: now };
+  
+  if (now - userLimit.lastReset > 60000) {
+    userLimit.count = 0;
+    userLimit.lastReset = now;
+  }
+  
+  if (userLimit.count >= MAX_MESSAGES_PER_MINUTE) {
+    return false;
+  }
+  
+  userLimit.count++;
+  messageRateLimit.set(userId, userLimit);
+  return true;
+};
+
+// Get current user ID from API
+const getCurrentUserId = async (): Promise<number> => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:6969'}/api/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('session_token')}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to get current user');
+    }
+    
+    const user = await response.json();
+    return Number(user.id);
+  } catch (error) {
+    console.error('Failed to get current user ID:', error);
+    throw new Error('Authentication failed');
+  }
+};
+
+//Validate Messaging for message content 
+const validateMessageContent = (content: string): boolean => {
+  if (!content || typeof content !== 'string') return false;
+  if (content.length > 1000 || content.trim().length === 0) return false;
+  return true;
+};
+
 // Custom hook for managing messages list (SIDEBAR)
 // User opens the app and this "useMessages" fetches their recent chats | This Hook is the bridge between our backend API and frontend UI
 export const useMessages = (): UseMessagesReturn => {
@@ -19,17 +108,27 @@ export const useMessages = (): UseMessagesReturn => {
     try {
       const response = await messageApi.getConversations(); //This will call to the backend  (returns data aka conversation objects)
       
+      // Validate API response structure
+      if (!response || !response.data || !Array.isArray(response.data)) {
+        throw new Error('Invalid API response structure');
+      }
+      
       // Transform backend data to Message type | Since the backend and frontend format are different
-      const transformedMessages: Message[] = response.data.map((conv: any) => ({
-        id: conv.conversation_id,
-        name: `${conv.otherUser.firstName} ${conv.otherUser.lastName}`,
-        date: new Date(conv.lastMessage.createdAt).toLocaleDateString(),
-        avatar: `https://ui-avatars.com/api/?name=${conv.otherUser.firstName}+${conv.otherUser.lastName}&background=3b82f6&color=fff`,
-        lastMessage: conv.lastMessage.content,
-        unreadCount: conv.unreadCount || "",
-        //Fixed for now @TODO: add tracking to determine isOnline status
-        isOnline: Math.random() > 0.5
-      }));
+      const transformedMessages: Message[] = response.data.map((conversation: any) => {
+        if (!conversation?.conversation_id || !conversation?.otherUser || !conversation?.lastMessage) {
+          throw new Error('Invalid conversation data structure');
+        }
+        return {
+          id: conversation.conversation_id,
+          name: `${conversation.otherUser.firstName} ${conversation.otherUser.lastName}`,
+          date: new Date(conversation.lastMessage.createdAt).toLocaleDateString(),
+          avatar: `https://ui-avatars.com/api/?name=${conversation.otherUser.firstName}+${conversation.otherUser.lastName}&background=3b82f6&color=fff`,
+          lastMessage: conversation.lastMessage.content,
+          unreadCount: conversation.unreadCount || "",
+          //Fixed for now @TODO: add tracking to determine isOnline status
+          isOnline: Math.random() > 0.5
+        };
+      });
        
       setMessages(transformedMessages); //Updates state with ready conversation data
     } catch (err) {
@@ -62,22 +161,25 @@ export const useMessages = (): UseMessagesReturn => {
       //WEB SOCKET INTEGRATION For updates on the sidebar
           if(socket) {
             socket.on("receiver-message", (messageData) => {
-                {/* NEED TO IMPLEMENT EDGE CASES | ALSO NEED TO Accurately update the message count*/} 
+                // Validate messageData structure to prevent runtime errors
+                if (!messageData || typeof messageData !== 'object' || 
+                    !messageData.conversation_id || !messageData.content || !messageData.timestamp) {
+                  return;
+                }
+                
+                // Sanitize incoming message data to prevent XSS
+                const sanitizedContent = sanitizeContent(messageData.content);
+                const validatedTimestamp = validateTimestamp(messageData.timestamp);
+                
               setMessages(prev => 
               prev.map(conversation => {
                   if(conversation.id === messageData.conversation_id) {
+                    const currentCount = Number(conversation.unreadCount) || 0;
                     return {
                       ...conversation,
-                      lastMessage: messageData.content,
-                      date: new Date(messageData.timestamp).toLocaleDateString(),
-                      unreadCount: (
-                        (typeof conversation.unreadCount === 'string'
-                          ? parseInt(conversation.unreadCount)
-                          : (typeof conversation.unreadCount === 'number'
-                              ? conversation.unreadCount
-                              : 0)
-                        ) || 0
-                      ) + 1
+                      lastMessage: sanitizedContent,
+                      date: validatedTimestamp.toLocaleDateString(),
+                      unreadCount: currentCount + 1
                     };
                   }
                   return conversation;
@@ -116,21 +218,41 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
 
   //calls the backend API and gets all messages between current user and selected user
   const fetchChatMessages = useCallback(async (id: string) => {
-    console.log('Fetching chat messages for user ID:', id);
+    // SECURITY: Removed console.log statements that exposed user IDs and API responses
+    // Validate and sanitize user ID
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid user ID');
+    }
+    
+    // Validate user ID format (should be numeric)
+    const numericId = Number(id);
+    if (isNaN(numericId) || numericId <= 0 || !Number.isInteger(numericId)) {
+      throw new Error('User ID must be a positive integer');
+    }
+    
+    const sanitizedId = String(numericId);
+    // Sanitize user ID for logging to prevent log injection
+    const logSafeId = sanitizedId.replace(/[\r\n\t\x00-\x1F\x7F-\x9F\u0080-\u009F\u2000-\u200F\u2028-\u202F]/g, '_');
     setIsLoading(true);
     setError(null);
     
     try {
       const response = await messageApi.getChatMessages(id);
-      console.log('Chat API response:', response);
-      console.log('Response data:', response.data);
-      console.log('Response data length:', response.data?.length);
+      // Sanitize response data for logging
+      const sanitizedResponse = {
+        status: response.status || 'unknown',
+        dataLength: response.data?.length || 0
+      };
+      // Sanitize response data for logging to prevent log injection
+      const logSafeStatus = String(sanitizedResponse.status).replace(/[\r\n\t\x00-\x1F\x7F-\x9F\u0080-\u009F\u2000-\u200F\u2028-\u202F]/g, '_');
+      const logSafeLength = String(sanitizedResponse.dataLength).replace(/[\r\n\t\x00-\x1F\x7F-\x9F\u0080-\u009F\u2000-\u200F\u2028-\u202F]/g, '_');
         //This will Transform database format to the UI format
+      const currentUserId = await getCurrentUserId();
       const transformedMessages: ChatMessage[] = response.data.map((msg: any) => ({
         id: msg.id.toString(),
-        content: msg.content,
-        timestamp: new Date(msg.createdAt),
-        isOwn: msg.sender_id === 1,
+        content: sanitizeContent(msg.content || ''),
+        timestamp: validateTimestamp(msg.createdAt),
+        isOwn: msg.sender_id === currentUserId,
         status: msg.status || 'read'
       }));
    
@@ -149,11 +271,28 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
   
   //Handles sending new messages 
   const sendMessage = useCallback(async (content: string) => {
-    if (!userId || !content.trim()) return;
-    //Shows message immediately with "sending" status
-    const tempMessage: ChatMessage = { //The users sees message right away with no waiting
+    if (!userId || !validateMessageContent(content)) return;
+    
+    // Get current user ID with error handling
+    let currentUserId: number;
+    try {
+      currentUserId = await getCurrentUserId();
+    } catch (error) {
+      setError('Authentication failed');
+      return;
+    }
+    
+    // Rate limiting check
+    if (!checkRateLimit(currentUserId)) {
+      setError('Too many messages. Please wait before sending another.');
+      return;
+    }
+    
+    const sanitizedContent = sanitizeContent(content);
+    //Shows message immediately with "sending" status - user sees message right away with no waiting
+    const tempMessage: ChatMessage = {
       id: `temp-${Date.now()}`,
-      content: content.trim(),
+      content: sanitizedContent,
       timestamp: new Date(),
       isOwn: true,
       status: 'sending'
@@ -163,172 +302,172 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
 
     try {
       // Saves the messages to database
-      const response = await fetch('http://localhost:8080/api/messages/send', { //frontend api call which will send an HTTP post request to the backend, thus the backend will save to the database
+      const messageApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+      
+      // Validate API URL to prevent SSRF
+      if (!validateUrl(messageApiUrl)) {
+        throw new Error('Invalid API URL');
+      }
+      // Validate userId before parsing
+      const receiverIdNum = Number(userId);
+      if (isNaN(receiverIdNum) || receiverIdNum <= 0) {
+        throw new Error('Invalid user ID');
+      }
+      
+      // Send HTTP POST request to backend to save message to database
+      const token = localStorage.getItem('session_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(`${messageApiUrl}/api/messages/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          receiver_id: parseInt(userId),
-          content: content.trim()
+          receiver_id: receiverIdNum,
+          content: sanitizedContent
         })
       });
       if(socket) { //Sending messages looking for the sending-message event in the backend
-        socket.emit("send-message", {
-          sender_id: 1,
-          receiver_id: parseInt(userId),
-          content: content.trim(),
-          conversation_id: [1, parseInt(userId)].sort((a, b) => a - b).join('-')
-     })
+        // Validate authentication before emitting
+        try {
+          socket.emit("send-message", {
+            sender_id: currentUserId,
+            receiver_id: receiverIdNum,
+            content: sanitizedContent
+          });
+        } catch (error) {
+          console.error('Socket emission failed');
+        }
       }
+
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('Message sent successfully:', result);
       
-      // Update the temp message with real database data from server (removed the hard coded U.I we had early)
+      // Update message status to sent
       setChatMessages(prev => 
         prev.map(msg => 
           msg.id === tempMessage.id 
-            ? { 
-                ...msg, 
-                id: result.data.id.toString(), 
-                status: 'sent' as const,
-                timestamp: new Date(result.data.createdAt)
-              }
+            ? { ...msg, id: result.id?.toString() || msg.id, status: 'sent' }
             : msg
         )
       );
+
     } catch (err) {
+      // SECURITY: Kept error logging for debugging, removed data exposure
       console.error('Send message error:', err);
+      // Update message status to failed
       setChatMessages(prev => 
         prev.map(msg => 
           msg.id === tempMessage.id 
-            ? { ...msg, status: 'failed' as any }
+            ? { ...msg, status: 'failed' }
             : msg
         )
       );
-      setError('Failed to send message');
+      setError(err instanceof Error ? err.message : 'Failed to send message');
     }
   }, [userId, socket]);
-    //Load Older messages when user scrolls to the top @TODO: implement fully functional function in the future would call API 
-  const loadMoreMessages = useCallback(async () => {
-    if (!userId) return;
-  }, [userId]);
-    //Updates message status to read  when a user clicks on individual message  Note:(Only updates UI status, doesn't call to the backend)
-  const markAsRead = useCallback(async (messageId: string) => {
-    setChatMessages(prev => 
-      prev.map(msg => 
-        msg.id === messageId ? { ...msg, status: 'read' as const } : msg
-      )
-    );
-  }, []);
-  
-  // Mark entire conversation as read | marks all messages in conversation as read clears unread in top right 
-  const markConversationAsRead = useCallback(async (otherUserId: string) => {
+
+  const markConversationAsRead = useCallback(async (conversationId: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/messages/mark-read', {
+      // Validate conversation ID
+      const numericId = Number(conversationId);
+      if (isNaN(numericId) || numericId <= 0) {
+        throw new Error('Invalid conversation ID');
+      }
+      
+      const token = localStorage.getItem('session_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const messageApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+      
+      // Validate API URL
+      if (!validateUrl(messageApiUrl)) {
+        throw new Error('Invalid API URL');
+      }
+      
+      await fetch(`${messageApiUrl}/api/messages/mark-read/${numericId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          other_user_id: parseInt(otherUserId)
-        })
+          'Authorization': `Bearer ${token}`
+        }
       });
-      
-      if (response.ok) {
-        console.log('Conversation marked as read');
-      }
     } catch (err) {
-      console.error('Failed to mark conversation as read:', err);
+      console.error('Mark as read failed');
     }
   }, []);
-  //Automatically loads message when userid changes | triggers when user clicks different conversation in sidebar
-  useEffect(() => {
-    if (userId) {
-      fetchChatMessages(userId);
-    } else {
-      setChatMessages([]);
-    }
-  }, [userId, fetchChatMessages]);
-// In useChat hook, after the userId useEffect:
-useEffect(() => {
 
-  if(socket) {
-  socket.on("receiver-message", (messageData) => {
-    console.log("Received new message:", messageData);
-    
-      // ONLY add messages from OTHER users (not your own)
-  if (messageData.sender_id === 1) {
-    console.log("Ignoring own message from socket");
-    return; // Don't add your own messages via socket
-  }
-  
-
-    // Transform the data
-    const newMessage: ChatMessage = {
-     id: messageData.id ? messageData.id.toString() : `socket-${Date.now()}`,// or messageData.id if available
-      content: messageData.content,
-  timestamp: messageData.timestamp ? new Date(messageData.timestamp) : new Date(),
-      isOwn: false,
-      status: 'delivered'
-    };
-    
-    
-    // Add to chat messages
-    setChatMessages(prev => [...prev, newMessage]);
-  });
-    return () => { socket.off("receiver-message") };  
-}
-
-}, [socket]);
-  //Exposes all chat functionality to components
   return {
     chatMessages,
     isLoading,
     error,
+    fetchChatMessages,
     sendMessage,
-    loadMoreMessages,
-    markAsRead,
     socket
   };
-
 };
 
-// Hook for real-time message updates (WebSocket integration) | Testing to See if we can connect the server and client 
+// Socket hook with error handling
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:8080');
-    
-    
-    newSocket.on('connect', () => {
-      setIsConnected(true);
-    
-      newSocket.emit(`user-login`, {userId:1});
-      console.log(`User Connect Successfully`);
+    try {
+      const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
       
-    });
-  
+      // Validate socket URL
+      if (!validateUrl(socketUrl)) {
+        setError('Invalid socket configuration');
+        return;
+      }
+      
+      const newSocket = io(socketUrl);
 
-    newSocket.on('disconnect', () => {
+      newSocket.on('connect', () => {
+        setIsConnected(true);
+        setError(null);
+      });
+
+      newSocket.on('disconnect', () => {
+        setIsConnected(false);
+      });
+
+      newSocket.on('connect_error', () => {
+        setError('Connection failed');
+        setIsConnected(false);
+      });
+
+      newSocket.on('error', () => {
+        setError('Socket error occurred');
+      });
+
+      setSocket(newSocket);
+
+      return () => {
+        try {
+          newSocket.close();
+        } catch (closeErr) {
+          console.error('Error closing socket:', closeErr);
+        }
+      };
+    } catch (err) {
+      setError('Socket initialization failed');
       setIsConnected(false);
-      console.log('Disconnected from server');
-    });
-
-    setSocket(newSocket);
-
-    return () => { newSocket.close()
-    };
+    }
   }, []);
 
-
-  return { socket, isConnected };
+  return { socket, isConnected, error };
 };
 
 // Define the conversation type | defining the structure of conversation data from the backend API

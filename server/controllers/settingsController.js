@@ -41,7 +41,7 @@ export const getProfileSettings = async (req, res) => {
             githubId: user?.githubId || null,
             //Edit Profile
             bio: profile?.bio || null,
-            pfp: profile?.pfp || null,
+            pfp: profile?.profileImageUrl || null,
             career: profile?.career || null,
             school: profile?.school || null,
             certName: certification?.certName || null,
@@ -59,6 +59,53 @@ export const getProfileSettings = async (req, res) => {
 //Update Profile Settings
 export const updateProfileSettings = async (req, res) => {
     try {
+        // Input validation
+        const {
+            firstName,
+            lastName,
+            email,
+            location,
+            age,
+            gender,
+            career,
+            school,
+            bio,
+        } = req.body;
+
+        // Validate required fields
+        if (!firstName || !lastName) {
+            return res
+                .status(400)
+                .json({ error: 'First name and last name are required' });
+        }
+
+        // Validate email format using literal regex
+        if (
+            email &&
+            !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)
+        ) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        // Validate age if provided
+        if (age && (isNaN(age) || age < 13 || age > 120)) {
+            return res
+                .status(400)
+                .json({ error: 'Age must be between 13 and 120' });
+        }
+
+        // Sanitize string inputs
+        const sanitizedData = {
+            firstName: firstName.trim().substring(0, 50),
+            lastName: lastName.trim().substring(0, 50),
+            email: email?.trim(),
+            location: location?.trim().substring(0, 100),
+            gender: gender?.trim().substring(0, 20),
+            career: career?.trim().substring(0, 100),
+            school: school?.trim().substring(0, 100),
+            bio: bio?.trim().substring(0, 500),
+        };
+
         const user = await User.findOne({
             //Find the user
             where: { id: req.user.userId },
@@ -74,18 +121,17 @@ export const updateProfileSettings = async (req, res) => {
             },
         });
         await user.update({
-            firstName: req.body.firstName,
-            lastName: req.body.lastName,
-            email: req.body.email,
+            firstName: sanitizedData.firstName,
+            lastName: sanitizedData.lastName,
+            email: sanitizedData.email,
         });
         await profile.update({
-            location: req.body.location,
-            age: req.body.age,
-            gender: req.body.gender,
-            github: req.body.github,
-            career: req.body.career,
-            school: req.body.school,
-            bio: req.body.bio,
+            location: sanitizedData.location,
+            age: age,
+            gender: sanitizedData.gender,
+            career: sanitizedData.career,
+            school: sanitizedData.school,
+            bio: sanitizedData.bio,
         });
         if (req.body.certName) {
             // Only if certification data is sent
@@ -245,8 +291,12 @@ export const updatePrivacySecuritySettings = async (req, res) => {
             //Find the user
             where: { id: req.user.userId },
         });
-        if (!user.email !== req.body.email) {
-            //If the email is not the same as the user's email then return an error
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (user.email !== req.body.email) {
+            //If the email is different from the user's email then return an error
             return res.status(400).json({ error: 'Email cannot be changed' });
         }
 
@@ -406,5 +456,41 @@ export const deleteAccount = async (req, res) => {
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete account' });
+    }
+};
+
+//Get GitHub Connection Status
+export const getGitHubConnection = async (req, res) => {
+    try {
+        const user = await User.findOne({
+            where: { id: req.user.userId },
+        });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({
+            isConnected: !!(user.githubId && user.githubUsername),
+            githubUsername: user.githubUsername || null,
+            githubEmail: user.githubEmail || null,
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get GitHub connection' });
+    }
+};
+//Get Github Information
+export const getGitHubInformation = async (req, res) => {
+    try {
+        const username = await User.findOne({
+            where: { id: req.user.userId },
+        });
+        if (!username) {
+            return res.status(404).json({ error: 'Username not found' });
+        }
+        res.json({
+            githubEmail: username?.githubEmail || null,
+            githubUsername: username?.githubUsername || null,
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get username' });
     }
 };

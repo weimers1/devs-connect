@@ -5,6 +5,9 @@ import { PublicRoute } from '../Components/Auth/PublicRoute';
 import AuthCallBack from '../Components/Auth/AuthCallBack';
 import { defaultRoutes, protectedRoutes, publicRoutes } from '../Utils/routes';
 import { ThemeProvider } from './ThemeContext';
+import CommunityPage from '../Components/Communities/CommunityPage';
+import CreateCommunity from '../Components/Communities/CreateCommunity';
+import EditCommunity from '../Components/Communities/EditCommunity';
 
 const AppRoutes = () => {
     return (
@@ -39,6 +42,19 @@ const AppRoutes = () => {
                     <Route
                         path="authenticate"
                         element={<AuthCallBack />}
+                    />
+                    {/* ROUTE FIX: Added missing community dynamic routes */}
+                    <Route
+                        path="/community/:communityId"
+                        element={<CommunityPage />}
+                    />
+                    <Route
+                        path="/communities/create"
+                        element={<CreateCommunity />}
+                    />
+                    <Route
+                        path="/community/:communityId/edit"
+                        element={<EditCommunity />}
                     />
                 </Routes>
             </BrowserRouter>

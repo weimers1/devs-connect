@@ -61,7 +61,7 @@ const Typeahead = ({
     // call the inherited onchange function when the selectedId changes
     useEffect(() => {
         inheritedOnChange(selectedId);
-    }, [selectedId]);
+    }, [selectedId, inheritedOnChange]);
 
     const performSearch = async (term: string) => {
         try {
@@ -76,6 +76,8 @@ const Typeahead = ({
             setResults(jsonResponse.data);
             setIsOpen(true);
         } catch (error) {
+            console.error('Search API error:', error);
+            setError('Failed to fetch search results');
             setResults([]);
             setIsOpen(false);
         }

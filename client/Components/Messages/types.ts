@@ -16,7 +16,7 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   isOwn: boolean;
-  status?: 'sending' | 'sent' | 'delivered' | 'read';
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   type?: 'text' | 'image' | 'file' | 'system';
   metadata?: {
     fileName?: string;
@@ -83,12 +83,12 @@ export interface UseMessagesReturn {
   refreshMessages: () => Promise<void>;
 }
 
+// TYPE FIX: Added fetchChatMessages to interface for TypeScript compatibility
 export interface UseChatReturn {
   chatMessages: ChatMessage[];
   isLoading: boolean;
   error: string | null;
   sendMessage: (content: string) => Promise<void>;
-  loadMoreMessages: () => Promise<void>;
-  markAsRead: (messageId: string) => Promise<void>;
+  fetchChatMessages: (userId: string) => Promise<void>;
   socket: Socket | null;
 }

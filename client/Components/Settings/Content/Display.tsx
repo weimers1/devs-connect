@@ -1,7 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import API from '../../../Service/service';
 import { useTheme } from '../../../src/ThemeContext';
+
+const DISPLAY_OPTIONS = [
+    {
+        id: 'appearance',
+        name: 'Appearance',
+        description: 'Theme and visual preferences',
+    },
+];
 
 function Display() {
     const { theme, setTheme } = useTheme();
@@ -13,24 +21,27 @@ function Display() {
         font_size: 'medium',
     });
 
-    const handleThemeChange = async (newTheme) => {
-        const newSettings = {
-            theme: newTheme,
-            font_size: settings.font_size,
-        };
+    const handleThemeChange = useCallback(
+        async (newTheme) => {
+            const newSettings = {
+                theme: newTheme,
+                font_size: settings.font_size,
+            };
 
-        setSettings(newSettings);
-        setTheme(newTheme);
+            setSettings(newSettings);
+            setTheme(newTheme);
 
-        setIsLoading(true);
-        try {
-            await API.updateDisplaySettings(newSettings);
-        } catch (error) {
-            seterror(error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+            setIsLoading(true);
+            try {
+                await API.updateDisplaySettings(newSettings);
+            } catch (error) {
+                seterror(error);
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [settings.font_size, setTheme]
+    );
 
     //Handle Font Size Change
     const handleFontChange = async (newSize) => {
@@ -69,14 +80,6 @@ function Display() {
         setOpenSetting(openSetting === settingId ? null : settingId);
     };
 
-    const displayOptions = [
-        {
-            id: 'appearance',
-            name: 'Appearance',
-            description: 'Theme and visual preferences',
-        },
-    ];
-
     return (
         <div>
             <div
@@ -95,7 +98,7 @@ function Display() {
                     </p>
                 </div>
 
-                {displayOptions.map((option, index) => (
+                {DISPLAY_OPTIONS.map((option, index) => (
                     <div key={option.id}>
                         <div
                             className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer ${
@@ -131,7 +134,7 @@ function Display() {
 
                         {openSetting === option.id && (
                             <div
-                                className={`mx-4 mb-4  rounded-lg shadow-sm border border-gray-100${
+                                className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100 ${
                                     theme === 'dark'
                                         ? 'bg-gray-900'
                                         : 'bg-white'
@@ -242,7 +245,7 @@ function Display() {
                             </div>
                         )}
 
-                        {index !== displayOptions.length - 1 && (
+                        {index !== DISPLAY_OPTIONS.length - 1 && (
                             <hr className="border-gray-100" />
                         )}
                     </div>

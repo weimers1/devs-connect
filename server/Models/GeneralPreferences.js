@@ -1,59 +1,65 @@
-import sequelize from "../config/database.js";
-import { DataTypes } from "sequelize";
+import sequelize from '../config/database.js';
+import { DataTypes } from 'sequelize';
 
 const GeneralPreferences = sequelize.define('GeneralPreferences', {
-          id: { //ID
+    id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         allowNull: false,
-        primaryKey: true
+        primaryKey: true,
     },
-    userId: { //ID
+    userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
             model: 'Users',
-            key: 'id'
-        }
+            key: 'id',
+        },
     },
-    language: { //Language Settings
-    type: DataTypes.STRING,
-    allowNull: false,
-     defaultValue: 'English',
-
-    }, 
-    time_zone: { //Time Zone 
-    type: DataTypes.STRING,
-    allowNull: false
-    }, 
-    notifications: { //Notifications Settings
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: {
-        sound_effects: false,
-        push_notifications: false,
-        email_notifications: false,
-        desktop_notifications: false,
-    }
-},
-    feed_preferences: { //Feed Preferences
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: {
-        latest_posts: false,
-        most_popular: true,
-        following_only: false,
-    }
-},
-    content_filtering: { //Content Filtering
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: {
-        explicit_content: false,
-        filter_spam: false,
-        filter_profanity: false,
-    }
-},
-})
+    language: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'English',
+        validate: {
+            isIn: [['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese']]
+        },
+    },
+    timeZone: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'UTC',
+        validate: {
+            notEmpty: true
+        },
+    },
+    notifications: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: {
+            soundEffects: false,
+            pushNotifications: false,
+            emailNotifications: false,
+            desktopNotifications: false,
+        },
+    },
+    feedPreferences: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: {
+            latestPosts: false,
+            mostPopular: true,
+            followingOnly: false,
+        },
+    },
+    contentFiltering: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: {
+            explicitContent: false,
+            filterSpam: false,
+            filterProfanity: false,
+        },
+    },
+});
 
 export default GeneralPreferences;

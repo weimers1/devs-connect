@@ -1,16 +1,33 @@
 import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../Layout';
 import UserCard from './UserCard';
 import Sidebar from '../Connections/Sidebar';
-import Certifications from './Certifactions';
-import Skills from './Skills';
 import Communities from './ProfileCommunities';
 import { useTheme } from '../../src/ThemeContext';
 import API from '../../Service/service';
 import { Icon } from '@iconify/react';
 import { assets } from '../../assets/assets';
 
+const MONTHS = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+];
+
 function Profile() {
+    const { userId } = useParams<{ userId: string }>();
+    const navigate = useNavigate();
+    const isOwnProfile = !userId;
     const [showCertModal, setShowCertModal] = React.useState(false); //Certification Modal
     const [showProfModal, setShowProfModal] = React.useState(false); // Profile Modal
     const [certSaving, setCertSaving] = useState(false);
@@ -30,7 +47,21 @@ function Profile() {
         credentialID: '',
         credentialURL: '',
     });
-    const handleImageUpload = async (file) => {
+    const validateImageUrl = (url: string) => {
+        try {
+            const parsedUrl = new URL(url);
+            const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com'];
+            return (
+                allowedHosts.some((host) =>
+                    parsedUrl.hostname.endsWith(host)
+                ) && parsedUrl.protocol === 'https:'
+            );
+        } catch {
+            return false;
+        }
+    };
+
+    const handleImageUpload = async (file: File) => {
         setImageUploading(true);
 
         try {
@@ -38,41 +69,70 @@ function Profile() {
             const formData = new FormData();
             formData.append('profileImage', file);
 
+            const baseUrl =
+                import.meta.env.VITE_API_URL || 'http://localhost:6969';
             const uploadResponse = await fetch(
-                'http://localhost:6969/api/upload/profile-image',
+                `${baseUrl}/api/upload/profile-image`,
                 {
                     method: 'POST',
                     body: formData,
                 }
             );
 
+            if (!uploadResponse.ok) {
+                throw new Error(`Upload failed: ${uploadResponse.status}`);
+            }
+
             const uploadResult = await uploadResponse.json();
 
-            if (uploadResult.success) {
-                // Save URL to database
-                const saveResponse = await fetch(
-                    'http://localhost:6969/api/settings/profile-image',
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization:
-                                'Bearer ' +
-                                localStorage.getItem('session_token'),
-                        },
-                        body: JSON.stringify({
-                            imageUrl: uploadResult.imageUrl,
-                        }),
-                    }
-                );
-
-                if (saveResponse.ok) {
-                    setCurrentProfileImage(uploadResult.imageUrl);
-                    console.log('Profile image saved to database!');
-                }
+            if (!uploadResult.success) {
+                throw new Error('Upload to S3 failed');
             }
+
+            // Validate returned URL to prevent SSRF
+            if (!validateImageUrl(uploadResult.imageUrl)) {
+                throw new Error('Invalid image URL returned from server');
+            }
+
+            // Save URL to database
+            const token = localStorage.getItem('session_token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+            const saveResponse = await fetch(
+                `${baseUrl}/api/settings/profile-image`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' + token,
+                    },
+                    body: JSON.stringify({
+                        imageUrl: uploadResult.imageUrl,
+                    }),
+                }
+            );
+
+            if (!saveResponse.ok) {
+                throw new Error(`Database save failed: ${saveResponse.status}`);
+            }
+
+            let saveResult;
+            try {
+                saveResult = await saveResponse.json();
+            } catch (jsonError) {
+                throw new Error('Invalid response from server');
+            }
+
+            if (!saveResult || saveResult.error) {
+                throw new Error(saveResult?.error || 'Database save failed');
+            }
+
+            setCurrentProfileImage(uploadResult.imageUrl);
+            console.log('Profile image saved to database!');
         } catch (error) {
             console.error('Upload failed:', error);
+            alert('Failed to upload profile image. Please try again.');
         } finally {
             setImageUploading(false);
         }
@@ -93,16 +153,26 @@ function Profile() {
     useEffect(() => {
         const loadProfileData = async () => {
             try {
-                const response = await API.getProfileInformation();
-                //Set both current form data and BACKUP
+                const response = isOwnProfile
+                    ? await API.getProfileInformation()
+                    : await API.getUserProfile(userId!);
                 setProfileData(response);
                 setCurrentProfileImage(response.pfp || '');
             } catch (error) {
-                console.log('Unable to Fetch settings');
+                console.error('Failed to load profile data:', error);
+                setProfileData({
+                    firstName: '',
+                    lastName: '',
+                    bio: '',
+                    location: '',
+                    career: '',
+                    school: '',
+                    github: '',
+                });
             }
         };
         loadProfileData();
-    }, []);
+    }, [userId, isOwnProfile]);
     //Check Url For modal trigger so the form for certifications and profile  can pop up
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -116,7 +186,10 @@ function Profile() {
     }, []);
 
     // Combine month and year into date string
-    const combineDateFields = (month, year) => {
+    const combineDateFields = (
+        month: string | number,
+        year: string | number
+    ) => {
         if (!month || !year) return '';
         return `${month}-${year}`;
     };
@@ -145,7 +218,86 @@ function Profile() {
             await API.addCertifications(certPayload);
             setCertSaveStatus('success');
             console.log('Certification saved:', certPayload);
+            //Handle Save for updating
+            const handleSave = async () => {
+                setCertSaving(true);
+                setCertSaveStatus('');
+                try {
+                    // Combine the date fields before sending
+                    const certPayload = {
+                        certName: certData.certName,
+                        issuer: certData.issuer,
+                        dateEarned: combineDateFields(
+                            certData.issuedMonth,
+                            certData.issuedYear
+                        ),
+                        dateExpiration: combineDateFields(
+                            certData.expiryMonth,
+                            certData.expiryYear
+                        ),
+                        credentialID: certData.credentialID,
+                        credentialURL: certData.credentialURL,
+                    };
 
+                    await API.addCertifications(certPayload);
+                    setCertSaveStatus('success');
+                    console.log('Certification saved:', certPayload);
+
+                    setTimeout(() => {
+                        setShowCertModal(false);
+                        setCertSaving(false);
+                        setCertSaveStatus('');
+                        // Re-enable scrolling
+                        document.body.style.overflow = 'auto';
+                        document.documentElement.style.overflow = 'auto';
+                    }, 1500);
+                } catch (error) {
+                    console.error('Error saving certification:', error);
+                    setCertSaveStatus('error');
+                    setCertSaving(false);
+                }
+            };
+            //Handle Change for certData
+            const handleChange = (field: string, value: string) => {
+                setCertData((prevData) => ({
+                    ...prevData,
+                    [field]: value,
+                }));
+                setHasChanges(true);
+            };
+
+            // Handle Change for profile data
+            const handleProfileChange = (field: string, value: string) => {
+                setProfileData((prevData) => ({
+                    ...prevData,
+                    [field]: value,
+                }));
+                setHasChanges(true);
+            };
+
+            // Handle Profile Save
+            const handleProfileSave = async () => {
+                setProfileSaving(true);
+                setProfileSaveStatus('');
+                try {
+                    await API.updateProfileSettings(profileData);
+                    setProfileSaveStatus('success');
+                    console.log('Profile saved:', profileData);
+
+                    setTimeout(() => {
+                        setShowProfModal(false);
+                        setProfileSaving(false);
+                        setProfileSaveStatus('');
+                        document.body.style.overflow = 'auto';
+                        document.documentElement.style.overflow = 'auto';
+                    }, 1500);
+                } catch (error) {
+                    console.error('Error saving profile:', error);
+                    setProfileSaveStatus('error');
+                    setProfileSaving(false);
+                }
+            };
+            const currentYear = new Date().getFullYear();
             setTimeout(() => {
                 setShowCertModal(false);
                 setCertSaving(false);
@@ -209,22 +361,30 @@ function Profile() {
     const sortedYears = [...years].sort((a, b) => b - a); //Sort Years from most recent to oldest
     return (
         <Layout>
-            {/* Main container with full width on mobile */}
-            <div className="bg-gradient-to-b  min-h-screen md:mr-7 md:w-183">
-                {/* User Profile Card - Full width on mobile */}
-                <UserCard />
+            {/* Main container - centered for other users, full width for own profile */}
+            <div
+                className={`bg-gradient-to-b min-h-screen ${
+                    isOwnProfile ? 'md:mr-7 md:w-183' : 'max-w-4xl mx-auto px-4'
+                }`}
+            >
+                {/* User Profile Card */}
+                <UserCard
+                    userId={userId}
+                    isOwnProfile={isOwnProfile}
+                    profileData={profileData}
+                />
 
-                {/* Profile sections - No spacing between sections on mobile */}
+                {/* Profile sections */}
                 <div className="divide-y-0 divide-transparent">
-                    {/* <Skills />IN LATER ITERATION THIS WILL BE REDEPLOYED */}
-                    {/* <Certifications />  IN LATER ITERATION THIS WILL BE REDEPLOYED*/}
-                    <Communities />
+                    <Communities userId={userId} />
                 </div>
 
-                {/* Sidebar for desktop only */}
-                <div className="hidden lg:block fixed right-4 top-24">
-                    <Sidebar />
-                </div>
+                {/* Sidebar for desktop only - only show for own profile */}
+                {isOwnProfile && (
+                    <div className="hidden lg:block fixed right-4 top-24">
+                        <Sidebar />
+                    </div>
+                )}
             </div>
             {/*  Before closing Layout */}
             {showCertModal && (
@@ -274,18 +434,14 @@ function Profile() {
                                 value={certData.issuedMonth}
                             >
                                 <option value="">Month</option>
-                                <option value="January">January</option>
-                                <option value="February">February</option>
-                                <option value="March">March</option>
-                                <option value="April">April</option>
-                                <option value="May">May</option>
-                                <option value="June">June</option>
-                                <option value="July">July</option>
-                                <option value="August">August</option>
-                                <option value="September">September</option>
-                                <option value="October">October</option>
-                                <option value="November">November</option>
-                                <option value="December">December</option>
+                                {MONTHS.map((month) => (
+                                    <option
+                                        key={month}
+                                        value={month}
+                                    >
+                                        {month}
+                                    </option>
+                                ))}
                             </select>
                             <select
                                 className="rounded-xl focus:outline-none focus:ring-1 border-1 py-1"
@@ -294,6 +450,19 @@ function Profile() {
                                 }
                                 value={certData.issuedYear}
                             >
+                                <option value="">Year</option>
+                                {sortedYears.map(
+                                    (
+                                        year //to map the years for the licenses/certifications
+                                    ) => (
+                                        <option
+                                            key={year}
+                                            value={year}
+                                        >
+                                            {year}
+                                        </option>
+                                    )
+                                )}
                                 <option value="">Year</option>
                                 {sortedYears.map(
                                     (
@@ -321,18 +490,14 @@ function Profile() {
                                 value={certData.expiryMonth}
                             >
                                 <option value="">Month</option>
-                                <option value="January">January</option>
-                                <option value="February">February</option>
-                                <option value="March">March</option>
-                                <option value="April">April</option>
-                                <option value="May">May</option>
-                                <option value="June">June</option>
-                                <option value="July">July</option>
-                                <option value="August">August</option>
-                                <option value="September">September</option>
-                                <option value="October">October</option>
-                                <option value="November">November</option>
-                                <option value="December">December</option>
+                                {MONTHS.map((month) => (
+                                    <option
+                                        key={month}
+                                        value={month}
+                                    >
+                                        {month}
+                                    </option>
+                                ))}
                             </select>
                             <select
                                 className="rounded-xl focus:outline-none focus:ring-1 border-1 py-1"
@@ -341,6 +506,19 @@ function Profile() {
                                 }
                                 value={certData.expiryYear}
                             >
+                                <option value="">Year</option>
+                                {sortedYears.map(
+                                    (
+                                        year //to map the years for the licenses/certifications
+                                    ) => (
+                                        <option
+                                            key={year}
+                                            value={year}
+                                        >
+                                            {year}
+                                        </option>
+                                    )
+                                )}
                                 <option value="">Year</option>
                                 {sortedYears.map(
                                     (
@@ -439,20 +617,129 @@ function Profile() {
                     <div className="bg-white w-170 mr-12 max-h-[90vh] overflow-y-auto rounded-xl p-6 mx-4">
                         <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
                         <hr className="mb-6" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
+                        <label className="block text-sm font-medium  mt-2">
+                            Credential ID
+                        </label>
+                        <input
+                            type="text"
+                            value={certData.credentialID}
+                            onChange={(e) =>
+                                handleChange('credentialID', e.target.value)
+                            }
+                            className="w-full px-3 py-1 border border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <label className="block text-sm font-medium  mt-2">
+                            Credential URL
+                        </label>
+                        <input
+                            type="text"
+                            value={certData.credentialURL}
+                            onChange={(e) =>
+                                handleChange('credentialURL', e.target.value)
+                            }
+                            className="w-full px-3 py-1 border border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                    </div>
+
+                    <div className="flex justify-end space-x-2 mt-4">
+                        <button onClick={() => setShowCertModal(false)}>
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={certSaving}
+                            className={`px-3 py-1.5 rounded-lg font-medium transition-all duration-200 ${
+                                certSaveStatus === 'success'
+                                    ? 'bg-green-600 text-white'
+                                    : certSaveStatus === 'error'
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                            }`}
+                        >
+                            {certSaving ? (
+                                <>
+                                    <Icon
+                                        icon="mdi:loading"
+                                        className="animate-spin w-4 h-4 mr-2"
+                                    />
+                                    Saving...
+                                </>
+                            ) : certSaveStatus === 'success' ? (
+                                <>
+                                    <Icon
+                                        icon="mdi:check"
+                                        className="w-4 h-4 mr-2"
+                                    />
+                                    Saved!
+                                </>
+                            ) : certSaveStatus === 'error' ? (
+                                <>
+                                    <Icon
+                                        icon="mdi:alert"
+                                        className="w-4 h-4 mr-2"
+                                    />
+                                    Error
+                                </>
+                            ) : (
+                                'Save'
+                            )}
+                        </button>
+                    </div>
+                </div>
+            )}
+            {showProfModal && (
+                <div
+                    className="fixed inset-0 flex items-start justify-center pt-8 z-[9999]"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                >
+                    <div className="bg-white w-170 mr-12 max-h-[90vh] overflow-y-auto rounded-xl p-6 mx-4">
+                        <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
+                        <hr className="mb-6" />
 
                         {/* Profile Photo Section */}
                         <div className="flex flex-col items-center mb-6">
                             <img
-                                src={currentProfileImage || assets.Profile}
+                                src={
+                                    currentProfileImage &&
+                                    currentProfileImage.startsWith(
+                                        'https://'
+                                    ) &&
+                                    /^https:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/[^\s<>"']*)?$/.test(
+                                        currentProfileImage
+                                    )
+                                        ? currentProfileImage
+                                        : assets.Profile
+                                }
                                 alt="Profile"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = assets.Profile;
+                                }}
                                 className="w-20 h-20 rounded-full border-4 border-gray-300 shadow-lg object-cover mb-3"
                             />
                             <input
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => {
-                                    const file = (e.target.files ?? [0])[0];
-                                    if (file) handleImageUpload(file);
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        // Check file type
+                                        if (!file.type.startsWith('image/')) {
+                                            alert(
+                                                'Please select an image file'
+                                            );
+                                            return;
+                                        }
+                                        // Check file size (5MB)
+                                        if (file.size > 5 * 1024 * 1024) {
+                                            alert(
+                                                'File size must be less than 5MB'
+                                            );
+                                            return;
+                                        }
+                                        handleImageUpload(file);
+                                    }
                                 }}
                                 className="hidden"
                                 id="profile-upload"

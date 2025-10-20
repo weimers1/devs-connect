@@ -1,8 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { assets } from '../../assets/assets';
 import { useTheme } from '../../src/ThemeContext';
+import API from '../../Service/service';
 function SettingsNavbar() {
+    const [userProfile, setUserProfile] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadProfileData = async () => {
+            try {
+                const response = await API.getProfileInformation();
+
+                if (response.pfp) {
+                    setUserProfile(response.pfp);
+                } else {
+                    setUserProfile('');
+                }
+            } catch (error) {
+                console.error('Failed to Load UserProfile', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadProfileData();
+    }, []);
+
     const { theme } = useTheme();
     return (
         <>
@@ -25,14 +48,20 @@ function SettingsNavbar() {
                                     src={assets.Logo}
                                     className="h-10 w-auto"
                                     alt="DevConnect Logo"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
                                 />
                             </Link>
                         </div>
-                        <div className="ml-0.5">
+                        <div className="ml-0.5 ">
                             <img
                                 alt="Profile"
-                                src={assets.Profile}
-                                className="w-10 h-10"
+                                src={userProfile || assets.Profile}
+                                className="w-9 h-9 rounded-3xl"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                }}
                             />
                         </div>
                     </div>

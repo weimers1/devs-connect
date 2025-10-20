@@ -1,56 +1,114 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Sidebar from '../Connections/Sidebar';
 import Layout from '../Layout';
 import MessagesContent from './MessagesContent';
 import MessageSidebar from './MessageSidebar';
 import { useMessages, useChat, useSocket } from './hooks';
+import API from '../../Service/service';
 import type { Message } from './types';
 
 const Messages = () => {
+    const [searchParams] = useSearchParams();
+    const targetUserId = searchParams.get('user');
+    const [currentUserId, setCurrentUserId] = useState<string>('1');
+    
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(
         null
     );
     const [isMobileView, setIsMobileView] = useState(false);
+    // Get current user ID
+    useEffect(() => {
+        const getCurrentUserId = async () => {
+            try {
+                const user = await API.getCurrentUser();
+                setCurrentUserId(user.id.toString());
+            } catch (error) {
+                console.error('Failed to get current user:', error);
+            }
+        };
+        getCurrentUserId();
+    }, []);
+    
     // Use custom hooks for state management
     const { messages, isLoading, error, searchMessages } = useMessages();
+    
+    // Auto-select conversation if coming from profile
+    useEffect(() => {
+        if (targetUserId) {
+            const existingConversation = messages.find(msg => 
+                msg.id.includes(targetUserId)
+            );
+            if (existingConversation) {
+                setSelectedMessage(existingConversation);
+            } else {
+                // Create new conversation immediately
+                const createNewConversation = async () => {
+                    try {
+                        const userProfile = await API.getUserProfile(targetUserId);
+                        const newConversation: Message = {
+                            id: `${currentUserId}-${targetUserId}`,
+                            name: `${userProfile.firstName} ${userProfile.lastName}`,
+                            lastMessage: 'Start a conversation...',
+                            timestamp: new Date().toISOString(),
+                            avatar: userProfile.pfp || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.firstName + ' ' + userProfile.lastName)}&background=random`
+                        };
+                        setSelectedMessage(newConversation);
+                    } catch (error) {
+                        console.error('Failed to create conversation:', error);
+                        const fallbackConversation: Message = {
+                            id: `${currentUserId}-${targetUserId}`,
+                            name: 'New Conversation',
+                            lastMessage: 'Start a conversation...',
+                            timestamp: new Date().toISOString(),
+                            avatar: `https://ui-avatars.com/api/?name=User&background=random`
+                        };
+                        setSelectedMessage(fallbackConversation);
+                    }
+                };
+                createNewConversation();
+            }
+        }
+    }, [targetUserId, messages, currentUserId]);
     // Extract other user ID from conversation ID (e.g., "1-2" -> "2")
     const selectedUserId = selectedMessage?.id
-        ? selectedMessage.id.split('-').find((id) => id !== '1') || null
+        ? selectedMessage.id.split('-').find((id) => id !== currentUserId) || null
         : null;
+    // BUG FIX: Added fetchChatMessages to load actual chat messages when conversation selected
     const {
         chatMessages,
         isLoading: chatLoading,
         sendMessage,
+        fetchChatMessages,
         socket,
     } = useChat(selectedUserId);
-    //This is building off of the previously established connection in the hooks and allowing us to put it to use with sending messages
 
-    // Debug logging
-    console.log('Selected message:', selectedMessage);
-    console.log('Selected user ID:', selectedUserId);
+    // Remove debug logging for production
 
     //Base Effect Method added (relying on the hook in the hooks which establishes a connection from client to server)
     useEffect(() => {
         if (socket) {
-            console.log(' Socket Connected');
-            socket.emit('test-connection', 'Hello friends');
-
-            socket.on('test-response', (data) => {
-                console.log('Server Responded:', data);
-            });
+            try {
+                socket.emit('test-connection', 'Hello friends');
+                socket.on('test-response', () => {
+                    // Connection confirmed
+                });
+                return () => {
+                    socket.off('test-response');
+                };
+            } catch (error) {
+                console.error('Socket connection error');
+            }
         }
     }, [socket]);
-
-    console.log('Chat messages:', chatMessages);
 
     // Handle responsive behavior
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth >= 768) {
-                setIsMobileView(false);
-            }
+            setIsMobileView(window.innerWidth < 768);
         };
 
+        handleResize(); // Set initial state
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -58,30 +116,37 @@ const Messages = () => {
     const handleMessageSelect = useCallback(
         (message: Message) => {
             setSelectedMessage(message);
+            
+            // BUG FIX: Actually fetch chat messages when conversation is selected
+            // This was missing, causing empty chat windows
+            const otherUserId = message.id.split('-').find((id) => id !== currentUserId);
+            if (otherUserId && fetchChatMessages) {
+                fetchChatMessages(otherUserId);
+            }
 
             if (socket) {
-                console.log('EMITTING JOIN-CHAT:', message.id);
-                socket.emit('user-login', { id: message.id }); //Event to Join A chat with the message ID (Case Sensitive must match the backend)
-            } else {
-                console.log('NO SOCKET AVAILABLE'); //Console Log of not joining
+                try {
+                    socket.emit('user-login', { userId: currentUserId });
+                } catch (error) {
+                    console.error('Failed to join chat');
+                }
             }
-            if (window.innerWidth < 768) {
-                setIsMobileView(true);
-            }
+            // Mobile view is now handled by CSS classes
         },
-        [socket]
+        [socket, currentUserId, fetchChatMessages]
     );
 
     const handleBackToList = useCallback(() => {
-        setIsMobileView(false);
-        if (window.innerWidth < 768) {
-            setSelectedMessage(null);
-        }
+        setSelectedMessage(null);
     }, []);
 
     const handleSendMessage = useCallback(
         async (content: string) => {
-            await sendMessage(content);
+            try {
+                await sendMessage(content);
+            } catch (err) {
+                console.error('Failed to send message:', err);
+            }
         },
         [sendMessage]
     );
@@ -103,29 +168,22 @@ const Messages = () => {
 
     return (
         <Layout>
-            <div
-                className="flex h-screen   bg-gray-50 messages-container 
-                  md:mt-4 md:rounded-xl 
-                  -mx-3 md:my-0
-                  absolute md:relative inset-3 top-17 md:top-auto  md:w-3/4 lg:w-2/3 xl:w-4/6"
-            >
-                <MessageSidebar
-                    onMessageSelect={handleMessageSelect}
-                    selectedMessage={selectedMessage}
-                    onSearch={searchMessages}
-                    className={`${isMobileView ? 'hidden md:flex' : `flex`}`}
-                />
-                <MessagesContent
-                    selectedMessage={selectedMessage}
-                    onBackToList={handleBackToList}
-                    messages={chatMessages}
-                    onSendMessage={handleSendMessage}
-                    className={`${
-                        !isMobileView ? 'hidden md:flex' : 'flex'
-                    } md:flex`}
-                />
-                <div className="hidden lg:flex">
-                    <Sidebar />
+            <div className="max-w-6xl mx-auto p-4">
+                {/* UI FIX: Improved mobile responsiveness with proper sidebar/chat switching */}
+                <div className="bg-white rounded-lg shadow-sm border h-[calc(100vh-8rem)] flex overflow-hidden">
+                    <MessageSidebar
+                        onMessageSelect={handleMessageSelect}
+                        selectedMessage={selectedMessage}
+                        onSearch={searchMessages}
+                        className={`${selectedMessage ? 'hidden md:flex' : 'flex'} border-r border-gray-200`}
+                    />
+                    <MessagesContent
+                        selectedMessage={selectedMessage}
+                        onBackToList={handleBackToList}
+                        messages={chatMessages}
+                        onSendMessage={handleSendMessage}
+                        className={`${selectedMessage ? 'flex' : 'hidden md:flex'} flex-1`}
+                    />
                 </div>
             </div>
         </Layout>
