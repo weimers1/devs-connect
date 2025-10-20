@@ -48,18 +48,20 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     const handleProfileClick = async () => {
         if (!post.userId) return;
         
-        try {
-            const currentUser = await API.getCurrentUser();
-            if (post.userId.toString() === currentUser.id.toString()) {
-                navigate('/profile');
-            } else {
+        requireAuth(async () => {
+            try {
+                const currentUser = await API.getCurrentUser();
+                if (post.userId.toString() === currentUser.id.toString()) {
+                    navigate('/profile');
+                } else {
+                    navigate(`/profile/${post.userId}`);
+                }
+            } catch (error) {
+                console.error('Failed to get current user:', error);
+                // Fallback to other user profile
                 navigate(`/profile/${post.userId}`);
             }
-        } catch (error) {
-            console.error('Failed to get current user:', error);
-            // Fallback to other user profile
-            navigate(`/profile/${post.userId}`);
-        }
+        });
     };
 
     const handleLike = async () => {

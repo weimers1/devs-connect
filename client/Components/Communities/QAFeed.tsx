@@ -3,18 +3,20 @@ import CreatePost from './CreatePost';
 import PostCard, { Post } from './PostTypes';
 import API from '../../Service/service';
 
-interface QAFeedProps {
-    communityId: string;
+//
+interface QAFeedProps { //What props this component expects to receive
+    communityId: string; //a string identifying which communities Q&A posts to display
 }
+//Functional React component that accepts communityId as a prop
+const QAFeed: React.FC<QAFeedProps> = ({ communityId }) => { //Tells TypeScript this is a React functional component with specific 
+    const [posts, setPosts] = useState<Post[]>([]);//Creates state variable posts (array of Post objects) with setter function setPosts
+    const [loading, setLoading] = useState(true); //Loading State
 
-const QAFeed: React.FC<QAFeedProps> = ({ communityId }) => {
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchPosts = async () => {
+    useEffect(() => { //Runs side effects when component mounts or communityId changes
+        setLoading(true);
+        const fetchPosts = async () => { //Async function to fetch posts from the API
             try {
-                const postsData = await API.getCommunityPosts(communityId, 'qa');
+                const postsData = await API.getCommunityPosts(communityId, 'qa'); //Calls API to get posts for this community, filtered by type 'qa'
                 setPosts(postsData);
             } catch (error) {
                 console.error('Failed to fetch Q&A posts:', error);
