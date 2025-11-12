@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
-import type { MessagesContentProps, ChatMessage } from './types';
+import type { MessagesContentProps } from './types';
 //
 const MessagesContent: React.FC<MessagesContentProps> = ({
     selectedMessage, //current conversation data

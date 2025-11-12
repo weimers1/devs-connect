@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useDropdown } from '../DropDown/DropDownContext';
 import ProfileDropdown from '../DropDown/ProfileDropDown';
-import { useTheme } from '../../src/ThemeContext';
+// import { useTheme } from '../../src/ThemeContext';
 import { useAuth } from '../Auth/AuthContext';
 import { defaultRoutes, protectedRoutes } from '../../Utils/routes';
 import API from '../../Service/service';
@@ -12,7 +12,7 @@ import API from '../../Service/service';
 const Navbar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
-    const { theme } = useTheme();
+    // const { theme } = useTheme();
     const { isProfileDropdownOpen, toggleProfileDropdown } = useDropdown();
     const { isAuthenticated } = useAuth();
     const [userProfile, setUserProfile] = useState('');
@@ -56,13 +56,18 @@ const Navbar: React.FC = () => {
 
     const isActive = (route: string) => location.pathname === route;
 
+    //Loading
+    if (loading) {
+        <div>Loading....</div>;
+    }
+
     return (
         <nav
-            className={`sticky top-0 z-50 shadow-lg border-b ${
-                theme === 'dark'
-                    ? 'bg-gray-800 border-gray-700'
-                    : 'bg-white border-gray-200'
-            }`}
+            className={`sticky top-0 z-50 shadow-lg border-b`}
+            //     // theme === 'dark'
+            //     //     ? 'bg-gray-800 border-gray-700'
+            //     //     : 'bg-white border-gray-200'
+            // }`}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-18">
@@ -78,10 +83,10 @@ const Navbar: React.FC = () => {
                                 alt="DevConnect Logo"
                             />
                             <span
-                                className={`text-xl font-bold hidden sm:block ${
-                                    theme === 'dark'
-                                        ? 'text-white'
-                                        : 'text-gray-900'
+                                className={`text-xl font-bold hidden sm:block
+                                    // theme === 'dark'
+                                    //     ? 'text-white'
+                                    //     : 'text-gray-900'
                                 }`}
                             >
                                 DevConnect
@@ -100,10 +105,11 @@ const Navbar: React.FC = () => {
                             </div>
                             <input
                                 type="text"
-                                className={`block w-full pl-9 pr-3 py-1.5 text-sm border rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                    theme === 'dark'
-                                        ? 'bg-gray-700 border-gray-600 text-white'
-                                        : 'bg-white border-gray-300'
+                                className={`block w-full pl-9 pr-3 py-1.5 text-sm border rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                                   
+                                    // theme === 'dark'
+                                    //     ? 'bg-gray-700 border-gray-600 text-white'
+                                    //     : 'bg-white border-gray-300'
                                 }`}
                                 placeholder="Search..."
                             />
@@ -121,11 +127,11 @@ const Navbar: React.FC = () => {
                             </div>
                             <input
                                 type="text"
-                                className={`block rounded-2xl w-full pl-10 pr-3 py-1.5 border leading-5 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out ${
-                                    theme === 'dark'
-                                        ? 'bg-gray-700 border-gray-600 text-white'
-                                        : 'bg-white border-black'
-                                }`}
+                                className={`block rounded-2xl w-full pl-10 pr-3 py-1.5 border leading-5 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out 
+                                    // theme === 'dark'
+                                    //     ? 'bg-gray-700 border-gray-600 text-white'
+                                    //     : 'bg-white border-black'
+                                `}
                                 placeholder="Search..."
                             />
                         </div>
@@ -141,12 +147,12 @@ const Navbar: React.FC = () => {
                                     to={page.route}
                                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
                                         active
-                                            ? theme === 'dark'
-                                                ? 'bg-blue-900 text-blue-300 shadow-sm'
-                                                : 'bg-blue-100 text-blue-700 shadow-sm'
-                                            : theme === 'dark'
-                                            ? 'text-gray-300 hover:text-white hover:bg-gray-700'
-                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                            // ? theme === 'dark'
+                                            //     ? 'bg-blue-900 text-blue-300 shadow-sm'
+                                            //     : 'bg-blue-100 text-blue-700 shadow-sm'
+                                            // : theme === 'dark'
+                                            // ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                                            // : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                                     }`}
                                 >
                                     <Icon
@@ -162,11 +168,11 @@ const Navbar: React.FC = () => {
                         {isAuthenticated && (
                             <div className="ml-4 flex items-center space-x-3">
                                 <button
-                                    className={`p-2 rounded-lg transition-colors ${
-                                        theme === 'dark'
-                                            ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
-                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                                    }`}
+                                    className={`p-2 rounded-lg transition-colors 
+                                        // theme === 'dark'
+                                        //     ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
+                                        //     : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                    `}
                                 >
                                     <Icon
                                         icon="mdi:bell-outline"
@@ -184,7 +190,8 @@ const Navbar: React.FC = () => {
                                                 src={userProfile}
                                                 className="w-8 h-8 rounded-full object-cover"
                                                 onError={(e) => {
-                                                    e.currentTarget.style.display = 'none';
+                                                    e.currentTarget.style.display =
+                                                        'none';
                                                 }}
                                             />
                                         ) : (
@@ -219,11 +226,11 @@ const Navbar: React.FC = () => {
                             onClick={() =>
                                 setIsMobileMenuOpen(!isMobileMenuOpen)
                             }
-                            className={`p-2 rounded-lg transition-colors ${
-                                theme === 'dark'
-                                    ? 'text-gray-300 hover:text-white hover:bg-gray-700'
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                            }`}
+                            className={`p-2 rounded-lg transition-colors 
+                                // theme === 'dark'
+                                //     ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                                //     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                            `}
                         >
                             <Icon
                                 icon={
@@ -239,11 +246,11 @@ const Navbar: React.FC = () => {
             {/* Mobile menu */}
             {isMobileMenuOpen && (
                 <div
-                    className={`md:hidden border-t ${
-                        theme === 'dark'
-                            ? 'border-gray-700 bg-gray-800'
-                            : 'border-gray-200 bg-white'
-                    }`}
+                    className={`md:hidden border-t 
+                        // theme === 'dark'
+                        //     ? 'border-gray-700 bg-gray-800'
+                        //     : 'border-gray-200 bg-white'
+                    `}
                 >
                     {/* Mobile Navigation Links */}
                     <div className="px-2 pt-2 pb-3 space-y-1">
@@ -255,12 +262,12 @@ const Navbar: React.FC = () => {
                                     to={page.route}
                                     className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-base font-medium transition-colors ${
                                         active
-                                            ? theme === 'dark'
-                                                ? 'bg-blue-900 text-blue-300'
-                                                : 'bg-blue-100 text-blue-700'
-                                            : theme === 'dark'
-                                            ? 'text-gray-300 hover:text-white hover:bg-gray-700'
-                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                            // ? theme === 'dark'
+                                            //     ? 'bg-blue-900 text-blue-300'
+                                            //     : 'bg-blue-100 text-blue-700'
+                                            // : theme === 'dark'
+                                            // ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                                            // : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                                     }`}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                 >
@@ -277,11 +284,11 @@ const Navbar: React.FC = () => {
                     {/* Mobile User Section */}
                     {isAuthenticated ? (
                         <div
-                            className={`border-t px-4 py-3 ${
-                                theme === 'dark'
-                                    ? 'border-gray-700'
-                                    : 'border-gray-200'
-                            }`}
+                            className={`border-t px-4 py-3 
+                                // theme === 'dark'
+                                //     ? 'border-gray-700'
+                                //     : 'border-gray-200'
+                            `}
                         >
                             <div className="flex items-center space-x-3">
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
@@ -291,11 +298,11 @@ const Navbar: React.FC = () => {
                                 </div>
                                 <div className="flex-1">
                                     <div
-                                        className={`text-base font-medium ${
-                                            theme === 'dark'
-                                                ? 'text-white'
-                                                : 'text-gray-900'
-                                        }`}
+                                        className={`text-base font-medium 
+                                            // theme === 'dark'
+                                            //     ? 'text-white'
+                                            //     : 'text-gray-900'
+                                        `}
                                     >
                                         User Profile
                                     </div>
@@ -304,11 +311,11 @@ const Navbar: React.FC = () => {
                         </div>
                     ) : (
                         <div
-                            className={`border-t px-4 py-3 ${
-                                theme === 'dark'
-                                    ? 'border-gray-700'
-                                    : 'border-gray-200'
-                            }`}
+                            className={`border-t px-4 py-3 
+                                // theme === 'dark'
+                                //     ? 'border-gray-700'
+                                //     : 'border-gray-200'
+                            `}
                         >
                             <Link
                                 to="/login"

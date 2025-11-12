@@ -19,7 +19,7 @@ export const getConversations = async (req, res) => {
                 ],
             },
             // Temporarily removed includes until associations are set up
-            order: [['createdAt', 'DESC']], //Order by Newest First
+            order: [['timestamp', 'DESC']], //Order by Newest First
         });
 
         // Group by conversation and get latest message per conversation
@@ -68,7 +68,7 @@ export const getConversations = async (req, res) => {
                     },
                     lastMessage: {
                         content: message.content,
-                        createdAt: message.createdAt,
+                        createdAt: message.timestamp,
                         sender_id: message.sender_id,
                     },
                     unreadCount: unreadCount,
@@ -117,7 +117,7 @@ export const getConversationMessages = async (req, res) => {
                 conversation_id: conversationId, //Filter Messages by conversation_id
             },
             // Temporarily removed includes until associations are set up
-            order: [['createdAt', 'ASC']], //Order by Newest First
+            order: [['timestamp', 'ASC']], //Order by Newest First
         });
         res.json({ success: true, data: result }); //Sends json to frontend
     } catch (error) {
@@ -153,7 +153,7 @@ export const sendMessage = async (req, res) => {
             conversation_id: message.conversation_id,
             receiver_id: message.receiver_id,
             content: message.content,
-            timestamp: message.createdAt,
+            timestamp: message.timestamp,
         };
 
         // Sanitize content before emitting to prevent XSS
@@ -178,7 +178,7 @@ export const sendMessage = async (req, res) => {
             sender_id: message.sender_id,
             receiver_id: message.receiver_id,
             content: sanitizedContent,
-            timestamp: message.createdAt,
+            timestamp: message.timestamp,
             conversation_id: message.conversation_id,
         });
 
@@ -232,7 +232,7 @@ export const sendReply = async (req, res) => {
             conversation_id: message.conversation_id,
             receiver_id: message.receiver_id,
             content: sanitizedContent,
-            timestamp: message.createdAt,
+            timestamp: message.timestamp,
         };
 
         // Get the io instance and emit to conversation room

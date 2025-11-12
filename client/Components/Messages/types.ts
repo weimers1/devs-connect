@@ -4,7 +4,7 @@ import { Socket } from "socket.io-client";
 export interface Message {
   id: string;
   name: string;
-  date: string;
+  timestamp: string;
   avatar: string;
   lastMessage: string;
   unreadCount?: number;

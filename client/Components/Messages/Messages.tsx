@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import Sidebar from '../Connections/Sidebar';
-import Layout from '../Layout';
 import MessagesContent from './MessagesContent';
 import MessageSidebar from './MessageSidebar';
-import { useMessages, useChat, useSocket } from './hooks';
+import { useMessages, useChat } from './hooks';
 import API from '../../Service/service';
 import type { Message } from './types';
+import React from 'react';
+import Layout from '../Layout';
 
 const Messages = () => {
     const [searchParams] = useSearchParams();
@@ -16,7 +16,6 @@ const Messages = () => {
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(
         null
     );
-    const [isMobileView, setIsMobileView] = useState(false);
     // Get current user ID
     useEffect(() => {
         const getCurrentUserId = async () => {
@@ -31,7 +30,7 @@ const Messages = () => {
     }, []);
 
     // Use custom hooks for state management
-    const { messages, isLoading, error, searchMessages } = useMessages();
+    const { messages, error, searchMessages } = useMessages();
 
     // Auto-select conversation if coming from profile
     useEffect(() => {
@@ -84,13 +83,8 @@ const Messages = () => {
           null
         : null;
     // BUG FIX: Added fetchChatMessages to load actual chat messages when conversation selected
-    const {
-        chatMessages,
-        isLoading: chatLoading,
-        sendMessage,
-        fetchChatMessages,
-        socket,
-    } = useChat(selectedUserId);
+    const { chatMessages, sendMessage, fetchChatMessages, socket } =
+        useChat(selectedUserId);
 
     // Remove debug logging for production
 
@@ -112,15 +106,6 @@ const Messages = () => {
     }, [socket]);
 
     // Handle responsive behavior
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobileView(window.innerWidth < 768);
-        };
-
-        handleResize(); // Set initial state
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     const handleMessageSelect = useCallback(
         (message: Message) => {

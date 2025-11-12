@@ -1,5 +1,4 @@
 // DropdownContext.tsx
-import ProfileDropdown from '../DropDown/ProfileDropDown';
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 type DropdownContextType = {

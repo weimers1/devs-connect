@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import type { MessageSidebarProps, Message } from './types';
+
 import { useMessages } from './hooks';
 
 const MessageSidebar: React.FC<MessageSidebarProps> = ({
@@ -30,11 +31,11 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
         },
         [onMessageSelect]
     );
-    //Converts ISO data string to readable content
-    const formatDate = useCallback((dateStr: string) => {
-        //CallBack has better performance, prevents unnecesary re-renders
-        return new Date(dateStr).toLocaleDateString();
-    }, []);
+    //Converts ISO data string to readable content || Implement Later
+    // const formatDate = useCallback((dateStr: string) => {
+    //     //CallBack has better performance, prevents unnecesary re-renders
+    //     return new Date(dateStr).toLocaleDateString();
+    // }, []);
 
     return (
         <aside className={`w-full md:w-80 flex flex-col bg-gray-50 ${className}`}>

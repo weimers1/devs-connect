@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
-import { useTheme } from '../../src/ThemeContext';
+// import { useTheme } from '../../src/ThemeContext';
 import { useAuth } from '../Auth/AuthContext';
 import API from '../../Service/service';
 import { assets } from '../../assets/assets';
@@ -14,12 +14,12 @@ function ProfileDropdown() {
     const [loading, setLoading] = useState(true);
 
     const navigate = useNavigate();
-    const { resetTheme, theme } = useTheme();
+    // const { resetTheme, theme } = useTheme();
     const { logout } = useAuth();
 
     const handleLogout = () => {
         logout();
-        resetTheme();
+        // resetTheme();
         navigate('/');
     };
     useEffect(() => {
@@ -69,20 +69,23 @@ function ProfileDropdown() {
             to: '/help',
         },
     ];
+    if(loading) (
+        <div>Loading...</div>
+    )
 
     return (
         <div
-            className={`absolute -right-4 top-10 w-56 rounded-lg shadow-xl border z-50 ${
-                theme === 'dark'
-                    ? 'bg-gray-800 border-gray-700'
-                    : 'bg-white border-gray-200'
-            }`}
+            className={`absolute -right-4 top-10 w-56 rounded-lg shadow-xl border z-50 
+                // theme === 'dark'
+                //     ? 'bg-gray-800 border-gray-700'
+                //     : 'bg-white border-gray-200'
+            `}
         >
             {/* User Info Section */}
             <div
-                className={`px-4 py-3 border-b ${
-                    theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
-                }`}
+                className={`px-4 py-3 border-b 
+                    // theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
+                `}
             >
                 <div className="flex items-center space-x-3">
                     {userProfile ? (
@@ -99,20 +102,20 @@ function ProfileDropdown() {
                     )}
                     <div className="flex-1 min-w-0">
                         <p
-                            className={`text-sm font-medium truncate ${
-                                theme === 'dark'
-                                    ? 'text-white'
-                                    : 'text-gray-900'
-                            }`}
+                            className={`text-sm font-medium truncate 
+                                // theme === 'dark'
+                                //     ? 'text-white'
+                                //     : 'text-gray-900'
+                            `}
                         >
                             {firstName} {lastName}
                         </p>
                         <p
-                            className={`text-xs truncate ${
-                                theme === 'dark'
-                                    ? 'text-gray-400'
-                                    : 'text-gray-500'
-                            }`}
+                            className={`text-xs truncate 
+                                // theme === 'dark'
+                                //     ? 'text-gray-400'
+                                //     : 'text-gray-500'
+                            `}
                         >
                             {email}
                         </p>
@@ -126,11 +129,11 @@ function ProfileDropdown() {
                     <Link
                         key={item.to}
                         to={item.to}
-                        className={`flex items-center px-4 py-2 text-sm transition-colors ${
-                            theme === 'dark'
-                                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                        }`}
+                        className={`flex items-center px-4 py-2 text-sm transition-colors 
+                            // theme === 'dark'
+                            //     ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                            //     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        `}
                     >
                         <Icon
                             icon={item.icon}
@@ -143,20 +146,20 @@ function ProfileDropdown() {
 
             {/* Divider */}
             <div
-                className={`border-t ${
-                    theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
-                }`}
+                className={`border-t 
+                    // theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
+                `}
             />
 
             {/* Logout Button */}
             <div className="py-1">
                 <button
                     onClick={handleLogout}
-                    className={`w-full flex items-center px-4 py-2 text-sm text-left transition-colors ${
-                        theme === 'dark'
-                            ? 'text-red-400 hover:bg-gray-700 hover:text-red-300'
-                            : 'text-red-600 hover:bg-red-50 hover:text-red-700'
-                    }`}
+                    className={`w-full flex items-center px-4 py-2 text-sm text-left transition-colors 
+                        // theme === 'dark'
+                        //     ? 'text-red-400 hover:bg-gray-700 hover:text-red-300'
+                        //     : 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                    `}
                 >
                     <Icon
                         icon="mdi:logout"

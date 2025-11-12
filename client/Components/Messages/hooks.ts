@@ -121,7 +121,7 @@ export const useMessages = (): UseMessagesReturn => {
         return {
           id: conversation.conversation_id,
           name: `${conversation.otherUser.firstName} ${conversation.otherUser.lastName}`,
-          date: new Date(conversation.lastMessage.createdAt).toLocaleDateString(),
+          timestamp: new Date(conversation.lastMessage.createdAt).toLocaleDateString(),
           avatar: `https://ui-avatars.com/api/?name=${conversation.otherUser.firstName}+${conversation.otherUser.lastName}&background=3b82f6&color=fff`,
           lastMessage: conversation.lastMessage.content,
           unreadCount: conversation.unreadCount || "",

@@ -1,0 +1,18 @@
+{
+    "extends": "./tsconfig.app.json",
+    "compilerOptions": {
+        "types": ["jest", "@testing-library/jest-dom", "node", "vite/client"],
+        "noEmit": true,
+        "esModuleInterop": true,
+        "jsx": "react",
+        "verbatimModuleSyntax": false,
+        "module": "ES2020",
+        "target": "ES2020"
+    },
+    "include": [
+        "src",
+        "Components/**/*.test.tsx",
+        "Components/**/*.test.ts",
+        "Components/**/__tests__/**/*"
+    ]
+}

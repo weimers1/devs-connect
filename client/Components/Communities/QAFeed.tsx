@@ -28,25 +28,25 @@ const QAFeed: React.FC<QAFeedProps> = ({ communityId }) => { //Tells TypeScript 
 
         fetchPosts();
     }, [communityId]);
-
-    const handlePostCreate = async (postData: any) => {
-        if (postData.type !== 'qa') return;
+    //Function to handle when user creates a new post
+    const handlePostCreate = async (postData: any) => { //postData contains the new post information
+        if (postData.type !== 'qa') return; //only process if the post type is 'qa' only
         
-        try {
+        try { //API to create the post in the community
             await API.createCommunityPost(communityId, postData);
             // Refresh posts after creating
             const updatedPosts = await API.getCommunityPosts(communityId, 'qa');
-            setPosts(updatedPosts);
+            setPosts(updatedPosts); //fetch the list of  Q&A posts after creating a new one
         } catch (error) {
             console.error('Failed to create Q&A post:', error);
         }
     };
-
+    //Handles the deletion of a user post
     const handlePostDelete = (postId: number) => {
-        setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+        setPosts(prevPosts => prevPosts.filter(post => post.id !== postId)); //Filter creates the new array excluding the post with matching postId
     };
 
-    if (loading) {
+    if (loading) { //Conditional rendering if still loading, show loading UI
         return (
             <div className="space-y-6">
                 <CreatePost onPostCreate={handlePostCreate} />
@@ -60,8 +60,8 @@ const QAFeed: React.FC<QAFeedProps> = ({ communityId }) => { //Tells TypeScript 
 
     return (
         <div className="space-y-6">
-            <CreatePost onPostCreate={handlePostCreate} />
             
+            <CreatePost onPostCreate={handlePostCreate} /> 
             {posts.length > 0 ? (
                 posts.map((post) => (
                     <PostCard 
