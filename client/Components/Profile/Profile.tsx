@@ -4,7 +4,7 @@ import Layout from '../Layout';
 import UserCard from './UserCard';
 import Sidebar from '../Connections/Sidebar';
 import Communities from './ProfileCommunities';
-import { useTheme } from '../../src/ThemeContext';
+// import { useTheme } from '../../src/ThemeContext';
 import API from '../../Service/service';
 import { Icon } from '@iconify/react';
 import { assets } from '../../assets/assets';
@@ -35,7 +35,7 @@ function Profile() {
     const [currentProfileImage, setCurrentProfileImage] = useState('');
     const [certSaveStatus, setCertSaveStatus] = useState(''); // 'success', 'error', ''
     const [hasChanges, setHasChanges] = useState(false);
-    const theme = useTheme(); //Change Theme
+    // const theme = useTheme(); //Change Theme
 
     const [certData, setCertData] = useState({
         certName: '',

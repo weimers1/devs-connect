@@ -2,10 +2,10 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import React, { useRef } from 'react';
 import Privacy from './Content/Privacy';
 import Visibility from './Content/Visibility';
-import BillingPreferences from './Content/BillingPreferences';
+// import BillingPreferences from './Content/BillingPreferences';
 import AccountManagement from './Content/AccountManagement';
 import ProfileInfo from './Content/ProfileInfo';
-import Display from './Content/Display';
+// import Display from './Content/Display';
 import GeneralPreferences from './Content/GeneralPreferences';
 
 function SettingsContent() {

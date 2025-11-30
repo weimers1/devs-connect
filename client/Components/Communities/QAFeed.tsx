@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CreatePost from './CreatePost';
-import PostCard, { Post } from './PostTypes';
+import PostCard from './PostTypes';
+import type {Post} from './PostTypes';
 import API from '../../Service/service';
 
 //

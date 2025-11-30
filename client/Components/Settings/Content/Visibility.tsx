@@ -1,6 +1,6 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import React, { useState, useMemo, useCallback } from 'react';
-import { useTheme } from '../../../src/ThemeContext';
+// import { useTheme } from '../../../src/ThemeContext';
 
 const VISIBILITY_OPTIONS = [
     {
@@ -22,26 +22,26 @@ const VISIBILITY_OPTIONS = [
 
 export default function Visibility() {
     const [openSetting, setOpenSetting] = useState<string | null>(null);
-    const { theme } = useTheme();
+    // const { theme } = useTheme();
 
     const handleSettingClick = useCallback((settingId: string) => {
         setOpenSetting(prev => prev === settingId ? null : settingId);
     }, []);
 
-    const isDark = theme === 'dark';
+    // const isDark = theme === 'dark';
 
     return (
         <div>
             <div
                 id="Visibility"
-                className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border border-gray-100 ${
-                    isDark ? 'bg-gray-900' : 'bg-white'
-                }`}
+                className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border border-gray-100 
+                    // isDark ? 'bg-gray-900' : 'bg-white'
+                `}
             >
                 <div
-                    className={`p-6 border-b border-gray-100 ${
-                        isDark ? 'text-white' : 'text-gray-900'
-                    }`}
+                    className={`p-6 border-b border-gray-100 
+                        // isDark ? 'text-white' : 'text-gray-900'
+                    `}
                 >
                     <h2 className="text-xl font-semibold ">
                         Visibility Settings
@@ -54,19 +54,19 @@ export default function Visibility() {
                 {VISIBILITY_OPTIONS.map((item, index) => (
                     <div key={item.id}>
                         <div
-                            className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer ${
-                                theme === 'dark'
-                                    ? 'hover:bg-gray-700'
-                                    : 'hover:bg-white'
-                            }`}
+                            className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer 
+                                // theme === 'dark'
+                                //     ? 'hover:bg-gray-700'
+                                //     : 'hover:bg-white'
+                            `}
                             onClick={() => handleSettingClick(item.id)}
                         >
                             <div
-                                className={` ${
-                                    theme === 'dark'
-                                        ? 'text-white'
-                                        : 'text-gray-900'
-                                }`}
+                                className={` 
+                                    // theme === 'dark'
+                                    //     ? 'text-white'
+                                    //     : 'text-gray-900'
+                                `}
                             >
                                 <h3 className="font-medium ">{item.name}</h3>
                                 <p className="text-sm ">{item.description}</p>
@@ -85,11 +85,11 @@ export default function Visibility() {
 
                         {openSetting === item.id && (
                             <div
-                                className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100 ${
-                                    theme === 'dark'
-                                        ? 'bg-gray-800'
-                                        : 'bg-white'
-                                }`}
+                                className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100 
+                                    // theme === 'dark'
+                                    //     ? 'bg-gray-800'
+                                    //     : 'bg-white'
+                                `}
                             >
                                 <div className="p-6 space-y-4">
                                     {(item.id === 'profile-visibility' ||
@@ -97,22 +97,22 @@ export default function Visibility() {
                                         item.id ===
                                             'connections-visibility') && (
                                         <div
-                                            className={` ${
-                                                theme === 'dark'
-                                                    ? 'text-white'
-                                                    : 'text-gray-900'
-                                            }`}
+                                            className={` 
+                                                // theme === 'dark'
+                                                //     ? 'text-white'
+                                                //     : 'text-gray-900'
+                                            `}
                                         >
                                             <h3 className="text-sm font-semibold  mb-3">
                                                 Who can see this?
                                             </h3>
                                             <div className="space-y-3">
                                                 <div
-                                                    className={` ${
-                                                        theme === 'dark'
-                                                            ? 'hover:bg-gray-600'
-                                                            : 'hover:bg-gray-50'
-                                                    }`}
+                                                    className={` 
+                                                        // theme === 'dark'
+                                                        //     ? 'hover:bg-gray-600'
+                                                        //     : 'hover:bg-gray-50'
+                                                    `}
                                                 >
                                                     <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg  cursor-pointer">
                                                         <input
@@ -140,11 +140,11 @@ export default function Visibility() {
                                                     </label>
                                                 </div>
                                                 <div
-                                                    className={` ${
-                                                        theme === 'dark'
-                                                            ? 'hover:bg-gray-600'
-                                                            : 'hover:bg-gray-50'
-                                                    }`}
+                                                    className={` 
+                                                        // theme === 'dark'
+                                                        //     ? 'hover:bg-gray-600'
+                                                        //     : 'hover:bg-gray-50'
+                                                    `}
                                                 >
                                                     <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg  cursor-pointer">
                                                         <input
@@ -160,12 +160,12 @@ export default function Visibility() {
                                                                 className="w-5 h-5 text-gray-400 mr-3"
                                                             />
                                                             <div
-                                                                className={` ${
-                                                                    theme ===
-                                                                    'dark'
-                                                                        ? 'text-white'
-                                                                        : 'text-gray-900'
-                                                                }`}
+                                                                className={` 
+                                                                    // theme ===
+                                                                    // 'dark'
+                                                                    //     ? 'text-white'
+                                                                    //     : 'text-gray-900'
+                                                                `}
                                                             >
                                                                 <span className="font-medium ">
                                                                     Connections
@@ -182,11 +182,11 @@ export default function Visibility() {
                                                     </label>
                                                 </div>
                                                 <div
-                                                    className={` ${
-                                                        theme === 'dark'
-                                                            ? 'hover:bg-gray-600'
-                                                            : 'hover:bg-gray-50'
-                                                    }`}
+                                                    className={` 
+                                                        // theme === 'dark'
+                                                        //     ? 'hover:bg-gray-600'
+                                                        //     : 'hover:bg-gray-50'
+                                                    `}
                                                 >
                                                     <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg  cursor-pointer">
                                                         <input
@@ -201,12 +201,12 @@ export default function Visibility() {
                                                                 className="w-5 h-5 text-gray-400 mr-3"
                                                             />
                                                             <div
-                                                                className={` ${
-                                                                    theme ===
-                                                                    'dark'
-                                                                        ? 'text-white'
-                                                                        : 'text-gray-900'
-                                                                }`}
+                                                                className={` 
+                                                                    // theme ===
+                                                                    // 'dark'
+                                                                    //     ? 'text-white'
+                                                                    //     : 'text-gray-900'
+                                                                `}
                                                             >
                                                                 <span className="font-medium ">
                                                                     Only me

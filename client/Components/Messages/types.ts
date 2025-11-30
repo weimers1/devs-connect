@@ -4,7 +4,7 @@ import { Socket } from "socket.io-client";
 export interface Message {
   id: string;
   name: string;
-  timestamp: string;
+  timestamp: Date;
   avatar: string;
   lastMessage: string;
   unreadCount?: number;
@@ -18,11 +18,10 @@ export interface ChatMessage {
   isOwn: boolean;
   status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   type?: 'text' | 'image' | 'file' | 'system';
-  metadata?: {
-    fileName?: string;
-    fileSize?: number;
-    imageUrl?: string;
-  };
+  // metadata?: {
+  //   fileName?: string;
+  //   imageUrl?: string;
+  // };
 }
 
 export interface MessageSidebarProps {

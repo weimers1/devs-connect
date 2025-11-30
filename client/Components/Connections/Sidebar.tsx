@@ -1,7 +1,8 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useState } from 'react';
 import { useDropdown } from '../DropDown/DropDownContext';
-import { useTheme } from '../../src/ThemeContext';
+import React from 'react';
+// import { useTheme } from '../../src/ThemeContext';
 
 const CONNECTIONS_DATA = [
     {
@@ -98,7 +99,7 @@ const SUGGESTIONS_DATA = [
 
 function Sidebar() {
     const { isSidebarOpen, toggleSidebar } = useDropdown();
-    const { theme } = useTheme();
+    // const { theme } = useTheme();
 
     return (
         <section className="overflow-hidden">
@@ -130,7 +131,7 @@ function Sidebar() {
             <div
                 className={`fixed right-0 bottom-0 lg:top-18.5 top-29  md:rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[92vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
                     isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
-                } ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}
+                }`}
             >
                 <button
                     type="button"

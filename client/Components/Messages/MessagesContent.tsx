@@ -211,6 +211,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                         />
                     </div>
                     <button
+                        data-testid="send-button"
                         onClick={handleSendMessage}
                         disabled={!newMessage.trim()}
                         className={`p-2 rounded-full transition-all ${

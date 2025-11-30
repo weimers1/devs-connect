@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { assets } from '../../assets/assets';
-import { useTheme } from '../../src/ThemeContext';
+// import { useTheme } from '../../src/ThemeContext';
 import API from '../../Service/service';
 function SettingsNavbar() {
     const [userProfile, setUserProfile] = useState('');

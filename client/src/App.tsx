@@ -4,14 +4,15 @@ import { ProtectedRoute } from '../Components/Auth/ProtectedRoute';
 import { PublicRoute } from '../Components/Auth/PublicRoute';
 import AuthCallBack from '../Components/Auth/AuthCallBack';
 import { defaultRoutes, protectedRoutes, publicRoutes } from '../Utils/routes';
-import { ThemeProvider } from './ThemeContext';
+// import { ThemeProvider } from './ThemeContext';
 import CommunityPage from '../Components/Communities/CommunityPage';
 import CreateCommunity from '../Components/Communities/CreateCommunity';
 import EditCommunity from '../Components/Communities/EditCommunity';
+import React from 'react';
 
 const AppRoutes = () => {
     return (
-        <ThemeProvider>
+        // <ThemeProvider>
             <BrowserRouter>
                 <Routes>
                     {defaultRoutes.map((route) => (
@@ -58,7 +59,7 @@ const AppRoutes = () => {
                     />
                 </Routes>
             </BrowserRouter>
-        </ThemeProvider>
+        // </ThemeProvider>
     );
 };
 

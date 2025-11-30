@@ -17,7 +17,7 @@ const mockMessages = [
         id: '1-2',
         name: 'John Doe',
         lastMessage: 'Hello',
-        timestamp: '2024-01-15T10:30:00Z',
+        timestamp: new Date('2024-01-15T10:30:00Z'),
         avatar: 'https://ui-avatars.com/api/?name=John+Doe&background=random',
         unreadCount: 2,
         isOnline: false,
@@ -26,7 +26,7 @@ const mockMessages = [
         id: '1-3',
         name: 'Jane Smith',
         lastMessage: 'Hello Friend!',
-        timestamp: '2024-01-15T09:15:00Z',
+        timestamp: new Date('2024-01-15T09:15:00Z'),
         avatar: 'https://ui-avatars.com/api/?name=Jane+Smith&background=random',
         unreadCount: 2,
         isOnline: false,
@@ -63,7 +63,7 @@ test('calls searchMessages (like Hello()) when John types', () => {
     const mockSelectedMessage = null;
 
     // Render the MessageSidebar component with required props
-    render(
+    render( //Arrange
         <TestWrapper>
             <MessageSidebar
                 onMessageSelect={mockOnMessageSelect}
@@ -75,13 +75,13 @@ test('calls searchMessages (like Hello()) when John types', () => {
     );
 
     // Find the search input element
-    const searchInput = screen.getByRole('textbox');
+    const searchInput = screen.getByRole('textbox'); //Act
 
     // Simulate user typing "Hello"
-    fireEvent.change(searchInput, { target: { value: 'Hello' } });
+    fireEvent.change(searchInput, { target: { value: 'Hello' } }); //ACt
 
     // Check if component called our mock function
-    expect(mockSearchMessages).toHaveBeenCalledWith('Hello');
+    expect(mockSearchMessages).toHaveBeenCalledWith('Hello');//Assert
 });
 // Clean up DOM between tests
 afterEach(() => {
@@ -99,7 +99,7 @@ test('pops up John messages when searching for john', () => {
     );
     
     // Render the MessageSidebar component with required props
-    render(
+    render( //
         <TestWrapper>
             <MessageSidebar
                 onMessageSelect={mockOnMessageSelect}
@@ -128,4 +128,4 @@ test('testing just john and his message appears', () => {
   expect(FilterMessage).toHaveLength(1);
   expect(FilterMessage[0].name).toBe('John Doe');
   expect(FilterMessage[0].lastMessage).toBe('Hello');
-})
+});

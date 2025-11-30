@@ -1,13 +1,13 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import React, { useState } from 'react';
-import { useTheme } from '../../../src/ThemeContext';
+// import { useTheme } from '../../../src/ThemeContext';
 
 const TOGGLE_SWITCH_CLASSES =
     "w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600";
 
 function GeneralPreferences() {
     const [openSetting, setOpenSetting] = useState<string | null>(null);
-    const { theme } = useTheme();
+    // const { theme } = useTheme();
 
     const handleSettingClick = (settingId: string) => {
         setOpenSetting(openSetting === settingId ? null : settingId);
@@ -45,14 +45,14 @@ function GeneralPreferences() {
         <div>
             <div
                 id="General-Preferences"
-                className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border border-gray-100"  ${
-                    theme === 'dark' ? 'bg-gray-900' : 'bg-white'
-                }`}
+                className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border border-gray-100"  
+                    // theme === 'dark' ? 'bg-gray-900' : 'bg-white'
+                `}
             >
                 <div
-                    className={`p-6 border-b border-gray-100 ${
-                        theme === 'dark' ? 'text-white' : 'text-gray-900'
-                    }`}
+                    className={`p-6 border-b border-gray-100 
+                        // theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    `}
                 >
                     <h2 className="text-xl font-semibold ">
                         General Preferences
@@ -65,19 +65,19 @@ function GeneralPreferences() {
                 {Preferences.map((item, index) => (
                     <div key={item.id}>
                         <div
-                            className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer ${
-                                theme === 'dark'
-                                    ? 'hover:bg-gray-700'
-                                    : 'hover:bg-white'
-                            }`}
+                            className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer 
+                                // theme === 'dark'
+                                //     ? 'hover:bg-gray-700'
+                                //     : 'hover:bg-white'
+                            `}
                             onClick={() => handleSettingClick(item.id)}
                         >
                             <div
-                                className={` ${
-                                    theme === 'dark'
-                                        ? 'text-white'
-                                        : 'text-gray-900'
-                                }`}
+                                className={` 
+                                    // theme === 'dark'
+                                    //     ? 'text-white'
+                                    //     : 'text-gray-900'
+                                `}
                             >
                                 <h3 className="font-medium ">{item.name}</h3>
                                 <p className="text-sm ">{item.description}</p>
@@ -96,21 +96,21 @@ function GeneralPreferences() {
 
                         {openSetting === item.id && (
                             <div
-                                className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100${
-                                    theme === 'dark'
-                                        ? 'bg-gray-800'
-                                        : 'bg-white'
-                                }`}
+                                className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100
+                                    // theme === 'dark'
+                                    //     ? 'bg-gray-800'
+                                    //     : 'bg-white'
+                                `}
                             >
                                 <div className="p-6 space-y-4">
                                     {item.id === 'language' && (
                                         <div>
                                             <div
-                                                className={` ${
-                                                    theme === 'dark'
-                                                        ? 'text-white'
-                                                        : 'text-gray-900'
-                                                }`}
+                                                className={` 
+                                                    // theme === 'dark'
+                                                    //     ? 'text-white'
+                                                    //     : 'text-gray-900'
+                                                `}
                                             >
                                                 <label className="block text-sm font-medium mb-2">
                                                     Language
@@ -142,11 +142,11 @@ function GeneralPreferences() {
                                     {item.id === 'timezone' && (
                                         <div>
                                             <div
-                                                className={` ${
-                                                    theme === 'dark'
-                                                        ? 'text-white'
-                                                        : 'text-gray-900'
-                                                }`}
+                                                className={` 
+                                                    // theme === 'dark'
+                                                    //     ? 'text-white'
+                                                    //     : 'text-gray-900'
+                                                `}
                                             >
                                                 <label className="block text-sm font-medium mb-2">
                                                     Time Zone
@@ -215,11 +215,11 @@ function GeneralPreferences() {
                                                     className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
                                                 >
                                                     <div
-                                                        className={` ${
-                                                            theme === 'dark'
-                                                                ? 'text-white'
-                                                                : 'text-gray-900'
-                                                        }`}
+                                                        className={` 
+                                                            // theme === 'dark'
+                                                            //     ? 'text-white'
+                                                            //     : 'text-gray-900'
+                                                        `}
                                                     >
                                                         <div className="font-medium">
                                                             {setting.label}
@@ -277,11 +277,11 @@ function GeneralPreferences() {
                                                     },
                                                 ].map((option) => (
                                                     <div
-                                                        className={` ${
-                                                            theme === 'dark'
-                                                                ? 'hover:bg-gray-600'
-                                                                : 'hover:bg-gray-50'
-                                                        }`}
+                                                        className={` 
+                                                            // theme === 'dark'
+                                                            //     ? 'hover:bg-gray-600'
+                                                            //     : 'hover:bg-gray-50'
+                                                        `}
                                                     >
                                                         <label
                                                             key={option.value}
@@ -300,12 +300,12 @@ function GeneralPreferences() {
                                                                 }
                                                             />
                                                             <div
-                                                                className={` ${
-                                                                    theme ===
-                                                                    'dark'
-                                                                        ? 'text-white'
-                                                                        : 'text-gray-900'
-                                                                }`}
+                                                                className={` 
+                                                                    // theme ===
+                                                                    // 'dark'
+                                                                    //     ? 'text-white'
+                                                                    //     : 'text-gray-900'
+                                                                `}
                                                             >
                                                                 <div className="font-medium ">
                                                                     {
@@ -358,11 +358,11 @@ function GeneralPreferences() {
                                                     className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
                                                 >
                                                     <div
-                                                        className={` ${
-                                                            theme === 'dark'
-                                                                ? 'text-white'
-                                                                : 'text-gray-900'
-                                                        }`}
+                                                        className={` 
+                                                            // theme === 'dark'
+                                                            //     ? 'text-white'
+                                                            //     : 'text-gray-900'
+                                                    `}
                                                     >
                                                         <div className="font-medium ">
                                                             {filter.label}

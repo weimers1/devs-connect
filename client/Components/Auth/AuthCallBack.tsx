@@ -6,7 +6,7 @@ import Layout from '../Layout';
 import Typeahead from '../Utils/Typeahead';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useAuth } from './AuthContext';
-import { useTheme } from '../../src/ThemeContext';
+// import { useTheme } from '../../src/ThemeContext';
 
 // BUG FIX: Define baseUrl that was missing and causing ReferenceError
 const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
@@ -15,7 +15,7 @@ const Authenticate: React.FC = () => {
     const [params] = useSearchParams();
     const token = params.get('token');
     const navigate = useNavigate();
-    const { loadUserTheme } = useTheme();
+    // const { loadUserTheme } = useTheme();
     const calledVerify = useRef(false);
     const { login } = useAuth();
 
@@ -175,7 +175,7 @@ const Authenticate: React.FC = () => {
                 login(data.session_token);
 
                 // Load user's theme preference after successful authentication
-                await loadUserTheme();
+                // await loadUserTheme();
 
                 if (data.isNewUser) {
                     showModal({

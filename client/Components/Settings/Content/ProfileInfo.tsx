@@ -1,7 +1,7 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import API from '../../../Service/service';
-import { useTheme } from '../../../src/ThemeContext';
+// import { useTheme } from '../../../src/ThemeContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // Security utility functions - comprehensive XSS protection
@@ -92,7 +92,7 @@ const INITIAL_PROFILE_DATA: ProfileData = {
 
 function ProfileInfo() {
     const [openSetting, setOpenSetting] = useState<string | null>(null);
-    const { theme } = useTheme();
+    // const { theme } = useTheme();
     const [loading, setLoading] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
     const [saveStatus, setSaveStatus] = useState('');
@@ -404,14 +404,14 @@ function ProfileInfo() {
     return (
         <div>
             <div
-                className={`md:w-200 w-full md:rounded-xl mt-4 col-start-1 row-start-1 overflow-hidden shadow-sm border ${
-                    theme === 'dark' ? 'bg-gray-900' : 'bg-white'
-                }`}
+                className={`md:w-200 w-full md:rounded-xl mt-4 col-start-1 row-start-1 overflow-hidden shadow-sm border 
+                    // theme === 'dark' ? 'bg-gray-900' : 'bg-white'
+                `}
             >
                 <div
-                    className={`p-6 border-b border-gray-100 ${
-                        theme === 'dark' ? 'text-white' : 'text-gray-900'
-                    }`}
+                    className={`p-6 border-b border-gray-100 
+                        // theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    `}
                 >
                     <h2 className="text-xl font-semibold">
                         Profile Information
@@ -424,11 +424,11 @@ function ProfileInfo() {
                 {sections.map((section, index) => (
                     <div key={section.id}>
                         <div
-                            className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer ${
-                                theme === 'dark'
-                                    ? 'hover:bg-gray-700'
-                                    : 'hover:bg-white'
-                            }`}
+                            className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer 
+                                // theme === 'dark'
+                                //     ? 'hover:bg-gray-700'
+                                //     : 'hover:bg-white'
+                            `}
                             onClick={() => {
                                 if (section.id === 'certifications') {
                                     handleCertificationClick(); // Open Modal instead
@@ -440,11 +440,11 @@ function ProfileInfo() {
                             }}
                         >
                             <div
-                                className={` ${
-                                    theme === 'dark'
-                                        ? 'text-white'
-                                        : 'text-gray-900'
-                                }`}
+                                className={` 
+                                    // theme === 'dark'
+                                    //     ? 'text-white'
+                                    //     : 'text-gray-900'
+                                `}
                             >
                                 <h3 className="font-medium ">
                                     {section.title}
@@ -469,22 +469,22 @@ function ProfileInfo() {
 
                         {openSetting === section.id && (
                             <div
-                                className={`mx-4 mb-4  rounded-lg shadow-sm border${
-                                    theme === 'dark'
-                                        ? 'bg-gray-900'
-                                        : 'bg-white'
-                                }`}
+                                className={`mx-4 mb-4  rounded-lg shadow-sm border
+                                    // theme === 'dark'
+                                    //     ? 'bg-gray-900'
+                                    //     : 'bg-white'
+                                `}
                             >
                                 <div className="p-6 space-y-4">
                                     {section.id === 'name-location' && (
                                         <>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div
-                                                    className={` ${
-                                                        theme === 'dark'
-                                                            ? 'text-white'
-                                                            : 'text-gray-700'
-                                                    }`}
+                                                    className={` 
+                                                        // theme === 'dark'
+                                                        //     ? 'text-white'
+                                                        //     : 'text-gray-700'
+                                                    `}
                                                 >
                                                     <label className="block text-sm font-medium  mb-2">
                                                         First Name
@@ -507,11 +507,11 @@ function ProfileInfo() {
                                                     />
                                                 </div>
                                                 <div
-                                                    className={` ${
-                                                        theme === 'dark'
-                                                            ? 'text-white'
-                                                            : 'text-gray-700'
-                                                    }`}
+                                                    className={` 
+                                                        // theme === 'dark'
+                                                        //     ? 'text-white'
+                                                        //     : 'text-gray-700'
+                                                    `}
                                                 >
                                                     <label className="block text-sm font-medium  mb-2">
                                                         Last Name
@@ -535,11 +535,11 @@ function ProfileInfo() {
                                                 </div>
                                             </div>
                                             <div
-                                                className={` ${
-                                                    theme === 'dark'
-                                                        ? 'text-white'
-                                                        : 'text-gray-700'
-                                                }`}
+                                                className={` 
+                                                    // theme === 'dark'
+                                                    //     ? 'text-white'
+                                                    //     : 'text-gray-700'
+                                                `}
                                             >
                                                 <label className="block text-sm font-medium  mb-2">
                                                     Location
@@ -623,11 +623,11 @@ function ProfileInfo() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {/* Age Input */}
                                                 <div
-                                                    className={`${
-                                                        theme === 'dark'
-                                                            ? 'text-white'
-                                                            : 'text-gray-900'
-                                                    }`}
+                                                    className={`
+                                                        // theme === 'dark'
+                                                        //     ? 'text-white'
+                                                        //     : 'text-gray-900'
+                                                    `}
                                                 >
                                                     <label className="block text-sm font-medium mb-2">
                                                         Age
@@ -652,21 +652,21 @@ function ProfileInfo() {
 
                                                 {/* Gender Select */}
                                                 <div
-                                                    className={`${
-                                                        theme === 'dark'
-                                                            ? 'text-white'
-                                                            : 'text-gray-900'
-                                                    }`}
+                                                    className={`
+                                                        // theme === 'dark'
+                                                        //     ? 'text-white'
+                                                        //     : 'text-gray-900'
+                                                    `}
                                                 >
                                                     <label className="block text-sm font-medium mb-2">
                                                         Gender
                                                     </label>
                                                     <select
-                                                        className={`w-full px-3 py-1.5 rounded-xl focus:outline-none focus:ring-2 border-1   ${
-                                                            theme === 'dark'
-                                                                ? 'bg-gray-900 text-white border-gray-300 '
-                                                                : 'bg-white text-gray-900 border-gray-300'
-                                                        }`}
+                                                        className={`w-full px-3 py-1.5 rounded-xl focus:outline-none focus:ring-2 border-1   
+                                                            // theme === 'dark'
+                                                            //     ? 'bg-gray-900 text-white border-gray-300 '
+                                                            //     : 'bg-white text-gray-900 border-gray-300'
+                                                        `}
                                                         value={
                                                             profileSettings.gender
                                                         }
