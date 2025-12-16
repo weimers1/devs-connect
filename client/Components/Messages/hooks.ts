@@ -6,7 +6,7 @@ import messageApi from '../../Service/service';
 // Security utilities || Without sanitization  for Example 
 // an attack can send a script fetch /api/user/delete, {method: 'POST}
 //Result: Script executes, deletes user account
-const sanitizeContent = (content: string): string => {
+export const sanitizeContent = (content: string): string => {
   if (typeof content !== 'string') return '';
   return content
     .replace(/[<>"'&\/\\]/g, (match) => {
@@ -26,11 +26,11 @@ const sanitizeContent = (content: string): string => {
 };
 
 //Validates the URL to make sure the URL is legit
-const validateUrl = (url: string): boolean => {
+export const validateUrl = (url: string): boolean => {
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url);
 };
 
-const validateTimestamp = (timestamp: any): Date => {
+export const validateTimestamp = (timestamp: any): Date => {
   const date = new Date(timestamp);
   const now = new Date();
   const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
@@ -43,10 +43,10 @@ const validateTimestamp = (timestamp: any): Date => {
 
 
 // Rate limiting to combat against DDOS attacks
-const messageRateLimit = new Map<number, { count: number; lastReset: number }>();
+export const messageRateLimit = new Map<number, { count: number; lastReset: number }>();
 const MAX_MESSAGES_PER_MINUTE = 30;
 
-const checkRateLimit = (userId: number): boolean => {
+export const checkRateLimit = (userId: number): boolean => {
   const now = Date.now();
   const userLimit = messageRateLimit.get(userId) || { count: 0, lastReset: now };
   
