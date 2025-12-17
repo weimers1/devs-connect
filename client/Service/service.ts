@@ -3,7 +3,8 @@ const validateUrl = (url: string): boolean => {
     return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url);
 };
 
-const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+const rawBaseUrl = //import.meta.env.VITE_API_URL || 
+ 'http://localhost:6969';
 if (!validateUrl(rawBaseUrl)) {
     throw new Error('Invalid API URL configuration');
 }

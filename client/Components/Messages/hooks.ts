@@ -65,9 +65,10 @@ export const checkRateLimit = (userId: number): boolean => {
 };
 
 // Get current user ID from API
-const getCurrentUserId = async (): Promise<number> => {
+export const getCurrentUserId = async (): Promise<number> => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:6969'}/api/users/me`, {
+    const response = await fetch(`${//import.meta.env.VITE_API_URL || 
+    'http://localhost:6969'}/api/users/me`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('session_token')}`
       }
@@ -86,7 +87,7 @@ const getCurrentUserId = async (): Promise<number> => {
 };
 
 //Validate Messaging for message content 
-const validateMessageContent = (content: string): boolean => {
+export const validateMessageContent = (content: string): boolean => {
   if (!content || typeof content !== 'string') return false;
   if (content.length > 1000 || content.trim().length === 0) return false;
   return true;
@@ -102,7 +103,7 @@ export const useMessages = (): UseMessagesReturn => {
   const [searchQuery, setSearchQuery] = useState(''); //User's search input
     //The purpose of the is to prevent any unnecessary re-renders
   const fetchMessages = useCallback(async () => { 
-    setIsLoading(true);
+    setIsLoading(true); 
     setError(null);
     //API CALL
     try {
@@ -302,7 +303,8 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
 
     try {
       // Saves the messages to database
-      const messageApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+      const messageApiUrl = //import.meta.env.VITE_API_URL ||
+        'http://localhost:6969';
       
       // Validate API URL to prevent SSRF
       if (!validateUrl(messageApiUrl)) {
@@ -387,7 +389,8 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
         throw new Error('No authentication token found');
       }
       
-      const messageApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+      const messageApiUrl = //import.meta.env.VITE_API_URL || 
+      'http://localhost:6969';
       
       // Validate API URL
       if (!validateUrl(messageApiUrl)) {
@@ -424,7 +427,8 @@ export const useSocket = () => {
 
   useEffect(() => {
     try {
-      const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+      const socketUrl = //import.meta.env.VITE_API_URL || 
+      'http://localhost:6969';
       
       // Validate socket URL
       if (!validateUrl(socketUrl)) {

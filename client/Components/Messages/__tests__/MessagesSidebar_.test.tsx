@@ -129,3 +129,6 @@ test('testing just john and his message appears', () => {
   expect(FilterMessage[0].name).toBe('John Doe');
   expect(FilterMessage[0].lastMessage).toBe('Hello');
 });
+
+
+//Testing Send Message
