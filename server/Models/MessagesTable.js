@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
-
+//Message Table
 const Message = sequelize.define('Message', {
     id: {
         type: DataTypes.INTEGER,

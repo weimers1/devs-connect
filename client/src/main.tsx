@@ -5,6 +5,7 @@ import { StytchUIClient } from "@stytch/vanilla-js";
 import "./index.css";
 import App from "./App.tsx";
 import { AuthProvider } from "../Components/Auth/AuthContext.tsx";
+import React from "react";
 
 const stytchToken = import.meta.env.VITE_STYTCH_PUBLIC_TOKEN;
 if (!stytchToken) {

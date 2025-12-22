@@ -1,6 +1,5 @@
 import multer from 'multer';
-import s3 from '../config/aws.js';
-import { testS3Connection } from '../config/aws.js';
+import s3Client, { testS3Connection, uploadToS3 } from '../config/aws.js';
 import UserProfile from '../Models/UserProfile.js';
 import Community from '../Models/Communites.js';
 
@@ -71,8 +70,8 @@ export const uploadProfileImage = async (req, res) => {
             ContentType: req.file.mimetype,
         };
 
-        // Upload to S3
-        const result = await s3.upload(params).promise();
+        // Upload to S3 using SDK v3 helper
+        const result = await uploadToS3(params);
 
         res.json({
             success: true,
@@ -145,7 +144,7 @@ export const uploadCommunityImage = async (req, res) => {
             ContentType: req.file.mimetype,
         };
 
-        const result = await s3.upload(params).promise();
+        const result = await uploadToS3(params);
 
         res.json({
             success: true,

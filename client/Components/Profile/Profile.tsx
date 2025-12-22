@@ -72,7 +72,8 @@ function Profile() {
             formData.append('profileImage', file);
 
             const baseUrl =
-                import.meta.env.VITE_API_URL || 'http://localhost:6969';
+               // import.meta.env.VITE_API_URL || 
+                'http://localhost:6969';
             const uploadResponse = await fetch(
                 `${baseUrl}/api/upload/profile-image`,
                 {
