@@ -19,6 +19,7 @@ import authMiddleware from '../middleware/authMiddleware.js';
 import { addCertification } from '../controllers/profileController.js';
 import { updateProfileImage } from '../controllers/uploadController.js';
 import { getCertifications } from '../controllers/profileController.js';
+import { linkGitHub } from '../controllers/ProfileController.js';
 import { get } from 'http';
 
 import {
@@ -66,5 +67,7 @@ router.put('/profile-image', updateProfileImage);
 router.get('/github', getGitHubConnection);
 //Get GitHub Username
 router.get('/github-info', getGitHubInformation);
+
+router.put('/link-github', linkGitHub);
 
 export default router;

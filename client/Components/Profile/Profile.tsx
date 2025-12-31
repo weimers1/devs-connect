@@ -23,32 +23,8 @@ const MONTHS = [
     'November',
     'December',
 ];
-
-function Profile() {
-    const { userId } = useParams<{ userId: string }>();
-    const navigate = useNavigate();
-    const isOwnProfile = !userId;
-    const [showCertModal, setShowCertModal] = React.useState(false); //Certification Modal
-    const [showProfModal, setShowProfModal] = React.useState(false); // Profile Modal
-    const [certSaving, setCertSaving] = useState(false);
-    const [imageUploading, setImageUploading] = useState(false);
-    const [currentProfileImage, setCurrentProfileImage] = useState('');
-    const [certSaveStatus, setCertSaveStatus] = useState(''); // 'success', 'error', ''
-    const [hasChanges, setHasChanges] = useState(false);
-    // const theme = useTheme(); //Change Theme
-
-    const [certData, setCertData] = useState({
-        certName: '',
-        issuer: '',
-        issuedMonth: '',
-        issuedYear: '',
-        expiryMonth: '',
-        expiryYear: '',
-        credentialID: '',
-        credentialURL: '',
-    });
     // TYPE FIX: Added explicit string type for URL validation parameter
-    const validateImageUrl = (url: string) => {
+   export const validateImageUrl = (url: string) => {
         try {
             const parsedUrl = new URL(url);
             const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com'];
@@ -62,10 +38,33 @@ function Profile() {
         }
     };
 
+function Profile() {
+    const { userId } = useParams<{ userId: string }>();
+    //const navigate = useNavigate();
+    const isOwnProfile = !userId;
+    // const [showCertModal, setShowCertModal] = React.useState(false); //Certification Modal
+    const [showProfModal, setShowProfModal] = React.useState(false); // Profile Modal
+    // const [certSaving, setCertSaving] = useState(false);
+    const [imageUploading, setImageUploading] = useState(false);
+    const [currentProfileImage, setCurrentProfileImage] = useState('');
+    // const [certSaveStatus, setCertSaveStatus] = useState(''); // 'success', 'error', ''
+    const [hasChanges, setHasChanges] = useState(false);
+    // const theme = useTheme(); //Change Theme
+
+    // const [certData, setCertData] = useState({
+    //     certName: '',
+    //     issuer: '',
+    //     issuedMonth: '',
+    //     issuedYear: '',
+    //     expiryMonth: '',
+    //     expiryYear: '',
+    //     credentialID: '',
+    //     credentialURL: '',
+    // });
+
     // TYPE FIX: Added explicit File type to prevent TypeScript implicit any error
     const handleImageUpload = async (file: File) => {
         setImageUploading(true);
-
         try {
             // Upload to S3
             const formData = new FormData();
@@ -80,7 +79,7 @@ function Profile() {
                     body: formData,
                 }
             );
-
+            
             if (!uploadResponse.ok) {
                 throw new Error(`Upload failed: ${uploadResponse.status}`);
             }
@@ -180,7 +179,7 @@ function Profile() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('showCertModal') === 'true') {
             //Checking if the redirect was for the certification Modal
-            setShowCertModal(true);
+            // setShowCertModal(true);
         } else if (urlParams.get('showProfModal') === 'true') {
             //Checking if the redirect was for the profile Model
             setShowProfModal(true);
@@ -189,137 +188,137 @@ function Profile() {
 
     // TYPE FIX: Added explicit string types for date combination parameters
     // Combine month and year into date string
-    const combineDateFields = (month: string, year: string) => {
-        if (!month || !year) return '';
-        return `${month}-${year}`;
-    };
+    // const combineDateFields = (month: string, year: string) => {
+    //     if (!month || !year) return '';
+    //     return `${month}-${year}`;
+    // };
 
     //Handle Save for updating
-    const handleSave = async () => {
-        setCertSaving(true);
-        setCertSaveStatus('');
-        try {
-            // Combine the date fields before sending
-            const certPayload = {
-                certName: certData.certName,
-                issuer: certData.issuer,
-                dateEarned: combineDateFields(
-                    certData.issuedMonth,
-                    certData.issuedYear
-                ),
-                dateExpiration: combineDateFields(
-                    certData.expiryMonth,
-                    certData.expiryYear
-                ),
-                credentialID: certData.credentialID,
-                credentialURL: certData.credentialURL,
-            };
+    // const handleSave = async () => {
+    //     setCertSaving(true);
+    //     setCertSaveStatus('');
+    //     try {
+    //         // Combine the date fields before sending
+    //         const certPayload = {
+    //             certName: certData.certName,
+    //             issuer: certData.issuer,
+    //             dateEarned: combineDateFields(
+    //                 certData.issuedMonth,
+    //                 certData.issuedYear
+    //             ),
+    //             dateExpiration: combineDateFields(
+    //                 certData.expiryMonth,
+    //                 certData.expiryYear
+    //             ),
+    //             credentialID: certData.credentialID,
+    //             credentialURL: certData.credentialURL,
+    //         };
 
-            await API.addCertifications(certPayload);
-            setCertSaveStatus('success');
-            console.log('Certification saved:', certPayload);
+    //         await API.addCertifications(certPayload);
+    //         setCertSaveStatus('success');
+    //         console.log('Certification saved:', certPayload);
             //Handle Save for updating
-            const handleSave = async () => {
-                setCertSaving(true);
-                setCertSaveStatus('');
-                try {
-                    // Combine the date fields before sending
-                    const certPayload = {
-                        certName: certData.certName,
-                        issuer: certData.issuer,
-                        dateEarned: combineDateFields(
-                            certData.issuedMonth,
-                            certData.issuedYear
-                        ),
-                        dateExpiration: combineDateFields(
-                            certData.expiryMonth,
-                            certData.expiryYear
-                        ),
-                        credentialID: certData.credentialID,
-                        credentialURL: certData.credentialURL,
-                    };
+            // const handleSave = async () => {
+            //     setCertSaving(true);
+            //     setCertSaveStatus('');
+            //     try {
+            //         // Combine the date fields before sending
+            //         const certPayload = {
+            //             certName: certData.certName,
+            //             issuer: certData.issuer,
+            //             dateEarned: combineDateFields(
+            //                 certData.issuedMonth,
+            //                 certData.issuedYear
+            //             ),
+            //             dateExpiration: combineDateFields(
+            //                 certData.expiryMonth,
+            //                 certData.expiryYear
+            //             ),
+            //             credentialID: certData.credentialID,
+            //             credentialURL: certData.credentialURL,
+            //         };
 
-                    await API.addCertifications(certPayload);
-                    setCertSaveStatus('success');
-                    console.log('Certification saved:', certPayload);
+            //         await API.addCertifications(certPayload);
+            //         setCertSaveStatus('success');
+            //         console.log('Certification saved:', certPayload);
 
-                    setTimeout(() => {
-                        setShowCertModal(false);
-                        setCertSaving(false);
-                        setCertSaveStatus('');
-                        // Re-enable scrolling
-                        document.body.style.overflow = 'auto';
-                        document.documentElement.style.overflow = 'auto';
-                    }, 1500);
-                } catch (error) {
-                    console.error('Error saving certification:', error);
-                    setCertSaveStatus('error');
-                    setCertSaving(false);
-                }
-            };
+            //         setTimeout(() => {
+            //             setShowCertModal(false);
+            //             setCertSaving(false);
+            //             setCertSaveStatus('');
+            //             // Re-enable scrolling
+            //             document.body.style.overflow = 'auto';
+            //             document.documentElement.style.overflow = 'auto';
+            //         }, 1500);
+            //     } catch (error) {
+            //         console.error('Error saving certification:', error);
+            //         setCertSaveStatus('error');
+            //         setCertSaving(false);
+            //     }
+            // };
             //Handle Change for certData
-            const handleChange = (field: string, value: string) => {
-                setCertData((prevData) => ({
-                    ...prevData,
-                    [field]: value,
-                }));
-                setHasChanges(true);
-            };
+            // const handleChange = (field: string, value: string) => {
+            //     setCertData((prevData) => ({
+            //         ...prevData,
+            //         [field]: value,
+            //     }));
+            //     setHasChanges(true);
+            // };
 
             // Handle Change for profile data
-            const handleProfileChange = (field: string, value: string) => {
-                setProfileData((prevData) => ({
-                    ...prevData,
-                    [field]: value,
-                }));
-                setHasChanges(true);
-            };
+            // const handleProfileChange = (field: string, value: string) => {
+            //     setProfileData((prevData) => ({
+            //         ...prevData,
+            //         [field]: value,
+            //     }));
+            //     setHasChanges(true);
+            // };
 
             // Handle Profile Save
-            const handleProfileSave = async () => {
-                setProfileSaving(true);
-                setProfileSaveStatus('');
-                try {
-                    await API.updateProfileSettings(profileData);
-                    setProfileSaveStatus('success');
-                    console.log('Profile saved:', profileData);
+            // const handleProfileSave = async () => {
+            //     setProfileSaving(true);
+            //     setProfileSaveStatus('');
+            //     try {
+            //         await API.updateProfileSettings(profileData);
+            //         setProfileSaveStatus('success');
+            //         console.log('Profile saved:', profileData);
 
-                    setTimeout(() => {
-                        setShowProfModal(false);
-                        setProfileSaving(false);
-                        setProfileSaveStatus('');
-                        document.body.style.overflow = 'auto';
-                        document.documentElement.style.overflow = 'auto';
-                    }, 1500);
-                } catch (error) {
-                    console.error('Error saving profile:', error);
-                    setProfileSaveStatus('error');
-                    setProfileSaving(false);
-                }
-            };
-            const currentYear = new Date().getFullYear();
-            setTimeout(() => {
-                setShowCertModal(false);
-                setCertSaving(false);
-                setCertSaveStatus('');
-                // Re-enable scrolling
-                document.body.style.overflow = 'auto';
-                document.documentElement.style.overflow = 'auto';
-            }, 1500);
-        } catch (error) {
-            console.error('Error saving certification:', error);
-            setCertSaveStatus('error');
-            setCertSaving(false);
-        }
-    };
+            //         setTimeout(() => {
+            //             setShowProfModal(false);
+            //             setProfileSaving(false);
+            //             setProfileSaveStatus('');
+            //             document.body.style.overflow = 'auto';
+            //             document.documentElement.style.overflow = 'auto';
+            //         }, 1500);
+            //     } catch (error) {
+            //         console.error('Error saving profile:', error);
+            //         setProfileSaveStatus('error');
+            //         setProfileSaving(false);
+            //     }
+            // };
+            // const currentYear = new Date().getFullYear();
+    //         setTimeout(() => {
+    //             setShowCertModal(false);
+    //             setCertSaving(false);
+    //             setCertSaveStatus('');
+    //             // Re-enable scrolling
+    //             document.body.style.overflow = 'auto';
+    //             document.documentElement.style.overflow = 'auto';
+    //         }, 1500);
+    //     } catch (error) {
+    //         console.error('Error saving certification:', error);
+    //         setCertSaveStatus('error');
+    //         setCertSaving(false);
+    //     }
+    // };
     //Handle Change for certData
-    const handleChange = (field: string, value: string) => {
-        setCertData((prevData) => ({
-            ...prevData,
-            [field]: value,
-        }));
-        setHasChanges(true);
-    };
+    // const handleChange = (field: string, value: string) => {
+    //     setCertData((prevData) => ({
+    //         ...prevData,
+    //         [field]: value,
+    //     }));
+    //     setHasChanges(true);
+    // };
 
     // Handle Change for profile data
     const handleProfileChange = (field: string, value: string) => {
@@ -352,13 +351,13 @@ function Profile() {
             setProfileSaving(false);
         }
     };
-    const currentYear = new Date().getFullYear();
-    const startYear = currentYear - 100; // Or any desired start year
-    const years = Array.from(
-        { length: currentYear - startYear + 1 },
-        (_, i) => startYear + i
-    );
-    const sortedYears = [...years].sort((a, b) => b - a); //Sort Years from most recent to oldest
+    // const currentYear = new Date().getFullYear();
+    // const startYear = currentYear - 100; // Or any desired start year
+    // const years = Array.from(
+    //     { length: currentYear - startYear + 1 },
+    //     (_, i) => startYear + i
+    // );
+    // const sortedYears = [...years].sort((a, b) => b - a); //Sort Years from most recent to oldest
     return (
         <Layout>
             {/* Main container - centered for other users, full width for own profile */}
@@ -387,18 +386,18 @@ function Profile() {
                 )}
             </div>
             {/*  Before closing Layout */}
-            {showCertModal && (
+            {/* {showCertModal && (
                 <div
                     className=" fixed inset-0 flex items-start justify-center pt-16 z-[9999]"
                     style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }} //Provides transparency for the background
                 >
-                    <div className="bg-white rounded-lg p-6 w-170 max-h-fit mr-5">
-                        <h2 className="text-xl font-bold mb-2">
+                    <div className="bg-white rounded-lg p-6 w-170 max-h-fit mr-5"> */}
+                        {/* <h2 className="text-xl font-bold mb-2">
                             Add Certification
-                        </h2>
+                        </h2> */}
                         <hr className="bg-gray-700"></hr>
                         {/* Form fields will go here */}
-                        <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
+                        {/* <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
                             <label className="block text-sm font-medium mt-2">
                                 Certification Name
                             </label>
@@ -421,8 +420,8 @@ function Profile() {
                                 }
                                 className="w-full px-3 py-1 border border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
-                        </div>
-                        <label className="block text-sm font-medium mt-2 mb-2">
+                        </div> */}
+                        {/* <label className="block text-sm font-medium mt-2 mb-2">
                             Issued Date
                         </label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -442,8 +441,8 @@ function Profile() {
                                         {month}
                                     </option>
                                 ))}
-                            </select>
-                            <select
+                            </select> */}
+                            {/* <select
                                 className="rounded-xl focus:outline-none focus:ring-1 border-1 py-1"
                                 onChange={(e) =>
                                     handleChange('issuedYear', e.target.value)
@@ -517,8 +516,8 @@ function Profile() {
                                         >
                                             {year}
                                         </option>
-                                    )
-                                )}
+                                    ) */}
+                                {/* )}
                                 <option value="">Year</option>
                                 {sortedYears.map(
                                     (
@@ -533,8 +532,8 @@ function Profile() {
                                     )
                                 )}
                             </select>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
+                        </div> */}
+                        {/* <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
                             <label className="block text-sm font-medium  mt-2">
                                 Credential ID
                             </label>
@@ -560,9 +559,9 @@ function Profile() {
                                 }
                                 className="w-full px-3 py-1 border border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
-                        </div>
+                        </div> */}
 
-                        <div className="flex justify-end space-x-2 mt-4">
+                        {/* <div className="flex justify-end space-x-2 mt-4">
                             <button onClick={() => setShowCertModal(false)}>
                                 Cancel
                             </button>
@@ -607,8 +606,8 @@ function Profile() {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+                </div> */}
+            {/* )}
             {showProfModal && (
                 <div
                     className="fixed inset-0 flex items-start justify-center pt-8 z-[9999]"
@@ -641,9 +640,9 @@ function Profile() {
                             }
                             className="w-full px-3 py-1 border border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
-                    </div>
+                    </div> */}
 
-                    <div className="flex justify-end space-x-2 mt-4">
+                    {/* <div className="flex justify-end space-x-2 mt-4">
                         <button onClick={() => setShowCertModal(false)}>
                             Cancel
                         </button>
@@ -688,7 +687,7 @@ function Profile() {
                         </button>
                     </div>
                 </div>
-            )}
+            )} */}
             {showProfModal && (
                 <div
                     className="fixed inset-0 flex items-start justify-center pt-8 z-[9999]"

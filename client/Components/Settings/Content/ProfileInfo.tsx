@@ -25,7 +25,6 @@ const sanitizeInput = (input: string): string => {
         .replace(/`/g, '&#96;')
         .replace(/~/g, '&#126;')
         .replace(/!/g, '&#33;')
-        .replace(/@/g, '&#64;')
         .replace(/#/g, '&#35;')
         .replace(/\$/g, '&#36;')
         .replace(/%/g, '&#37;')
@@ -349,8 +348,8 @@ function ProfileInfo() {
                     return;
                 }
 
-                const response = await fetch(`${baseUrl}/user/link-github`, {
-                    method: 'POST',
+                const response = await fetch(`${baseUrl}/api/settings/link-github`, {
+                    method: 'PUT',
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
@@ -716,7 +715,8 @@ function ProfileInfo() {
                                                                 Email Verified
                                                             </span>
                                                             <p className="text-sm text-gray-600">
-                                                                {profileSettings.email || 'No email found'}
+                                                                {profileSettings.email ||
+                                                                    'No email found'}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -743,12 +743,11 @@ function ProfileInfo() {
                                                         />
                                                         <div>
                                                             <span
-                                                                className={`font-medium ${
-                                                                    theme ===
-                                                                    'dark'
-                                                                        ? 'text-white'
-                                                                        : 'text-gray-900'
-                                                                }`}
+                                                                className={`font-medium                                                                    // theme ===
+                                                                    // 'dark'
+                                                                    //     ? 'text-white'
+                                                                    //     : 'text-gray-900'
+                                                                `}
                                                             >
                                                                 GitHub Account
                                                             </span>

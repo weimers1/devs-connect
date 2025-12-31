@@ -24,7 +24,7 @@ const Authenticate: React.FC = () => {
         icon: string;
         message: string;
         allowClose: boolean;
-    } | null>(null);
+    } | null>(null); 
 
     const [isNewUser, setIsNewUser] = useState(false);
     const [firstName, setFirstName] = useState('');

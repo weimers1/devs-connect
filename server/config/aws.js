@@ -1,5 +1,6 @@
-import AWS from 'aws-sdk';
+import { S3Client, HeadBucketCommand } from '@aws-sdk/client-s3';
 import 'dotenv/config.js';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 
 // Validate required environment variables
 const requiredEnvVars = [
@@ -15,23 +16,21 @@ for (const envVar of requiredEnvVars) {
 }
 
 //Config AWS
-AWS.config.update({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+const s3Client = new S3Client({
     region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
 });
-
-//Create S3 instance
-const s3 = new AWS.S3();
 
 // Test function (you can remove this later)
 export const testS3Connection = async () => {
     try {
-        const params = {
+        const command = new HeadBucketCommand({
             Bucket: process.env.AWS_BUCKET_NAME,
-        };
-
-        const result = await s3.headBucket(params).promise();
+        });
+        await s3Client.send(command);
         console.log('S3 connection successful!');
         return true;
     } catch (error) {
@@ -40,4 +39,12 @@ export const testS3Connection = async () => {
     }
 };
 
-export default s3;
+export const uploadToS3 = async ({ Bucket, Key, Body, ContentType }) => {
+    const params = { Bucket, Key, Body, ContentType };
+    await s3Client.send(new PutObjectCommand(params));
+
+    const url = `https://${Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${Key}`;
+    return { Location: url };
+};
+
+export default s3Client;

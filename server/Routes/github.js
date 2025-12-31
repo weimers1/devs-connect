@@ -55,63 +55,49 @@ router.get(
     }),
     async (req, res) => {
         try {
-            // Get GitHub data from passport
             const githubData = req.user;
+            const clientUrl = process.env.CLIENT_URL;
 
             if (!githubData) {
-                console.log('No GitHub data received');
-                const clientUrl =
-                    process.env.CLIENT_URL || 'http://localhost:80';
                 return res.redirect(
                     `${clientUrl}/settings?github=error&reason=no_data`
                 );
             }
 
-            // Get current user from session
-            const sessionToken =
-                req.cookies?.session_token ||
-                req.headers.authorization?.replace('Bearer ', '');
-            console.log('Session token found:', !!sessionToken);
-
-            // For now, since we can't easily link to existing user without proper session handling,
-            // let's just redirect with the GitHub data and handle it on frontend
-            console.log('GitHub OAuth successful, redirecting to settings');
-            const githubParams = new URLSearchParams({
-                github: 'success',
-                githubId: githubData.githubId,
-                githubUsername: githubData.githubUsername,
-                githubEmail: githubData.githubEmail || 'no-email',
+            // Check if user with this GitHub ID already exists
+            let user = await User.findOne({
+                where: { githubId: githubData.githubId },
             });
 
-            // Validate redirect URL to prevent SSRF
-            const clientUrl = process.env.CLIENT_URL || 'http://localhost:80';
-            const allowedHosts = ['localhost'];
-            
-            try {
-                const redirectUrl = new URL(
-                    `${clientUrl}/settings?${githubParams.toString()}`
-                );
-
-                if (!allowedHosts.includes(redirectUrl.hostname)) {
-                    return res.redirect(
-                        `${clientUrl}/settings?github=error&reason=invalid_redirect`
-                    );
-                }
-
-                return res.redirect(redirectUrl.toString());
-            } catch (urlError) {
-                console.error('Invalid URL construction:', urlError);
-                return res.redirect(
-                    `${clientUrl}/settings?github=error&reason=invalid_url`
-                );
+            if (user) {
+                // Update existing user's GitHub data
+                await user.update({
+                    githubUsername: githubData.githubUsername,
+                    githubAccessToken: githubData.githubAccessToken,
+                    githubEmail: githubData.githubEmail,
+                });
+                console.log('Updated existing user with GitHub data');
+            } else {
+                // Create new user with GitHub data
+                user = await User.create({
+                    firstName: githubData.githubUsername || 'GitHub',
+                    lastName: 'User',
+                    email:
+                        githubData.githubEmail ||
+                        `${githubData.githubUsername}@github.local`,
+                    githubId: githubData.githubId,
+                    githubUsername: githubData.githubUsername,
+                    githubAccessToken: githubData.githubAccessToken,
+                    githubEmail: githubData.githubEmail,
+                    verifiedAt: new Date(),
+                });
+                console.log('Created new user with GitHub data');
             }
 
-            // Commented out session check for now
-            // if (sessionToken) {
-            //   res.redirect('http://localhost:80/settings?github=success');
-            // } else {
-            //   res.redirect('http://localhost:80/login?error=not_logged_in');
-            // }
+            // Redirect with success
+            return res.redirect(
+                `${clientUrl}/settings?github=success&userId=${user.id}`
+            );
         } catch (error) {
             console.error('GitHub callback error:', error);
             const clientUrl = process.env.CLIENT_URL || 'http://localhost:80';

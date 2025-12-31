@@ -1,6 +1,6 @@
 import multer from 'multer';
 import s3 from '../config/aws.js';
-import { testS3Connection } from '../config/aws.js';
+import s3Client, { testS3Connection, uploadToS3 } from '../config/aws.js';
 import UserProfile from '../Models/UserProfile.js';
 import Community from '../Models/Communites.js';
 
@@ -109,9 +109,9 @@ export const updateProfileImage = async (req, res) => {
         // Find or create UserProfile record, then update image URL
         const [userProfile, created] = await UserProfile.findOrCreate({
             where: { userId: req.user.userId },
-            defaults: { userId: req.user.userId }
+            defaults: { userId: req.user.userId },
         });
-        
+
         await userProfile.update({ profileImageUrl: imageUrl });
 
         res.json({
@@ -123,7 +123,7 @@ export const updateProfileImage = async (req, res) => {
             message: error.message,
             stack: error.stack,
             userId: req.user?.userId,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         });
         res.status(500).json({ error: 'Failed to update profile image' });
     }
@@ -136,7 +136,9 @@ export const uploadCommunityImage = async (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        const fileName = `community-images/${Date.now()}-${req.file.originalname}`;
+        const fileName = `community-images/${Date.now()}-${
+            req.file.originalname
+        }`;
 
         const params = {
             Bucket: process.env.AWS_BUCKET_NAME,
