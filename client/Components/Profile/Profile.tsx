@@ -26,7 +26,7 @@ const MONTHS = [
 
 function Profile() {
     const { userId } = useParams<{ userId: string }>();
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const isOwnProfile = !userId;
     const [showCertModal, setShowCertModal] = React.useState(false); //Certification Modal
     const [showProfModal, setShowProfModal] = React.useState(false); // Profile Modal
@@ -72,7 +72,7 @@ function Profile() {
             formData.append('profileImage', file);
 
             const baseUrl =
-               // import.meta.env.VITE_API_URL || 
+               import.meta.env.VITE_API_URL ||
                 'http://localhost:6969';
             const uploadResponse = await fetch(
                 `${baseUrl}/api/upload/profile-image`,
@@ -364,8 +364,8 @@ function Profile() {
         <Layout>
             {/* Main container - centered for other users, full width for own profile */}
             <div
-                className={`bg-gradient-to-b min-h-screen ${
-                    isOwnProfile ? 'md:mr-7 md:w-183' : 'max-w-4xl mx-auto px-4'
+                className={`bg-gradient-to-b min-h-screen mt-4  ${
+                    isOwnProfile ? ' md:mr-7 md:w-183' : 'max-w-4xl mx-auto px-4'
                 }`}
             >
                 {/* User Profile Card */}

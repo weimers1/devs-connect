@@ -3,7 +3,7 @@ const validateUrl = (url: string): boolean => {
     return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url);
 };
 
-const rawBaseUrl = //import.meta.env.VITE_API_URL || 
+const rawBaseUrl = import.meta.env.VITE_API_URL || 
  'http://localhost:6969';
 if (!validateUrl(rawBaseUrl)) {
     throw new Error('Invalid API URL configuration');
@@ -71,16 +71,26 @@ const API = {
         if (!response.ok) throw new Error('Failed to update profile settings');
     },
     //Update Display Settings API
-    updateDisplaySettings: async (settings: object) => {
-        const response = await fetch(`${API_SETTINGS}/display`, {
-            method: 'PUT',
-            headers: getAuthHeaders(true),
-            body: JSON.stringify(settings),
-        });
-        if (!response.ok) throw new Error('Failed to update settings');
-        return response.json();
+    // updateDisplaySettings: async (settings: object) => {
+    //     const response = await fetch(`${API_SETTINGS}/display`, {
+    //         method: 'PUT',
+    //         headers: getAuthHeaders(true),
+    //         body: JSON.stringify(settings),
+    //     });
+    //     if (!response.ok) throw new Error('Failed to update settings');
+    //     return response.json();
+    // },
+    //General Preferences 
+    updateGeneralPreferences: async (settings: object) =>  {
+            const response = await fetch(`${API_SETTINGS}/general`, {
+                method: 'PUT', 
+                headers: getAuthHeaders(true),
+                body: JSON.stringify(settings),
+            });
+            if(!response.ok) throw new Error('Failed to update general Settings'); 
+               
     },
-    //Fetch Display Settings APi
+    //Fetch Display Settings API
     getDisplaySettings: async () => {
         const response = await fetch(`${API_SETTINGS}/display`, {
             headers: getAuthHeaders(),
@@ -107,30 +117,30 @@ const API = {
         return response.json();
     },
     //Update Certification
-    updateCertifications: async (certId: string, certPayload: object) => {
-        const response = await fetch(
-            `${API_SETTINGS}/update-certifications/${certId}`,
-            {
-                method: 'PUT',
-                headers: getAuthHeaders(true),
-                body: JSON.stringify(certPayload),
-            }
-        );
-        if (!response.ok) throw new Error('Failed to update certification');
-        return response.json();
-    },
+    // updateCertifications: async (certId: string, certPayload: object) => {
+    //     const response = await fetch(
+    //         `${API_SETTINGS}/update-certifications/${certId}`,
+    //         {
+    //             method: 'PUT',
+    //             headers: getAuthHeaders(true),
+    //             body: JSON.stringify(certPayload),
+    //         }
+    //     );
+    //     if (!response.ok) throw new Error('Failed to update certification');
+    //     return response.json();
+    // },
 
-    deleteCertification: async (certId: number) => {
-        const response = await fetch(
-            `${API_SETTINGS}/certifications/${certId}`,
-            {
-                method: 'DELETE',
-                headers: getAuthHeaders(),
-            }
-        );
-        if (!response.ok) throw new Error('Failed to delete certification');
-        return response.json();
-    },
+    // deleteCertification: async (certId: number) => {
+    //     const response = await fetch(
+    //         `${API_SETTINGS}/certifications/${certId}`,
+    //         {
+    //             method: 'DELETE',
+    //             headers: getAuthHeaders(),
+    //         }
+    //     );
+    //     if (!response.ok) throw new Error('Failed to delete certification');
+    //     return response.json();
+    // },
 
     //Get GitHub Connection Status
     getGitHubConnection: async () => {
@@ -337,5 +347,7 @@ const API = {
         return response.json();
     },
 };
+
+
 
 export default API;

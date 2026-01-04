@@ -25,7 +25,6 @@ const sanitizeInput = (input: string): string => {
         .replace(/`/g, '&#96;')
         .replace(/~/g, '&#126;')
         .replace(/!/g, '&#33;')
-        .replace(/@/g, '&#64;')
         .replace(/#/g, '&#35;')
         .replace(/\$/g, '&#36;')
         .replace(/%/g, '&#37;')
@@ -46,13 +45,13 @@ const validateEmail = (email: string): boolean => {
 };
 
 const validateAge = (age: string): boolean => {
-    if (!age || age.trim() === '') return false;
+   // if (!age || age.trim() === '') return false;
     const ageNum = Number(age);
-    return Number.isInteger(ageNum) && ageNum >= 13 && ageNum <= 120;
+    return Number.isInteger(ageNum) && ageNum >= 0 && ageNum <= 120;
 };
 
 const validateName = (name: string): boolean => {
-    const nameRegex = /^[a-zA-Z\s'-]{1,50}$/;
+    const nameRegex = /^[a-zA-Z\s'-]{0,50}$/;
     return nameRegex.test(name.trim());
 };
 
@@ -100,6 +99,7 @@ function ProfileInfo() {
     const [githubConnected, setGithubConnected] = useState(false);
     const [githubEmail, setGithubEmail] = useState('');
     const [githubUsername, setGithubUsername] = useState('');
+    //const [value, setValue] = useState('');
     const navigate = useNavigate();
 
     const handleSettingClick = (settingType: string) => {
@@ -153,6 +153,7 @@ function ProfileInfo() {
                 [field]: sanitizedValue,
             }));
             setHasChanges(true);
+       
         }
     }, []);
     //Side Effect
@@ -270,7 +271,7 @@ function ProfileInfo() {
 
     // Secure form submission with validation
     const handleSave = useCallback(async () => {
-        setLoading(true);
+        setLoading(true); 
         setSaveStatus('');
 
         try {
@@ -282,6 +283,7 @@ function ProfileInfo() {
                 location: sanitizeInput(profileSettings.location),
                 bio: sanitizeInput(profileSettings.bio),
                 email: sanitizeInput(profileSettings.email),
+                gender: sanitizeInput(profileSettings.gender),
             };
 
             // Validate required fields
@@ -314,6 +316,7 @@ function ProfileInfo() {
 
     // Secure GitHub data saving with validation
     const saveGitHubData = useCallback(
+
         async (
             githubId: string,
             githubUsername: string,
@@ -321,6 +324,7 @@ function ProfileInfo() {
         ) => {
             try {
                 // Validate inputs before sending
+         
                 if (
                     !validateEmail(githubEmail) ||
                     !validateGitHubUsername(githubUsername) ||
@@ -337,8 +341,7 @@ function ProfileInfo() {
                 }
 
                 const baseUrl =
-                    //import.meta.env.VITE_API_URL ||
-                     'http://localhost:6969';
+                    import.meta.env.VITE_API_URL || 'http://localhost:6969';
 
                 // Validate base URL
                 if (
@@ -350,8 +353,8 @@ function ProfileInfo() {
                     return;
                 }
 
-                const response = await fetch(`${baseUrl}/user/link-github`, {
-                    method: 'POST',
+                const response = await fetch(`${baseUrl}/api/settings/link-github`, {
+                    method: 'PUT',
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
@@ -368,6 +371,8 @@ function ProfileInfo() {
                     throw new Error(
                         `HTTP ${response.status}: ${response.statusText}`
                     );
+                } else {
+                    console.log("success")
                 }
             } catch (error) {
                 console.error('Error saving GitHub data:', error);
@@ -526,7 +531,7 @@ function ProfileInfo() {
                                                             handleChange(
                                                                 'lastName',
                                                                 e.target.value
-                                                            )
+                                                            )   
                                                         }
                                                         maxLength={50}
                                                         pattern="[a-zA-Z\s'-]+"
@@ -621,7 +626,7 @@ function ProfileInfo() {
                                     )}
                                     {section.id === 'demographics' && (
                                         <>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                                                 {/* Age Input */}
                                                 <div
                                                     className={`
@@ -647,9 +652,9 @@ function ProfileInfo() {
                                                         }
                                                         min="13"
                                                         max="120"
-                                                        className="w-full px-3 py-1 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                        className="w-full px-3 py-1 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent "
                                                     />
-                                                </div>
+                                                      
 
                                                 {/* Gender Select */}
                                                 <div
@@ -659,43 +664,101 @@ function ProfileInfo() {
                                                         //     : 'text-gray-900'
                                                     `}
                                                 >
-                                                    <label className="block text-sm font-medium mb-2">
+                                                    <label className="block text-sm font-medium mb-2"
+                                                    >
                                                         Gender
                                                     </label>
-                                                    <select
-                                                        className={`w-full px-3 py-1.5 rounded-xl focus:outline-none focus:ring-2 border-1   
-                                                            // theme === 'dark'
-                                                            //     ? 'bg-gray-900 text-white border-gray-300 '
-                                                            //     : 'bg-white text-gray-900 border-gray-300'
+                                                    <select 
+
+                                                        className={`w-full px-3 py-1.5 rounded-xl border-1   
+                                                          
                                                         `}
                                                         value={
                                                             profileSettings.gender
                                                         }
+                                                      
                                                         onChange={(e) =>
                                                             handleChange(
                                                                 'gender',
-                                                                e.target.value
+                                                                e.target.value,
+                                                                
                                                             )
                                                         }
                                                     >
-                                                        <option value="">
-                                                            Select gender
-                                                        </option>
-                                                        <option value="prefer-not-to-say">
+                                                          <option value="" disabled selected>-- Select a Gender --</option>
+                                                        <option value="prefer-not-to-say" className="bg-gray-300 text-black">
                                                             Prefer not to say
                                                         </option>
-                                                        <option value="male">
+                                                        <option value="male" className="bg-gray-300 text-black">
                                                             Male
                                                         </option>
-                                                        <option value="female">
+                                                        <option value="female" className="bg-gray-300 text-black">
                                                             Female
                                                         </option>
-                                                        <option value="other">
+                                                        <option value="other" className="bg-gray-300 text-black">
                                                             Other
                                                         </option>
+                                                     
                                                     </select>
+                                                    
                                                 </div>
                                             </div>
+                                            </div>
+                                             <div className="flex justify-end space-x-2 space-y-0">
+                                                <div className="flex justify-center pt-1 bg-red-600 w-25 rounded-2xl h-8.5 hover:bg-red-500 ">
+                                                    <button
+                                                        className="border-gray-500"
+                                                        onClick={() =>
+                                                            handleCancel()
+                                                        }
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    onClick={handleSave}
+                                                    disabled={
+                                                        !hasChanges || loading
+                                                    }
+                                                    className={`w-25 rounded-2xl font-medium transition-colors ${
+                                                        saveStatus === 'success'
+                                                            ? 'bg-green-600 text-white'
+                                                            : saveStatus ===
+                                                              'error'
+                                                            ? 'bg-red-600 text-white'
+                                                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                                                    }`}
+                                                >
+                                                    {' '}
+                                                    {loading ? (
+                                                        <>
+                                                            <Icon
+                                                                icon="mdi:loading"
+                                                                className="animate-spin w-4 h-4 mr-2"
+                                                            />
+                                                            Saving...
+                                                        </>
+                                                    ) : saveStatus ===
+                                                      'success' ? (
+                                                        <>
+                                                            <div className="flex justify-center">
+                                                                Saved!
+                                                            </div>
+                                                        </>
+                                                    ) : saveStatus ===
+                                                      'error' ? (
+                                                        <>
+                                                            <Icon
+                                                                icon="mdi:alert"
+                                                                className="w-4 h-4 mr-2"
+                                                            />
+                                                            Error
+                                                        </>
+                                                    ) : (
+                                                        'Save'
+                                                    )}
+                                                </button>
+                                                </div>
                                         </>
                                     )}
 
@@ -744,12 +807,12 @@ function ProfileInfo() {
                                                         />
                                                         <div>
                                                             <span
-                                                                className={`font-medium ${
-                                                                    theme ===
-                                                                    'dark'
-                                                                        ? 'text-white'
-                                                                        : 'text-gray-900'
-                                                                }`}
+                                                                className={`font-medium`
+                                                                    // theme ===
+                                                                    // 'dark'
+                                                                    //     ? 'text-white'
+                                                                    //     : 'text-gray-900'
+                                                                }
                                                             >
                                                                 GitHub Account
                                                             </span>
@@ -769,10 +832,8 @@ function ProfileInfo() {
                                                         <button
                                                             onClick={() => {
                                                                 const baseUrl =
-                                                                    // .mimporteta
-                                                                    //     .env
-                                                                    //     .VITE_API_URL ||
-                                                                    'http://localhost:6969';
+                                                                    import.meta.env
+                                                                         .VITE_API_URL || 'http://localhost:6969';
 
                                                                 // Validate URL before redirect
                                                                 if (

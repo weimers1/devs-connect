@@ -19,7 +19,7 @@ function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
     }, [profileData]);
 
     return (
-        <div className="w-full bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2">
+        <div className="w-full  bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2">
             {/* Banner - Full width on mobile */}
             <div className="relative">
                 <div className="w-full">

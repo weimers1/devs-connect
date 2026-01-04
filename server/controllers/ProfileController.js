@@ -38,7 +38,7 @@ export const linkGitHub = async (req, res) => {
         }
 
         // Update user with GitHub info
-        await user.update({
+        await user.update({ 
             githubId,
             githubUsername,
             githubEmail,
@@ -46,6 +46,7 @@ export const linkGitHub = async (req, res) => {
 
         res.json({
             message: 'GitHub account linked successfully',
+            githubId: req.body.githubId,
             githubUsername: req.body.githubUsername,
             githubEmail: req.body.githubEmail,
         });

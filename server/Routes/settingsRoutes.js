@@ -16,7 +16,7 @@ import {
     getGitHubInformation,
 } from '../controllers/settingsController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
-import { addCertification } from '../controllers/profileController.js';
+import { addCertification, linkGitHub } from '../controllers/profileController.js';
 import { updateProfileImage } from '../controllers/uploadController.js';
 import { getCertifications } from '../controllers/profileController.js';
 import { get } from 'http';
@@ -37,13 +37,13 @@ router.post('/certifications', addCertification);
 //Get Certs
 router.get('/get-certifications', getCertifications);
 //Update Certifications
-router.put('/update-certifications/:id', updateCertifications);
+// router.put('/update-certifications/:id', updateCertifications);
 //Delete Certification
-router.delete('/certifications/:id', deleteCertification);
+// router.delete('/certifications/:id', deleteCertification);
 //Get Display Settings
-router.get('/display', getDisplaySettings);
-//Update Display Settings
-router.put('/display', updateDisplaySettings);
+// router.get('/display', getDisplaySettings);
+// //Update Display Settings
+// router.put('/display', updateDisplaySettings);
 //Get General Preferences
 router.get('/general', getGeneralPreferences);
 //Update General Preferences
@@ -66,5 +66,7 @@ router.put('/profile-image', updateProfileImage);
 router.get('/github', getGitHubConnection);
 //Get GitHub Username
 router.get('/github-info', getGitHubInformation);
+//Link github account
+router.put('/link-github', linkGitHub);
 
 export default router;

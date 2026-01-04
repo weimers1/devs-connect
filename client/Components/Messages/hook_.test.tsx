@@ -112,7 +112,7 @@ describe("Testing the Messages Send API to the DB ", () => {
         jest.restoreAllMocks();
         messageRateLimit.clear();
         localStorage.removeItem("session_token");
-    })
+    }) 
     test("Checking to see if the send messages API will work", async () => {
         const mockMessage = {sender_id: "1", conversation_id: "1-2", receiver_id:"2", message_type: "text", status:"sent"
              ,content:"hello"};
@@ -125,11 +125,11 @@ describe("Testing the Messages Send API to the DB ", () => {
         expect(data).toEqual({success: true, data: mockMessage});
     })
 }) 
-//{ ok: true, json: () => Promise.resolve({ success: true, data: mockMessage }) }. Mimivig the controller, it should resolve to 
+// { ok: true, json: () => Promise.resolve({ success: true, data: mockMessage }) }. Mimivig the controller, it should resolve to 
 // Because the controller res.json respone is "res.json({success: true, data: message})"
 
 
-// //Testing The Web Socket
+//Testing The Web Socket
 // describe("testing web sockets for seemless communication with users", () => {
 //     test("Testing Web socket integration", async () => {
 //         //Arrange : fake created message

@@ -58,6 +58,7 @@ router.get(
             // Get GitHub data from passport
             const githubData = req.user;
 
+
             if (!githubData) {
                 console.log('No GitHub data received');
                 const clientUrl =

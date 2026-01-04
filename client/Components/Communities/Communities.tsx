@@ -1,6 +1,7 @@
 import Layout from '../Layout';
 import Sidebar from '../Connections/Sidebar';
 import CommunityExplore from '../Communities/CommunityExplore';
+import React from 'react';
 
 const Communities = () => {
     return (

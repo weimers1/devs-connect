@@ -206,17 +206,12 @@ export const getGeneralPreferences = async (req, res) => {
         const general = await GeneralPreferences.findOne({
             where: { userId: req.user.userId },
         });
+       
         res.json({
             //Language
             language: general?.language || null,
             //Time Zone
             time_zone: general?.time_zone || null,
-            //Notifications
-            notifications: general?.notifications || null,
-            //Feed Preferences
-            feed_preferences: general?.feed_preferences || null,
-            //Content Filtering
-            content_filtering: general?.content_filtering || null,
         });
     } catch (error) {
         res.status(500).json({ error: 'Failed to get general preferences' });
@@ -225,27 +220,36 @@ export const getGeneralPreferences = async (req, res) => {
 //Update General Preferences
 export const updateGeneralPreferences = async (req, res) => {
     try {
-        const [generalPrefs, created] = await GeneralPreferences.findOrCreate({
+        const LanguageMap = {
+            en: 'English',
+            es: 'Spanish',
+            fr: 'French',
+            de: 'German',
+            ja: 'Japanese',
+            zh: 'Chinese',
+        }
+        const languageValue = LanguageMap[req.body.language] || req.body.language;
+        const timeZoneValue = req.body.time_zone || req.body.TimeZone;
+        const [generalPrefs] = await GeneralPreferences.findOrCreate({
             //Find or create the General Preferences
             where: { userId: req.user.userId },
             defaults: {
-                userId: req.user.userId,
-                time_zone: 'UTC',
+                userId: req.user.userId
             },
         });
+        if(!generalPrefs) {
+            return res
+            .status(404)
+            .json({error: "Didn't find user"});
+
+        }
         await generalPrefs.update({
-            language: req.body.language,
-            time_zone: req.body.time_zone,
-            notifications: req.body.notifications,
-            feed_preferences: req.body.feed_preferences,
-            content_filtering: req.body.content_filtering,
+            language: languageValue,
+            time_zone: timeZoneValue,
         });
         res.json({
-            language: generalPrefs?.language || null,
-            time_zone: generalPrefs?.time_zone || null,
-            notifications: generalPrefs?.notifications || null,
-            feed_preferences: generalPrefs?.feed_preferences || null,
-            content_filtering: generalPrefs?.content_filtering || null,
+            language: generalPrefs.language ,
+            time_zone: generalPrefs.time_zone,
         });
     } catch (error) {
         res.status(500).json({ error: 'Failed to update general preferences' });

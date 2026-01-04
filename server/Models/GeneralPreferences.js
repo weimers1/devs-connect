@@ -24,7 +24,7 @@ const GeneralPreferences = sequelize.define('GeneralPreferences', {
             isIn: [['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese']]
         },
     },
-    timeZone: {
+    time_zone: {
         type: DataTypes.STRING,
         allowNull: false,
         defaultValue: 'UTC',
@@ -32,34 +32,7 @@ const GeneralPreferences = sequelize.define('GeneralPreferences', {
             notEmpty: true
         },
     },
-    notifications: {
-        type: DataTypes.JSON,
-        allowNull: true,
-        defaultValue: {
-            soundEffects: false,
-            pushNotifications: false,
-            emailNotifications: false,
-            desktopNotifications: false,
-        },
-    },
-    feedPreferences: {
-        type: DataTypes.JSON,
-        allowNull: true,
-        defaultValue: {
-            latestPosts: false,
-            mostPopular: true,
-            followingOnly: false,
-        },
-    },
-    contentFiltering: {
-        type: DataTypes.JSON,
-        allowNull: true,
-        defaultValue: {
-            explicitContent: false,
-            filterSpam: false,
-            filterProfanity: false,
-        },
-    },
+    
 });
 
 export default GeneralPreferences;

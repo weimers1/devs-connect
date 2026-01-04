@@ -3,8 +3,7 @@ import { StytchLogin } from '@stytch/react';
 import { Products } from '@stytch/vanilla-js';
 import Layout from './Layout';
 import React from 'react';
-const URL_CLIENT = 'http://localhost:6969' ;
- //import.meta.env.VITE_URL_CLIENT;
+const URL_CLIENT =  import.meta.env.VITE_URL_CLIENT || 'http://localhost:6969';
 
 // Define TypeScript interface for stytchStyle
 interface StytchStyle {
@@ -81,7 +80,7 @@ const Login = () => {
     return (
         <Layout>
             <section className="h-175 lg:h-[100vh] flex flex-col items-center justify-center">
-                <h1 className="text-center mb-8 text-6xl text-white font-black tracking-tight text-shadow-sm">
+                <h1 className="text-center mb-8 text-6xl text-bg-linear-to-tr from-blue-700 to-slate-950 font-mono select-none font-black tracking-tight text-shadow-sm mb-25">
                     Connect. Code. Create.
                 </h1>
                 <div className="shadow-xl">

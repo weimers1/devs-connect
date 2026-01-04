@@ -52,7 +52,7 @@ const io = new Server(httpServer, {
         ],
         methods: ['GET', 'POST'],
         credentials: true,
-    },
+    }, 
 });
 app.set('io', io);
 

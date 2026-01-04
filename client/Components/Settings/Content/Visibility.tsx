@@ -34,14 +34,10 @@ export default function Visibility() {
         <div>
             <div
                 id="Visibility"
-                className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border border-gray-100 
-                    // isDark ? 'bg-gray-900' : 'bg-white'
-                `}
+                className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border `}
             >
                 <div
-                    className={`p-6 border-b border-gray-100 
-                        // isDark ? 'text-white' : 'text-gray-900'
-                    `}
+                    className={`p-6 border-b border-gray-100 `}
                 >
                     <h2 className="text-xl font-semibold ">
                         Visibility Settings
@@ -54,7 +50,7 @@ export default function Visibility() {
                 {VISIBILITY_OPTIONS.map((item, index) => (
                     <div key={item.id}>
                         <div
-                            className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer 
+                            className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer
                                 // theme === 'dark'
                                 //     ? 'hover:bg-gray-700'
                                 //     : 'hover:bg-white'
