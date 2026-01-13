@@ -12,6 +12,7 @@ import { useAuthRedirect } from '../Auth/useAuthRedirect';
 
 const CommunityPage: React.FC = () => {
     const { communityId } = useParams<{ communityId: string }>();
+    const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
     const { requireAuth } = useAuthRedirect();
     const [activeTab, setActiveTab] = useState('posts');
@@ -88,6 +89,17 @@ const CommunityPage: React.FC = () => {
         requireAuth(async () => {
             if (!communityId) return;
             try {
+                const currentUser = await API.getCurrentUser();
+                if (!currentUser) {
+                    console.error('User not authenticated');
+                    return;
+                }
+                const membershipStatus = 
+                await API.getCommunityMembership(communityId, currentUser.id);
+                if (membershipStatus) {
+                    console.log('Already a member');
+                        return;
+                }
                 await API.joinCommunity(communityId);
                 setIsJoined(!isJoined);
                 const [updatedCommunity, updatedMembers] = await Promise.all([
@@ -116,12 +128,7 @@ const CommunityPage: React.FC = () => {
         tags: [],
         createdDate: community.createdAt,
         members: members,
-        rules: [
-            'Be respectful and professional',
-            'No spam or self-promotion without permission',
-            'Share knowledge and help others learn',
-            'Use appropriate channels for discussions'
-        ]
+        rules: []
     };
 
     return (

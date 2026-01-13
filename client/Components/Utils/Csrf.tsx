@@ -1,4 +1,5 @@
 const getCsrfToken = async () => {
+        //had to change to import import Meta for testing
     const baseUrl = import.meta.env.VITE_API_URL  || 'http://localhost:6969';
     try {
         const res = await fetch(`${baseUrl}/csrf-token`, {

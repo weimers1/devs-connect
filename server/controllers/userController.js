@@ -43,7 +43,7 @@ export const getCurrentUser = async (req, res) => {
         }
 
         res.json({
-            id: user.id,
+            userId: userId,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,

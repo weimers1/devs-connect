@@ -9,26 +9,39 @@ import API from '../../Service/service';
 import { Icon } from '@iconify/react';
 import { assets } from '../../assets/assets';
 
-const MONTHS = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-];
+// const MONTHS = [
+//     'January',
+//     'February',
+//     'March',
+//     'April',
+//     'May',
+//     'June',
+//     'July',
+//     'August',
+//     'September',
+//     'October',
+//     'November',
+//     'December',
+// ];
+   export const validateImageUrl = (url: string) => {
+        try {
+            const parsedUrl = new URL(url);
+            const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com'];
+            return (
+                  allowedHosts.some((host) =>
+                    parsedUrl.hostname.endsWith(host)
+                ) && parsedUrl.protocol === 'https:'
+            );
+        } catch {
+            return false;
+        }
+    };
 
 function Profile() {
     const { userId } = useParams<{ userId: string }>();
     // const navigate = useNavigate();
     const isOwnProfile = !userId;
-    const [showCertModal, setShowCertModal] = React.useState(false); //Certification Modal
+    // const [showCertModal, setShowCertModal] = React.useState(false); //Certification Modal
     const [showProfModal, setShowProfModal] = React.useState(false); // Profile Modal
     const [certSaving, setCertSaving] = useState(false);
     const [imageUploading, setImageUploading] = useState(false);
@@ -37,30 +50,18 @@ function Profile() {
     const [hasChanges, setHasChanges] = useState(false);
     // const theme = useTheme(); //Change Theme
 
-    const [certData, setCertData] = useState({
-        certName: '',
-        issuer: '',
-        issuedMonth: '',
-        issuedYear: '',
-        expiryMonth: '',
-        expiryYear: '',
-        credentialID: '',
-        credentialURL: '',
-    });
+    // const [certData, setCertData] = useState({
+    //     certName: '',
+    //     issuer: '',
+    //     issuedMonth: '',
+    //     issuedYear: '',
+    //     expiryMonth: '',
+    //     expiryYear: '',
+    //     credentialID: '',
+    //     credentialURL: '',
+    // });
     // TYPE FIX: Added explicit string type for URL validation parameter
-    const validateImageUrl = (url: string) => {
-        try {
-            const parsedUrl = new URL(url);
-            const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com'];
-            return (
-                allowedHosts.some((host) =>
-                    parsedUrl.hostname.endsWith(host)
-                ) && parsedUrl.protocol === 'https:'
-            );
-        } catch {
-            return false;
-        }
-    };
+
 
     // TYPE FIX: Added explicit File type to prevent TypeScript implicit any error
     const handleImageUpload = async (file: File) => {
@@ -138,6 +139,7 @@ function Profile() {
             alert('Failed to upload profile image. Please try again.');
         } finally {
             setImageUploading(false);
+        
         }
     };
 
@@ -181,7 +183,7 @@ function Profile() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('showCertModal') === 'true') {
             //Checking if the redirect was for the certification Modal
-            setShowCertModal(true);
+            // setShowCertModal(true);
         } else if (urlParams.get('showProfModal') === 'true') {
             //Checking if the redirect was for the profile Model
             setShowProfModal(true);
@@ -190,10 +192,10 @@ function Profile() {
 
     // TYPE FIX: Added explicit string types for date combination parameters
     // Combine month and year into date string
-    const combineDateFields = (month: string, year: string) => {
-        if (!month || !year) return '';
-        return `${month}-${year}`;
-    };
+    // const combineDateFields = (month: string, year: string) => {
+    //     if (!month || !year) return '';
+    //     return `${month}-${year}`;
+    // };
 
     //Handle Save for updating
     const handleSave = async () => {
@@ -201,57 +203,57 @@ function Profile() {
         setCertSaveStatus('');
         try {
             // Combine the date fields before sending
-            const certPayload = {
-                certName: certData.certName,
-                issuer: certData.issuer,
-                dateEarned: combineDateFields(
-                    certData.issuedMonth,
-                    certData.issuedYear
-                ),
-                dateExpiration: combineDateFields(
-                    certData.expiryMonth,
-                    certData.expiryYear
-                ),
-                credentialID: certData.credentialID,
-                credentialURL: certData.credentialURL,
-            };
+            // const certPayload = {
+            //     certName: certData.certName,
+            //     issuer: certData.issuer,
+            //     dateEarned: combineDateFields(
+            //         certData.issuedMonth,
+            //         certData.issuedYear
+            //     ),
+            //     dateExpiration: combineDateFields(
+            //         certData.expiryMonth,
+            //         certData.expiryYear
+            //     ),
+            //     credentialID: certData.credentialID,
+            //     credentialURL: certData.credentialURL,
+            // };
 
-            await API.addCertifications(certPayload);
-            setCertSaveStatus('success');
-            console.log('Certification saved:', certPayload);
-            //Handle Save for updating
+            // await API.addCertifications(certPayload);
+            // setCertSaveStatus('success');
+            // console.log('Certification saved:', certPayload);
+            // Handle Save for updating
             const handleSave = async () => {
                 setCertSaving(true);
                 setCertSaveStatus('');
                 try {
-                    // Combine the date fields before sending
-                    const certPayload = {
-                        certName: certData.certName,
-                        issuer: certData.issuer,
-                        dateEarned: combineDateFields(
-                            certData.issuedMonth,
-                            certData.issuedYear
-                        ),
-                        dateExpiration: combineDateFields(
-                            certData.expiryMonth,
-                            certData.expiryYear
-                        ),
-                        credentialID: certData.credentialID,
-                        credentialURL: certData.credentialURL,
-                    };
+                 //   Combine the date fields before sending
+                    // const certPayload = {
+                    //     certName: certData.certName,
+                    //     issuer: certData.issuer,
+                    //     dateEarned: combineDateFields(
+                    //         certData.issuedMonth,
+                    //         certData.issuedYear
+                    //     ),
+                    //     dateExpiration: combineDateFields(
+                    //         certData.expiryMonth,
+                    //         certData.expiryYear
+                    //     ),
+                    //     credentialID: certData.credentialID,
+                    //     credentialURL: certData.credentialURL,
+                    // };
 
-                    await API.addCertifications(certPayload);
-                    setCertSaveStatus('success');
-                    console.log('Certification saved:', certPayload);
+                    // await API.addCertifications(certPayload);
+                    // setCertSaveStatus('success');
+                    // console.log('Certification saved:', certPayload);
 
-                    setTimeout(() => {
-                        setShowCertModal(false);
-                        setCertSaving(false);
-                        setCertSaveStatus('');
-                        // Re-enable scrolling
-                        document.body.style.overflow = 'auto';
-                        document.documentElement.style.overflow = 'auto';
-                    }, 1500);
+                    // setTimeout(() => {
+                    //     setShowCertModal(false);
+                    //     setCertSaving(false);
+                    //     setCertSaveStatus('');
+                    //     // Re-enable scrolling
+                    //     document.body.style.overflow = 'auto';
+                    //     document.documentElement.style.overflow = 'auto';
+                    // }, 1500);
                 } catch (error) {
                     console.error('Error saving certification:', error);
                     setCertSaveStatus('error');
@@ -259,22 +261,22 @@ function Profile() {
                 }
             };
             //Handle Change for certData
-            const handleChange = (field: string, value: string) => {
-                setCertData((prevData) => ({
-                    ...prevData,
-                    [field]: value,
-                }));
-                setHasChanges(true);
-            };
+            // const handleChange = (field: string, value: string) => {
+            //     setCertData((prevData) => ({
+            //         ...prevData,
+            //         [field]: value,
+            //     }));
+            //     setHasChanges(true);
+            // };
 
             // Handle Change for profile data
-            const handleProfileChange = (field: string, value: string) => {
-                setProfileData((prevData) => ({
-                    ...prevData,
-                    [field]: value,
-                }));
-                setHasChanges(true);
-            };
+            // const handleProfileChange = (field: string, value: string) => {
+            //     setProfileData((prevData) => ({
+            //         ...prevData,
+            //         [field]: value,
+            //     }));
+            //     setHasChanges(true);
+            // };
 
             // Handle Profile Save
             const handleProfileSave = async () => {
@@ -299,14 +301,14 @@ function Profile() {
                 }
             };
             const currentYear = new Date().getFullYear();
-            setTimeout(() => {
-                setShowCertModal(false);
-                setCertSaving(false);
-                setCertSaveStatus('');
-                // Re-enable scrolling
-                document.body.style.overflow = 'auto';
-                document.documentElement.style.overflow = 'auto';
-            }, 1500);
+            // setTimeout(() => {
+            //     setShowCertModal(false);
+            //     setCertSaving(false);
+            //     setCertSaveStatus('');
+            //     // Re-enable scrolling
+            //     document.body.style.overflow = 'auto';
+            //     document.documentElement.style.overflow = 'auto';
+            // }, 1500);
         } catch (error) {
             console.error('Error saving certification:', error);
             setCertSaveStatus('error');
@@ -314,13 +316,13 @@ function Profile() {
         }
     };
     //Handle Change for certData
-    const handleChange = (field: string, value: string) => {
-        setCertData((prevData) => ({
-            ...prevData,
-            [field]: value,
-        }));
-        setHasChanges(true);
-    };
+    // const handleChange = (field: string, value: string) => {
+    //     setCertData((prevData) => ({
+    //         ...prevData,
+    //         [field]: value,
+    //     }));
+    //     setHasChanges(true);
+    // };
 
     // Handle Change for profile data
     const handleProfileChange = (field: string, value: string) => {
@@ -364,8 +366,8 @@ function Profile() {
         <Layout>
             {/* Main container - centered for other users, full width for own profile */}
             <div
-                className={`bg-gradient-to-b min-h-screen mt-4  ${
-                    isOwnProfile ? ' md:mr-7 md:w-183' : 'max-w-4xl mx-auto px-4'
+                className={`bg-gradient-to-b  mt-4  ${
+                    isOwnProfile ? ' md:mr-7 md:w-auto' : 'max-w-4xl mx-auto px-4'
                 }`}
             >
                 {/* User Profile Card */}
@@ -388,7 +390,7 @@ function Profile() {
                 )}
             </div>
             {/*  Before closing Layout */}
-            {showCertModal && (
+            {/* {showCertModal && (
                 <div
                     className=" fixed inset-0 flex items-start justify-center pt-16 z-[9999]"
                     style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }} //Provides transparency for the background
@@ -399,7 +401,7 @@ function Profile() {
                         </h2>
                         <hr className="bg-gray-700"></hr>
                         {/* Form fields will go here */}
-                        <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
+                        {/* <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
                             <label className="block text-sm font-medium mt-2">
                                 Certification Name
                             </label>
@@ -422,8 +424,8 @@ function Profile() {
                                 }
                                 className="w-full px-3 py-1 border border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
-                        </div>
-                        <label className="block text-sm font-medium mt-2 mb-2">
+                        </div> */}
+                        {/* <label className="block text-sm font-medium mt-2 mb-2">
                             Issued Date
                         </label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -500,8 +502,8 @@ function Profile() {
                                     </option>
                                 ))}
                             </select>
-                            <select
-                                className="rounded-xl focus:outline-none focus:ring-1 border-1 py-1"
+                            <select */}
+                                {/* className="rounded-xl focus:outline-none focus:ring-1 border-1 py-1"
                                 onChange={(e) =>
                                     handleChange('expiryYear', e.target.value)
                                 }
@@ -534,8 +536,8 @@ function Profile() {
                                     )
                                 )}
                             </select>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
+                        </div> */}
+                        {/* <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
                             <label className="block text-sm font-medium  mt-2">
                                 Credential ID
                             </label>
@@ -608,9 +610,9 @@ function Profile() {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
-            {showProfModal && (
+                </div> */} 
+            {/* )} */}
+            {/* {showProfModal && (
                 <div
                     className="fixed inset-0 flex items-start justify-center pt-8 z-[9999]"
                     style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
@@ -689,7 +691,7 @@ function Profile() {
                         </button>
                     </div>
                 </div>
-            )}
+            )} */}
             {showProfModal && (
                 <div
                     className="fixed inset-0 flex items-start justify-center pt-8 z-[9999]"
@@ -722,6 +724,7 @@ function Profile() {
                             <input
                                 type="file"
                                 accept="image/*"
+                                data-testId="profile-upload-input"
                                 onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {

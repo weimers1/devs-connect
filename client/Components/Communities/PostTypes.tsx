@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import API from '../../Service/service';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
@@ -35,23 +35,57 @@ interface PostCardProps {
     onPostDelete?: (postId: number) => void;
 }
 
+// const postId  = useParams<{postId: string}>();
+
 const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete }) => {
     const navigate = useNavigate();
     const { requireAuth } = useAuthRedirect();
     const [isLiked, setIsLiked] = useState(false);
-    const [likes, setLikes] = useState(post.likes || 0);
+    const [likes, setLikes] = useState("");
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState<any[]>([]);
     const [newComment, setNewComment] = useState('');
     const [loadingComments, setLoadingComments] = useState(false);
     
+  
+    useEffect(() => {
+          const fetchlikes = async () => { 
+        try { 
+            const getlikes = await API.getLikes(post.id);
+            const likeCount = getlikes.like["COUNT(*)"] || 0;
+            if(!getlikes) {
+                console.log("No likes found for this post");    
+            }
+            setLikes(likeCount.toString());
+        
+        }   catch(error) {
+            console.log("Error fetching likes for post", error);
+        }
+    }
+        const getLikeStatus = async () => {
+            try {
+             const user = await API.getCurrentUser();
+             const userId = user.userId;
+             const getLikeStatus = await API.getLikeStatus(post.id, userId);
+            setIsLiked(getLikeStatus.postLiked);
+            if(!userId) {
+                console.log("No user Logged in");
+                return;
+            }
+        }   catch(error) {
+            console.log("Error fetching like status for post", error);
+        }
+    }
+        getLikeStatus();
+        fetchlikes();
+    }, [post.id]);
     const handleProfileClick = async () => {
         if (!post.userId) return;
         
         requireAuth(async () => {
             try {
                 const currentUser = await API.getCurrentUser();
-                if (post.userId.toString() === currentUser.id.toString()) {
+                if (post.id.toString() === currentUser.id.toString()) {
                     navigate('/profile');
                 } else {
                     navigate(`/profile/${post.userId}`);
@@ -68,14 +102,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
         requireAuth(async () => {
             try {
                 const result = await API.likePost(post.id.toString());
-                setIsLiked(result.liked);
-                setLikes(prev => result.liked ? prev + 1 : prev - 1);
+                setLikes(prev => result.liked ? (parseInt(prev)+1).toString() : (parseInt(prev)-1).toString()); //update like count do math in number then transform to string
+                 setIsLiked(result.liked);
+                // const likecount = await API.getLikes(post.id);
+                // setLikes(JSON.stringify(likecount));
             } catch (error) {
                 console.error('Failed to like post:', error);
             }
         });
     };
-
+  
+  
     const handleComment = async () => {
         if (!newComment.trim()) return;
         
@@ -159,6 +196,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                     />
                 </button>
                 <div className="flex-1">
+                  
                     <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center space-x-2">
                             <button 
@@ -166,6 +204,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                                 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
                             >
                                 {post.author}
+
                             </button>
                             <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeInfo.bg} ${typeInfo.color}`}>
                                 <Icon icon={typeInfo.icon} className="w-3 h-3 mr-1" />

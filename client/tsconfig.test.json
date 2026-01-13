@@ -14,5 +14,5 @@
         "Components/**/*.test.tsx",
         "Components/**/*.test.ts",
         "Components/**/__tests__/**/*"
-    ]
+, "babel.config.cjs"    ]
 }

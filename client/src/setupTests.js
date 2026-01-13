@@ -1,5 +1,4 @@
 // Jest setup file - runs before all tests
-import '@testing-library/jest-dom';
 
 // Mock TextEncoder/TextDecoder for Node.js environment
 if (typeof globalThis.TextEncoder === 'undefined') {
@@ -24,14 +23,14 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock IntersectionObserver
-(globalThis as any).IntersectionObserver = class {
+globalThis.IntersectionObserver = class {
   observe() {}
   disconnect() {}
   unobserve() {}
 };
 
 // Mock ResizeObserver
-(globalThis as any).ResizeObserver = class {
+globalThis.ResizeObserver = class {
   observe() {}
   disconnect() {}
   unobserve() {}

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import API from '../../Service/service';
 
 interface CommunityActionBarProps {
     community: {
@@ -10,17 +11,62 @@ interface CommunityActionBarProps {
         createdAt?: string;
         isOwner?: boolean;
     };
-    isJoined: boolean;
-    onJoinToggle: () => void;
+   
 }
 
 const CommunityActionBar: React.FC<CommunityActionBarProps> = ({ 
     community, 
-    isJoined, 
-    onJoinToggle 
+   
 }) => {
+
+ 
+
+ const { communityId } = useParams<{ communityId: string }>(); //Get the community ID FROM Browser
+const [membershipStatus, setMembershipStatus] = useState(false);
+
+    const onJoin = async () =>  {
+    // Implement join community logic here
+    try{    
+    const user = await API.getCurrentUser();
+        const userId =  user.userId;
+        if(!userId) {
+            console.log("No user Logged in");
+            return;
+        }
+        if(userId && communityId) {
+            const response = await API.joinCommunity(communityId);
+            setMembershipStatus(true);
+            window.location.reload();
+            if(!response.sucess){
+                console.log("Failed to join community");
+            }
+        }
+    } catch(error) {
+        console.log("There was some issue with joining community", error);
+    }
+  }
+
+useEffect(() => {
+    const fetchMembershipStatus = async () => {
+        try{  
+            
+            const user  = await API.getCurrentUser();
+            const userId = user.userId;  
+            if(!userId) {
+                console.log("No user Logged in");
+                return;
+            }
+        if (userId && communityId) {
+            const membershipStatus = await API.getCommunityMembership(communityId, userId);
+                    setMembershipStatus(membershipStatus.isMember);  
+        }
+        } catch (error) {
+            console.error("Error Fetching membership status:", error);
+        }
+    };
+        fetchMembershipStatus();
+});
     const navigate = useNavigate();
-    
     const handleEditCommunity = () => {
         navigate(`/edit-community/${community.id}`);
     };
@@ -45,7 +91,7 @@ const CommunityActionBar: React.FC<CommunityActionBarProps> = ({
                                 className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                             >
                                 <Icon icon="mdi:cog" className="w-4 h-4 mr-2 inline" />
-                                Edit Community
+                                Edit Community ` `
                             </button>
                             <div className="px-4 py-2 bg-green-100 text-green-700 rounded-lg">
                                 <Icon icon="mdi:crown" className="w-4 h-4 mr-2 inline" />
@@ -54,18 +100,18 @@ const CommunityActionBar: React.FC<CommunityActionBarProps> = ({
                         </>
                     ) : (
                         <button
-                            onClick={onJoinToggle}
+                            onClick={onJoin}
                             className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                                isJoined
+                                membershipStatus
                                     ? 'bg-green-100 text-green-700 hover:bg-green-200'
                                     : 'bg-blue-600 text-white hover:bg-blue-700'
                             }`}
                         >
                             <Icon 
-                                icon={isJoined ? "mdi:check" : "mdi:plus"} 
+                                icon={membershipStatus ? "mdi:check" : "mdi:plus"} 
                                 className="w-4 h-4 mr-2 inline" 
                             />
-                            {isJoined ? 'Joined' : 'Join Community'}
+                            {membershipStatus ? 'Joined' : 'Join Community'}
                         </button>
                     )}
                 </div>

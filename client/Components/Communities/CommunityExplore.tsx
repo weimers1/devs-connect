@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Tag from '../../Components/Decal/Tag';
 import API from '../../Service/service';
 
@@ -8,11 +8,11 @@ const CommunityExplore = () => {
     const navigate = useNavigate();
     const [communities, setCommunities] = useState([]);
     const [loading, setLoading] = useState(true);
-
+   
     useEffect(() => {
-        const fetchCommunities = async () => {
+        const fetchCommunities = async () => { 
             try {
-                const data = await API.getCommunities();
+                 const data = await API.getCommunities();
                 setCommunities(data);
             } catch (error) {
                 console.error('Failed to fetch communities:', error);
@@ -26,7 +26,6 @@ const CommunityExplore = () => {
     const handleCommunityClick = (communityId: string) => {
         navigate(`/community/${communityId}`);
     };
-
     return (
         <div className="py-6">
             {/* Modern Header */}
@@ -101,6 +100,7 @@ const CommunityExplore = () => {
                         <p className="text-gray-600">No communities found</p>
                     </div>
                 ) : communities.map((community, index) => (
+                    
                     <div
                         key={index}
                         onClick={() => handleCommunityClick(community.id)}
@@ -203,15 +203,7 @@ const CommunityExplore = () => {
                             </div>
 
                             {/* Enhanced Join Button */}
-                            <button className="w-full py-3 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 text-white rounded-xl hover:from-blue-700 hover:via-blue-800 hover:to-purple-800 transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl group-hover:scale-105 transform">
-                                <span className="flex items-center justify-center">
-                                    <Icon
-                                        icon="mdi:plus"
-                                        className="w-4 h-4 mr-2"
-                                    />
-                                    Join Community
-                                </span>
-                            </button>
+                         
                         </div>
                     </div>
                 ))}

@@ -4,6 +4,8 @@ import Post from '../Models/Post.js';
 import PostLike from '../Models/PostLike.js';
 import PostComment from '../Models/PostComment.js';
 import sequelize from '../config/database.js';
+import User from "../models/User.js";
+import { json } from 'sequelize';
 
 export const createCommunity = async (req, res) => {
     try {
@@ -59,6 +61,7 @@ export const getCommunities = async (req, res) => {
         });
     }
 };
+
 
 export const getCommunityById = async (req, res) => {
     try {
@@ -134,6 +137,55 @@ export const updateCommunity = async (req, res) => {
         res.status(500).json({ error: 'Failed to update community' });
     }
 };
+//Retrieving Community Membership
+export const getCommunityMemberShip = async (req, res) => {
+    try {
+        const {communityId, userId} = req.params;
+
+        const membership = await sequelize.query(
+            `SELECT * FROM usercommunities WHERE communityId = ? AND userId = ?`,
+            {
+                replacements: [communityId, userId],
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+        
+        if(!membership || membership.length === 0) {
+            console.log("No membership found");
+            return res.json({isMember: false});
+        }
+        
+         res.json({isMember: true});
+    } catch (error) {
+        console.log("Error fetching community membership:", error);
+        res.status(500).json({
+            error: 'Failed to fetch membership: ' + error.message
+        });
+    }
+}
+
+
+    //Getting all the communities a user is in
+export const getCommunitiesFromUser = async(req, res) => {
+    try { 
+        const { userId } = req.params;
+        
+        const communitiesfromuser = await sequelize.query(
+            `SELECT communityId FROM usercommunities WHERE userId = ?`,
+            {
+                replacements: [userId],
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+        
+        res.json(communitiesfromuser);
+    } catch(queryError) {
+        console.log("No Communities found for user:", queryError);
+        res.status(500).json({
+            error: 'Failed to fetch communities: ' + queryError.message
+        });
+    }
+}
 
 export const getCommunityMembers = async (req, res) => {
     try {
@@ -321,11 +373,16 @@ export const createCommunityPost = async (req, res) => {
 
 export const joinCommunity = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { communityId } = req.params;
         const userId = req.user.userId;
+        const user = await User.findByPk(userId);
+
+        if (!user) {
+            console.error('User not found:', userId);
+        }
 
         const existingMembership = await UserCommunity.findOne({
-            where: { userId, communityId: id },
+            where: { userId: userId, communityId: communityId},
         });
 
         if (existingMembership) {
@@ -335,8 +392,8 @@ export const joinCommunity = async (req, res) => {
         }
 
         await UserCommunity.create({
-            userId,
-            communityId: id,
+            userId: userId,
+            communityId: communityId,
             role: 'member',
         });
 
@@ -367,21 +424,70 @@ export const likePost = async (req, res) => {
         }
 
         const existingLike = await PostLike.findOne({
-            where: { postId, userId },
+            where: { postId: postId, userId: userId },
         });
 
         if (existingLike) {
             await existingLike.destroy();
-            res.json({ message: 'Post unliked', liked: false });
+            res.json({ liked: false });
         } else {
-            await PostLike.create({ postId, userId });
-            res.json({ message: 'Post liked', liked: true });
+            await PostLike.create({ postId: postId, userId: userId});
+            res.json({ liked: true });
         }
     } catch (error) {
         console.error('Error liking post:', error);
         res.status(500).json({ error: 'Failed to like post' });
     }
 };
+    //get Post likes
+export const getLikes = async (req, res) => {
+    try{ 
+        const postId = req.params.postId; //Post id on render will determine with a search for 
+        //each how many likes a post has.
+       
+        if(!postId) {   
+            return res.status(400).json({ error: 'Post ID is required' });
+        }
+        const like = await sequelize.query(
+            'SELECT COUNT(*) FROM dev_connect.postlikes WHERE postId=?;'
+           ,{
+                replacements: [postId],
+                type: sequelize.QueryTypes.SELECT,
+                plain: true
+            }
+        )
+        res.json({like}); //return like count
+    } catch(error) {
+        console.error('Error fetching likes:', error);
+        res.status(500).json({ error: 'Failed to fetch likes' });
+    }
+}
+
+export const getLikeStatus = async (req, res) => {
+    try{
+        const postId = req.params.postId; 
+        const userId = req.user.userId;
+        if(!postId || !userId) {
+            return res.status(400).json({error: "post Id is not found or not logged in"});
+        }
+
+        const result = await sequelize.query(
+            'SELECT * FROM dev_connect.postlikes WHERE postId=? && userId=?;'
+        ,{
+                replacements: [postId, userId],
+                type: sequelize.QueryTypes.SELECT,
+                plain: true
+        })
+            if(!result || result.length === 0) {
+            console.log("No Like on the post");
+            return res.json({postLiked: false});
+        }
+        
+         res.json({postLiked: true});
+    } catch(error) {
+        res.json("Error fetching user like status:", error);
+    }
+}
 
 export const commentOnPost = async (req, res) => {
     try {

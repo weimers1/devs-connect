@@ -346,8 +346,47 @@ const API = {
         if (!response.ok) throw new Error('Failed to get current user');
         return response.json();
     },
-};
+    //Get CommunityMembership
+     getCommunityMembership: async (communityId: string, userId: string ) => {
+        const response = await fetch(`${BASE_URL}/api/communities/${communityId}/membership/${userId}`, {
+             headers: getAuthHeaders(),
+         });
+         if (!response.ok) throw new Error('Failed to get community membership');
+         return response.json();
+        },
+ //Get all communities a user is in
+    getCommunitiesByUser: async( userId: string) => {
+            const response = await fetch(`${BASE_URL}/api/communities/${userId}/communities`, {
+                    headers: getAuthHeaders(),
+            });
+            if (!response.ok) throw new Error('Failed to get user communities');
+            return response.json();
+            },
+    //Get Like Status from a user
+    getLikeStatus: async (postId: number, userId: string) => {
+            const response = await fetch(
+                `${BASE_URL}/api/communities/posts/${postId}/likes/${userId}`,
+                {
+                    headers: getAuthHeaders(),
+                }
+            );
+            if (!response.ok) throw new Error('Failed to get like status');
+            return response.json();
+    },
+       //Get Total Post like on a user Post
+    getLikes: async (postId: number) => {
+        const response = await fetch(
+            `${BASE_URL}/api/communities/posts/${postId}/likes`,
+             { headers: getAuthHeaders(),
+                }
+        )
+        if(!response.ok) throw new Error('Failed to get likes');
+        return response.json();
+    },
 
+
+}
+        
 
 
 export default API;

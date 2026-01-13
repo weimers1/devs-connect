@@ -341,7 +341,7 @@ function ProfileInfo() {
                 }
 
                 const baseUrl =
-                    import.meta.env.VITE_API_URL || 'http://localhost:6969';
+                    process.env.VITE_API_URL || 'http://localhost:6969';
 
                 // Validate base URL
                 if (
@@ -832,8 +832,8 @@ function ProfileInfo() {
                                                         <button
                                                             onClick={() => {
                                                                 const baseUrl =
-                                                                    import.meta.env
-                                                                         .VITE_API_URL || 'http://localhost:6969';
+
+                                                                         process.env.VITE_API_URL || 'http://localhost:6969';
 
                                                                 // Validate URL before redirect
                                                                 if (

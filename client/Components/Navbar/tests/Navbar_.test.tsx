@@ -5,7 +5,6 @@ import React, { act } from "react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import userEvent from '@testing-library/user-event'
 import { AuthProvider } from "../../Auth/AuthContext";
-import * as Session from "../../../Utils/Session";
 
 
 const LocationDisplay = () => {
