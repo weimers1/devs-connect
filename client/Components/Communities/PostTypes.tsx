@@ -41,13 +41,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     const navigate = useNavigate();
     const { requireAuth } = useAuthRedirect();
     const [isLiked, setIsLiked] = useState(false);
+    
     const [likes, setLikes] = useState("");
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState<any[]>([]);
     const [newComment, setNewComment] = useState('');
     const [loadingComments, setLoadingComments] = useState(false);
+    const [wantingToDelete, setWantingToDelete] = useState(false); //State to determine if a user wants to
+    // delete a post.
     
-  
+  post.canDelete = true;
     useEffect(() => {
           const fetchlikes = async () => { 
         try { 
@@ -139,10 +142,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
             }
         });
     };
+    
+    const areYouSure = async () => {
+        setWantingToDelete(true);
+    }
+    const handleCancel = async() => {
+        setWantingToDelete(false);
+    }
 
     const handleDelete = async () => {
-        if (!confirm('Are you sure you want to delete this post?')) return;
-        
+        if (wantingToDelete) {
         try {
             await API.deletePost(post.id.toString());
             onPostDelete?.(post.id);
@@ -150,7 +159,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
             console.error('Failed to delete post:', error);
         }
     };
-
+        setWantingToDelete(false);
+}
     const loadComments = async () => {
         if (loadingComments) return;
         
@@ -214,15 +224,36 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                         </div>
                         {post.canDelete && (
                             <button 
-                                onClick={handleDelete}
+                                onClick={areYouSure}
                                 className="text-gray-400 hover:text-red-600 transition-colors"
                                 title="Delete post"
                             >
                                 <Icon icon="mdi:delete" className="w-4 h-4" />
                             </button>
                         )}
-                    </div>
-                    
+                      {wantingToDelete && (
+    <div className="fixed inset-0 bg-gray-400 bg-opacity-10 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold mb-6 text-center">Permanently Delete Post?</h2>
+            <div className="flex flex-col gap-3">
+                <button 
+                    onClick={handleDelete}
+                    className="w-full py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold"
+                >
+                    Confirm Delete
+                </button>
+                <button 
+                    onClick={handleCancel}
+                    className="w-full py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold"
+                >   
+                    Cancel                  
+                </button>
+            </div>
+        </div> 
+    </div>
+)}
+
+                        </div>
                     {/* Post Content */}
                     <div className="mb-3">
                         {post.type === 'qa' && post.question && (
