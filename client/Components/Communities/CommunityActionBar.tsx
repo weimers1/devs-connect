@@ -13,15 +13,12 @@ interface CommunityActionBarProps {
     };
    
 }
-
 const CommunityActionBar: React.FC<CommunityActionBarProps> = ({ 
     community, 
    
 }) => {
 
- 
-
- const { communityId } = useParams<{ communityId: string }>(); //Get the community ID FROM Browser
+const { communityId } = useParams<{ communityId: string }>(); //Get the community ID FROM Browser
 const [membershipStatus, setMembershipStatus] = useState(false);
 
     const onJoin = async () =>  {
@@ -43,6 +40,7 @@ const [membershipStatus, setMembershipStatus] = useState(false);
         }
     } catch(error) {
         console.log("There was some issue with joining community", error);
+        navigate('/login'); //No auth = no interactiing
     }
   }
 

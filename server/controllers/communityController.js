@@ -100,7 +100,7 @@ export const getCommunityById = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch community' });
     }
 };
-
+   
 export const updateCommunity = async (req, res) => {
     try {
         const { id } = req.params;

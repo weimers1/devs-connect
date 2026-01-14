@@ -4,12 +4,25 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Tag from '../../Components/Decal/Tag';
 import API from '../../Service/service';
 
+
+export interface Community {
+    id: string;
+    name:  string;
+    description?: string;
+    memberCount: number;
+    image?: string;
+    color?: string;
+    icon?: string;
+    isPrivate: boolean;
+}
+
 const CommunityExplore = () => {
     const navigate = useNavigate();
-    const [communities, setCommunities] = useState([]);
+    const [communities, setCommunities] = useState<Community[]>([]);
     const [loading, setLoading] = useState(true);
-   
-    useEffect(() => {
+    const [CommunityName, setName] = useState('');
+
+      useEffect(() => {
         const fetchCommunities = async () => { 
             try {
                  const data = await API.getCommunities();
@@ -21,7 +34,18 @@ const CommunityExplore = () => {
             }
         };
         fetchCommunities();
+        
     }, []);
+    //Constantly updating the name
+    const handleChange = (e) => {
+        setName(e.target.value);
+    }
+    //FilteredCommunities
+    const filteredCommunities = communities.filter((community) => community.name.toLowerCase().includes(CommunityName.toLowerCase()));
+
+
+    // items.filter(item =>
+    // item.name.toLowerCase().includes(searchQuery.toLowerCase())
 
     const handleCommunityClick = (communityId: string) => {
         navigate(`/community/${communityId}`);
@@ -54,6 +78,7 @@ const CommunityExplore = () => {
                     />
                 </div>
                 <input
+                    onChange={handleChange}
                     type="text"
                     placeholder="Search communities, topics, or technologies..."
                     className="w-full pl-14 pr-6 py-4 lg:py-5 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-400 shadow-lg hover:shadow-xl transition-all duration-300 text-base lg:text-lg placeholder-gray-400"
@@ -94,12 +119,12 @@ const CommunityExplore = () => {
                         <Icon icon="mdi:loading" className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
                         <p className="text-gray-600">Loading communities...</p>
                     </div>
-                ) : communities.length === 0 ? (
+                ) : filteredCommunities.length === 0 ? (
                     <div className="col-span-full text-center py-12">
                         <Icon icon="mdi:account-group-outline" className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                         <p className="text-gray-600">No communities found</p>
                     </div>
-                ) : communities.map((community, index) => (
+                ) : filteredCommunities.map((community, index) => (
                     
                     <div
                         key={index}
