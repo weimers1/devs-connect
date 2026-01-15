@@ -17,6 +17,7 @@ import {
     getCommunitiesFromUser,
     getLikes,
     getLikeStatus,
+    getCommunityAdmins
 } from '../controllers/communityController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
@@ -40,5 +41,5 @@ router.get('/:communityId/membership/:userId', authMiddleware, getCommunityMembe
 router.get('/:userId/communities', authMiddleware, getCommunitiesFromUser); // Get all communities a user is in
 router.get('/posts/:postId/likes', authMiddleware, getLikes); //Get Likes from a Users Post
 router.get('/posts/:postId/likes/:userId', authMiddleware, getLikeStatus); //Get Likes from a Users Post
-
+router.get("/:communityId/communityAdmin/:userId", authMiddleware, getCommunityAdmins); //Returns Community adminship
 export default router;

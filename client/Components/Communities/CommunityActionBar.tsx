@@ -20,6 +20,7 @@ const CommunityActionBar: React.FC<CommunityActionBarProps> = ({
 
 const { communityId } = useParams<{ communityId: string }>(); //Get the community ID FROM Browser
 const [membershipStatus, setMembershipStatus] = useState(false);
+const [isOwner, setOwnerStatus] = useState(false);
 
     const onJoin = async () =>  {
     // Implement join community logic here
@@ -45,9 +46,26 @@ const [membershipStatus, setMembershipStatus] = useState(false);
   }
 
 useEffect(() => {
-    const fetchMembershipStatus = async () => {
+    //Function to find if a user has const the commmunity;
+    const fetchHasUserJoined = async () => {
         try{  
-            
+            const user  = await API.getCurrentUser();
+            const userId = user.userId;
+            if(!userId) {
+                console.log("No user Logged in");
+                return;
+            }
+        if (userId && communityId) {
+            const membershipStatus = await API.getCommunityMembership(communityId, userId);
+             setMembershipStatus(membershipStatus.isMember);       
+        }
+        } catch (error) {
+            console.error("Error Fetching membership status:", error);
+        }
+    };
+    //Function to find if a user is an owner of a community 
+    const fetchIsOwner = async () => {
+             try{  
             const user  = await API.getCurrentUser();
             const userId = user.userId;  
             if(!userId) {
@@ -55,14 +73,15 @@ useEffect(() => {
                 return;
             }
         if (userId && communityId) {
-            const membershipStatus = await API.getCommunityMembership(communityId, userId);
-                    setMembershipStatus(membershipStatus.isMember);  
+            const OwnerStatus = await API.getCommunityAdmins(communityId, userId);
+                setOwnerStatus(OwnerStatus.admin);      
         }
         } catch (error) {
             console.error("Error Fetching membership status:", error);
         }
-    };
-        fetchMembershipStatus();
+    }
+        fetchIsOwner();
+        fetchHasUserJoined();
 });
     const navigate = useNavigate();
     const handleEditCommunity = () => {
@@ -82,14 +101,14 @@ useEffect(() => {
                     </p>
                 </div>
                 <div className="flex space-x-3">
-                    {community.isOwner ? (
+                    {isOwner ? (
                         <>
                             <button 
                                 onClick={handleEditCommunity}
                                 className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                             >
                                 <Icon icon="mdi:cog" className="w-4 h-4 mr-2 inline" />
-                                Edit Community ` `
+                                Edit Community
                             </button>
                             <div className="px-4 py-2 bg-green-100 text-green-700 rounded-lg">
                                 <Icon icon="mdi:crown" className="w-4 h-4 mr-2 inline" />

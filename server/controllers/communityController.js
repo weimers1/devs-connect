@@ -140,10 +140,11 @@ export const updateCommunity = async (req, res) => {
 //Retrieving Community Membership
 export const getCommunityMemberShip = async (req, res) => {
     try {
-        const {communityId, userId} = req.params;
+        const {communityId} = req.params;
+        const userId=  req.user.userId;
 
         const membership = await sequelize.query(
-            `SELECT * FROM usercommunities WHERE communityId = ? AND userId = ?`,
+            `SELECT * FROM dev_connect.usercommunities WHERE communityId = ? AND userId = ?`,
             {
                 replacements: [communityId, userId],
                 type: sequelize.QueryTypes.SELECT
@@ -155,7 +156,7 @@ export const getCommunityMemberShip = async (req, res) => {
             return res.json({isMember: false});
         }
         
-         res.json({isMember: true});
+        return res.json({isMember: true});
     } catch (error) {
         console.log("Error fetching community membership:", error);
         res.status(500).json({
@@ -254,6 +255,33 @@ export const getCommunityMembers = async (req, res) => {
         res.json([]);
     }
 };
+//Getting Community to determine OwnerShip.
+export const getCommunityAdmins = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const {communityId} = req.params; 
+
+        if(! userId || communityId) {
+            console.log("need user and communityId to fetch admins");
+        }
+
+        const admins = await sequelize.query(`
+                
+            SELECT * from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {
+                replacements: [userId, communityId],
+                  type: sequelize.QueryTypes.SELECT,
+            }) 
+            if(!admins || admins.length === 0) {
+                console.log("User is not an admin of the community");
+                return;
+                }
+        res.json({admin: admins}); 
+        
+    } catch(error) {
+        console.log(error, "Something Went Wrong Trying to fetch the communityAdmins");
+        res.json({error: "Failed to fetch community admins" });
+    }
+}
 
 export const getCommunityPosts = async (req, res) => {
     try {

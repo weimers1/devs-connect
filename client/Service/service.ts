@@ -383,6 +383,16 @@ const API = {
         if(!response.ok) throw new Error('Failed to get likes');
         return response.json();
     },
+    //Returns if a user has the role 'Owner' Atttached to it
+    getCommunityAdmins: async (communityId: string, userId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/${communityId}/communityAdmin/${userId}`, 
+            {
+                headers: getAuthHeaders(),
+            }
+        ) 
+        if(!response.ok) throw new Error('Failed to get community admin status');
+        return response.json();
+    }
 
 
 }
