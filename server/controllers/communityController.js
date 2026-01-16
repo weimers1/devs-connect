@@ -273,6 +273,7 @@ export const getCommunityAdmins = async (req, res) => {
             }) 
             if(!admins || admins.length === 0) {
                 console.log("User is not an admin of the community");
+                navigate(`/communities`);
                 return;
                 }
         res.json({admin: admins}); 

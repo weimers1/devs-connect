@@ -12,7 +12,6 @@ import { useAuthRedirect } from '../Auth/useAuthRedirect';
 
 const CommunityPage: React.FC = () => {
     const { communityId } = useParams<{ communityId: string }>();
-    const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
     const { requireAuth } = useAuthRedirect();
     const [activeTab, setActiveTab] = useState('posts');
@@ -30,7 +29,6 @@ const CommunityPage: React.FC = () => {
                 navigate('/communities');
                 return;
             }
-            
             try {
                 const communityData = await API.getCommunityById(communityId);
                 setCommunity(communityData);

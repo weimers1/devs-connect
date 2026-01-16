@@ -4,7 +4,15 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import Layout from '../Layout';
 import API from '../../Service/service';
 
-const EditCommunity: React.FC = () => {
+//So our edit community regonzies the API call with role and other data important to the community.
+export interface userCommunites {
+    role: String,
+    userId: String,
+    joinedAt: String,
+    
+}
+
+const EditCommunity: React.FC<userCommunites> = () => {
     const { communityId } = useParams<{ communityId: string }>();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -19,7 +27,7 @@ const EditCommunity: React.FC = () => {
     });
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string>('');
-
+    // const [isAdmin, setisAdmin] = useState<userCommunites | Boolean>();
     const iconOptions = [
         { value: 'mdi:react', label: 'React', preview: '⚛️' },
         { value: 'mdi:vuejs', label: 'Vue.js', preview: '🟢' },
@@ -46,15 +54,21 @@ const EditCommunity: React.FC = () => {
 
     useEffect(() => {
         const fetchCommunity = async () => {
+            const user = await API.getCurrentUser();
+            const userId = user.userId;
+            if(!userId) {
+                navigate('/login');
+                return;
+            }   
             if (!communityId) {
                 navigate('/communities');
                 return;
             }
 
             try {
-                const data = await API.getCommunityById(communityId);
-                if (!data.isOwner) {
-                    navigate(`/community/${communityId}`);
+                const data = await API.getCommunityAdmins(communityId, userId); //Only admins can edit community for now     
+                    if (!data.admin || data.admin.length === 0) {
+                    navigate(`/communities`);
                     return;
                 }
                 setFormData({
@@ -66,6 +80,7 @@ const EditCommunity: React.FC = () => {
                     image: data.image || ''
                 });
                 setBannerPreview(data.image || '');
+
             } catch (error) {
                 console.error('Failed to fetch community:', error);
                 navigate('/communities');

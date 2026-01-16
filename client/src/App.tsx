@@ -54,7 +54,7 @@ const AppRoutes = () => {
                         element={<CreateCommunity />}
                     />
                     <Route
-                        path="/community/:communityId/edit"
+                        path="/edit-community/:communityId"
                         element={<EditCommunity />}
                     />
                 </Routes>

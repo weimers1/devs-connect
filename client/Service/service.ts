@@ -193,7 +193,7 @@ const API = {
     //Get Community by ID
     getCommunityById: async (id: string) => {
         const response = await fetch(`${BASE_URL}/api/communities/${id}`, {
-            headers: getAuthHeaders(false, false),
+            headers: getAuthHeaders(true),
         });
         if (!response.ok) throw new Error('Failed to fetch community');
         return response.json();

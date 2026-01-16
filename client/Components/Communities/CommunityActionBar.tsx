@@ -80,9 +80,9 @@ useEffect(() => {
             console.error("Error Fetching membership status:", error);
         }
     }
-        fetchIsOwner();
-        fetchHasUserJoined();
-});
+    fetchHasUserJoined();
+    fetchIsOwner();
+} ,[]);
     const navigate = useNavigate();
     const handleEditCommunity = () => {
         navigate(`/edit-community/${community.id}`);

@@ -43,7 +43,6 @@ const CommunityExplore = () => {
     //FilteredCommunities
     const filteredCommunities = communities.filter((community) => community.name.toLowerCase().includes(CommunityName.toLowerCase()));
 
-
     // items.filter(item =>
     // item.name.toLowerCase().includes(searchQuery.toLowerCase())
 

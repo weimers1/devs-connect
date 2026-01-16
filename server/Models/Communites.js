@@ -13,6 +13,8 @@ const Community = sequelize.define('Community', {
   color: { type: DataTypes.STRING, allowNull: true },
   image: { type: DataTypes.STRING, allowNull: true },
   memberCount: { type: DataTypes.INTEGER, defaultValue: 1 },
+  isMember: {type: DataTypes.BOOLEAN, allowNull: false},
+  isOwner: {type: DataTypes.BOOLEAN, allowNull: false},
   isPrivate: { type: DataTypes.BOOLEAN, defaultValue: false },
 
   
