@@ -392,11 +392,18 @@ const API = {
         ) 
         if(!response.ok) throw new Error('Failed to get community admin status');
         return response.json();
-    }
+    }, 
+    //Kick a member from a community. 
+    kickCommunityMember: async (communityId: string, userId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/member/${userId}/community/${communityId}`, 
+            { 
+                method: 'DELETE',
+                headers: getAuthHeaders(),
+            } )
 
-
+        if(!response.ok) throw new Error('Failed to get kick community Member');
+        return response.json();
+    },
 }
-        
-
 
 export default API;

@@ -24,6 +24,7 @@ export const createCommunity = async (req, res) => {
             icon: icon || null,
             color: color || null,
             isPrivate: isPrivate || false,
+            isOwner: 1,
         });
 
         // Add creator as admin member
@@ -228,8 +229,11 @@ export const getCommunityMembers = async (req, res) => {
                 joinedAt: m.joinedAt,
                 firstName: `User ${m.userId}`,
                 lastName: '',
+                profileImageUrl: m.profileImageUrl,
             }));
         }
+
+
 
         console.log('Raw members found:', members.length, members);
 
@@ -255,6 +259,47 @@ export const getCommunityMembers = async (req, res) => {
         res.json([]);
     }
 };
+    //kick CommunityMember
+export const kickCommunityMember = async (req, res) => {
+    try {
+        const {userId, communityId} = req.params;  
+        
+        if(!userId || !communityId) {
+            return res.status(400).json({error: "need user and communityId to kick member"});
+        }
+
+        // First, find the record to get the primary key (id)
+        const memberRecord = await sequelize.query(`
+            SELECT id FROM dev_connect.usercommunities 
+            WHERE userId = ? AND communityId = ? AND role = "member"
+        `, {
+            replacements: [userId, communityId],
+            type: sequelize.QueryTypes.SELECT,
+        });
+
+        if (!memberRecord || memberRecord.length === 0) {
+            return res.status(404).json({error: "Member not found or not a member"});
+        }
+
+        const primaryKeyId = memberRecord[0].id;
+
+        // Now delete using the primary key
+        const kickMember = await sequelize.query(`
+            DELETE FROM dev_connect.usercommunities 
+            WHERE id = ?
+        `, {
+            replacements: [primaryKeyId],
+            type: sequelize.QueryTypes.DELETE,
+        });
+
+        res.json({message: "Member kicked successfully", kick: kickMember});
+        
+    } catch(error) {
+        console.log(error, "Can't kick member from community");
+        res.status(500).json({error: "Failed to kick member"});
+    }       
+}
+
 //Getting Community to determine OwnerShip.
 export const getCommunityAdmins = async (req, res) => {
     try {

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import Layout from '../Layout';
 import API from '../../Service/service';
+import CommunityMembers from './CommunityMembers';
 
 //So our edit community regonzies the API call with role and other data important to the community.
 export interface userCommunites {
@@ -142,8 +143,8 @@ const EditCommunity: React.FC<userCommunites> = () => {
     return (
         <Layout>
             <div className="min-h-screen bg-gray-50 py-8">
-                <div className="max-w-2xl mx-auto px-4">
-                    <div className="bg-white rounded-xl shadow-sm border p-8">
+                <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-4">
+                    <div className="bg-white  rounded-none md:border md:rounded-xl shadow-sm p-8">
                         <div className="flex items-center mb-6">
                             <button
                                 onClick={() => navigate(`/community/${communityId}`)}
@@ -276,10 +277,15 @@ const EditCommunity: React.FC<userCommunites> = () => {
                                     {saving ? 'Saving...' : 'Save Changes'}
                                 </button>
                             </div>
+                            
                         </form>
+                         
                     </div>
+                 <CommunityMembers></CommunityMembers>
                 </div>
+               
             </div>
+          
         </Layout>
     );
 };
