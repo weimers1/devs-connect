@@ -105,7 +105,7 @@ export const getCommunityById = async (req, res) => {
 export const updateCommunity = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, icon, color, isPrivate } = req.body;
+        const { name, description, icon, color, isPrivate, rules } = req.body;
 
         const community = await Community.findByPk(id);
 
@@ -122,11 +122,11 @@ export const updateCommunity = async (req, res) => {
 
         await community.update({
             name: name?.trim() || community.name,
+            rules: rules.trim() || community.rules,
             description: description?.trim() || community.description,
             icon: icon !== undefined ? icon : community.icon,
             color: color !== undefined ? color : community.color,
-            isPrivate:
-                isPrivate !== undefined ? isPrivate : community.isPrivate,
+            isPrivate: isPrivate !== undefined ? isPrivate : community.isPrivate,
         });
 
         res.json({

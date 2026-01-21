@@ -9,6 +9,7 @@ const Community = sequelize.define('Community', {
   name: { type: DataTypes.STRING, allowNull: false },
   description: { type: DataTypes.TEXT },
   createdBy: { type: DataTypes.INTEGER, allowNull: false },
+  rules: {type: DataTypes.TEXT, allowNull: true},
   icon: { type: DataTypes.STRING, allowNull: true },
   color: { type: DataTypes.STRING, allowNull: true },
   image: { type: DataTypes.STRING, allowNull: true },

@@ -5,7 +5,7 @@ interface CommunitySidebarProps {
         membersTotal: string;
         membersOnline: string;
         category: string;
-        rules: string[];
+        rules: string;
         members?: any[];
     };
 }
@@ -35,13 +35,11 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community }) => {
             {/* Community Rules */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Community Rules</h3>
-                <div className="space-y-3">
-                    {community.rules.map((rule, index) => (
-                        <div key={index} className="flex items-start space-x-2">
-                            <span className="text-blue-600 font-semibold text-sm mt-0.5">{index + 1}.</span>
-                            <span className="text-gray-700 text-sm">{rule}</span>
+                <div className="space-y-3 w-full">
+                        <div  className="flex space-x-2">
+                            <p  className="rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{community.rules}</p>
                         </div>
-                    ))}
+                   
                 </div>
             </div>
 

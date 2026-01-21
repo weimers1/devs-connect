@@ -24,7 +24,9 @@ const EditCommunity: React.FC<userCommunites> = () => {
         icon: '',
         color: '',
         isPrivate: false,
-        image: ''
+        image: '',
+        rules: '',
+
     });
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string>('');
@@ -72,15 +74,22 @@ const EditCommunity: React.FC<userCommunites> = () => {
                     navigate(`/communities`);
                     return;
                 }
+                //Once past if a user is an admin we can continue
+                const communityData = await API.getCommunityById(communityId);
+                    if(!communityData || communityData.length === 0) {
+                        console.log("No community Data Found");
+                        return; 
+                    }
                 setFormData({
-                    name: data.name || '',
-                    description: data.description || '',
-                    icon: data.icon || '',
-                    color: data.color || '',
-                    isPrivate: data.isPrivate || false,
-                    image: data.image || ''
+                    name: communityData.name || '',
+                    description: communityData.description || '',
+                    icon: communityData.icon || '',
+                    color: communityData.color || '',
+                    isPrivate: communityData.isPrivate || false,
+                    image: communityData.image || '',
+                    rules: communityData.rules || '',
                 });
-                setBannerPreview(data.image || '');
+                setBannerPreview(communityData.image || '');
 
             } catch (error) {
                 console.error('Failed to fetch community:', error);
@@ -178,7 +187,18 @@ const EditCommunity: React.FC<userCommunites> = () => {
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     rows={4}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    required
+                                  
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 ">
+                                  Rules
+                                </label>
+                                <textarea
+                                    value={formData.rules}
+                                    onChange={(e) => setFormData({ ...formData, rules: e.target.value })}
+                                    rows={4}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                             </div>
 

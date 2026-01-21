@@ -47,4 +47,3 @@ router.get("/:communityId/communityAdmin/:userId", authMiddleware, getCommunityA
 router.delete("/member/:userId/community/:communityId", authMiddleware, kickCommunityMember); //Kick a member from a community; 
 router.get('/communityOwner/:id/communities/:communityId', authMiddleware, isCommunityOwner); //Gets a community Owner
 export default router;
-s
