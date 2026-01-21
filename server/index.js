@@ -17,10 +17,10 @@ import messageRoutes from "./Routes/MessageRoutes.js";
 import errorHandler from './utils/errorHandler.js';
 import csurf from 'csurf';
 import cookieParser from 'cookie-parser';
-import authRouter from './routes/authRoutes.js';
-import utilsRouter from './routes/utilRoutes.js';
-import userRouter from './routes/userRoutes.js';
-import sessionRouter from './routes/sessionRoutes.js';
+import authRouter from './Routes/authRoutes.js';
+import utilsRouter from './Routes/utilRoutes.js';
+import userRouter from './Routes/userRoutes.js';
+import sessionRouter from './Routes/sessionRoutes.js';
 import settingsRouter from './Routes/settingsRoutes.js';
 import uploadRoutes from './Routes/uploadRoutes.js'
 import githubRoutes from "./Routes/github.js"

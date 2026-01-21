@@ -7,12 +7,14 @@ const ThemeContext = createContext({
   toggleTheme: () => {}, 
   setTheme: (theme: string) => {}, 
   loadUserTheme: async () => {},
-  resetTheme: () => {}
+  resetTheme: () => {},
+  isThemeLoaded: false
 });
 
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState("light");
+  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
 
   useEffect(() => {
     const loadThemeFromAPI = async () => {
@@ -44,6 +46,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         console.log('Using stored theme:', storedTheme);
         setTheme(storedTheme);
         localStorage.setItem("theme", storedTheme);
+      } finally {
+        setIsThemeLoaded(true);
       }
     };
     
@@ -116,7 +120,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme: updateTheme, loadUserTheme, resetTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme: updateTheme, loadUserTheme, resetTheme, isThemeLoaded }}>
       {children}
     </ThemeContext.Provider>
   );

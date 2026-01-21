@@ -4,8 +4,6 @@ import authMiddleware from "../middleware/authMiddleware.js";
 import { addCertification} from "../controllers/ProfileController.js";
 import { updateProfileImage } from "../controllers/uploadController.js";
 import { getCertifications } from "../controllers/ProfileController.js"
-import { get } from "http";
-import { getProfile } from "../controllers/userController.js";
 import { updateCertifications, deleteCertification } from "../controllers/ProfileController.js";
 const router = express.Router();
 

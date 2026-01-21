@@ -101,15 +101,16 @@ export const verifyMagicLink = async (req, res) => {
         // mark all previous sessions as inactive for a user to ensure there are no duplicate active sessions
         await Session.update(
             { isActive: false },
-            { where: { userId: user.id, isActive: true } }
+            { where: { userId: user.id, isActive: true } },
         );
 
         // create a session for them in the database
         const dbSession = await Session.create({
             userId: user.id,
             token: session.session_token,
+            stytchSessionId: session.session_id,
             isActive: true,
-            isExtended: false, // setting to false: manageSessionLifecycle happens in 60 min; by then, session should be extended
+            expiresAt: new Date(session.expires_at),
         });
 
         // if they're a new user, mark them as verified
@@ -117,11 +118,6 @@ export const verifyMagicLink = async (req, res) => {
             user.verifiedAt = new Date();
             user.save();
         }
-
-        // call the manageSessionLifecycle function in 60 minutes
-        setTimeout(() => {
-            manageSessionLifecycle(dbSession.token);
-        }, 1000 * 60 * 5); // temporarily using 1 minute for testing
 
         res.status(200).json({ isNewUser, session_token: dbSession.token });
     } catch (error) {
@@ -135,32 +131,75 @@ export const verifyMagicLink = async (req, res) => {
     }
 };
 
-export const manageSessionLifecycle = (token) => {
-    // check if the session has been extended (via the isExtended column in the session record);
-    // if it has, start a countdown to manageSessionLifecycle again; but if it hasn't been extended, mark it inactive
-    // and log them out
-    Session.findOne({ where: { token } })
-        .then((session) => {
-            if (!session) return;
-
-            // if the session is not extended, mark it inactive and drop it
-            if (!session.isExtended) {
-                session.isActive = false;
-                session.save();
-                return;
-            }
-
-            // if the session is extended, call to manageSessionLifecycle again in 60 min;
-            // also mark isExtended false now (since this will be set via the endpoint)
-            setTimeout(() => {
-                manageSessionLifecycle(token);
-            }, 1000 * 60 * 5); // temporarily using 1 minute for testing
-            session.isExtended = false;
-            session.save();
-        })
-        .catch((error) => {
-            throw Object.assign(new Error('Failed to check session'), {
-                status: 500,
-            });
+export const checkSessionStatus = async (sessionToken) => {
+    console.log('🔍 [checkSessionStatus] Starting session check for token:', sessionToken?.substring(0, 10) + '...');
+    
+    try {
+        // Check if session exists in our database
+        const dbSession = await Session.findOne({
+            where: { token: sessionToken },
         });
+        console.log('📊 [checkSessionStatus] DB session found:', !!dbSession);
+        
+        if (!dbSession) {
+            console.log('❌ [checkSessionStatus] No session found in database for token');
+            return { success: false, reason: 'session_not_found_in_db' };
+        }
+
+        console.log('🔗 [checkSessionStatus] Checking session with Stytch API...');
+        
+        // Check session status with Stytch
+        const stytchSession = await stytchClient.sessions.get({
+            session_token: sessionToken,
+        });
+        
+        console.log('📡 [checkSessionStatus] Stytch response status:', stytchSession.status_code);
+        console.log('📡 [checkSessionStatus] Stytch session active:', stytchSession.status_code === 200);
+
+        if (stytchSession.status_code === 200) {
+            // Session is active in Stytch - update our DB
+            console.log('✅ [checkSessionStatus] Session active - updating DB');
+            dbSession.isActive = true;
+            dbSession.expiresAt = new Date(stytchSession.session.expires_at);
+            dbSession.lastRenewedAt = new Date();
+            await dbSession.save();
+            console.log('💾 [checkSessionStatus] DB session updated successfully');
+            return {
+                isActive: true,
+                session: dbSession,
+            };
+        } else {
+            // Session is inactive in Stytch - mark as inactive
+            console.log('❌ [checkSessionStatus] Session inactive in Stytch - marking DB as inactive');
+            dbSession.isActive = false;
+            await dbSession.save();
+            console.log('💾 [checkSessionStatus] DB session marked inactive');
+            return { isActive: false };
+        }
+    } catch (error) {
+        console.error('🚨 [checkSessionStatus] Error occurred:', error.message);
+        console.error('🚨 [checkSessionStatus] Error details:', error);
+        
+        // If Stytch returns error, mark session as inactive
+        try {
+            const dbSession = await Session.findOne({
+                where: { token: sessionToken },
+            });
+            if (dbSession) {
+                console.log('🔧 [checkSessionStatus] Marking session inactive due to error');
+                dbSession.isActive = false;
+                await dbSession.save();
+                console.log('💾 [checkSessionStatus] DB session marked inactive after error');
+            }
+        } catch (dbError) {
+            console.error('🚨 [checkSessionStatus] Failed to update DB after error:', dbError.message);
+        }
+        
+        return {
+            isActive: false,
+            error:
+                error.message ??
+                'Something went wrong when checking the session status.',
+        };
+    }
 };

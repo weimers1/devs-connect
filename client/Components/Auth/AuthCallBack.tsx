@@ -12,7 +12,7 @@ const Authenticate: React.FC = () => {
     const [params] = useSearchParams();
     const token = params.get('token');
     const navigate = useNavigate();
-    const { loadUserTheme } = useTheme();
+    const { loadUserTheme, isThemeLoaded } = useTheme();
     const calledVerify = useRef(false);
     const { login } = useAuth();
 
@@ -95,26 +95,45 @@ const Authenticate: React.FC = () => {
     };
 
     useEffect(() => {
+        console.log('🔄 [AuthCallback] useEffect triggered - token:', token, 'isThemeLoaded:', isThemeLoaded);
+        
         if (!token) {
             navigate('/login');
             return;
         }
 
-        // avoid duplicate calls
-        if (calledVerify.current) return;
-        calledVerify.current = true;
+        // Wait for theme to load before proceeding
+        if (!isThemeLoaded) {
+            console.log('⏳ [AuthCallback] Waiting for theme to load...');
+            return;
+        }
 
         const verifyToken = async () => {
+            // avoid duplicate calls
+            if (calledVerify.current) {
+                console.log('🚫 [AuthCallback] Already called verify, skipping');
+                return;
+            }
+            calledVerify.current = true;
+            console.log('✅ [AuthCallback] Starting token verification');
+
             try {
+                console.log('🌐 [AuthCallback] Calling verify endpoint with token:', token);
+                console.log('🔗 [AuthCallback] Full URL:', `http://localhost:6969/auth/verify?token=${token}`);
+                
                 const response = await fetch(
                     `http://localhost:6969/auth/verify?token=${token}`,
                     {
                         method: 'GET',
                         credentials: 'include',
-                    }
+                    },
                 );
+                
+                console.log('📡 [AuthCallback] Response received:', response.status, response.statusText);
+                console.log('📊 [AuthCallback] Response headers:', Object.fromEntries(response.headers.entries()));
 
                 const data = await response.json();
+                console.log('📦 [AuthCallback] Response data:', data);
 
                 if (data.error) {
                     const errorObject =
@@ -176,7 +195,11 @@ const Authenticate: React.FC = () => {
                     navigate('/home');
                 }
             } catch (error) {
-                console.error('Authentication failed:', error);
+                console.error('🚨 [AuthCallback] Fetch error occurred:', error);
+                console.error('🚨 [AuthCallback] Error type:', error.constructor.name);
+                console.error('🚨 [AuthCallback] Error message:', error.message);
+                console.error('🚨 [AuthCallback] Full error:', error);
+                
                 showModal({
                     icon: 'mdi-emoticon-frown-outline',
                     title: 'Our Bad...',
@@ -188,7 +211,7 @@ const Authenticate: React.FC = () => {
         };
 
         verifyToken();
-    }, [token, navigate]);
+    }, [token, navigate, isThemeLoaded]);
 
     return (
         <Layout>
