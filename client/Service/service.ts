@@ -404,6 +404,15 @@ const API = {
         if(!response.ok) throw new Error('Failed to get kick community Member');
         return response.json();
     },
+    isCommunityOwner: async (communityId: string, id: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/communityOwner/${id}/communities/${communityId}`, 
+            { 
+                headers: getAuthHeaders(),
+            } )
+
+        if(!response.ok) throw new Error('Failed to get kick community Member');
+        return response.json();
+    },
 }
 
 export default API;

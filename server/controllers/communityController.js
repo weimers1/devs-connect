@@ -138,6 +138,33 @@ export const updateCommunity = async (req, res) => {
         res.status(500).json({ error: 'Failed to update community' });
     }
 };
+
+export const isCommunityOwner = async (req, res) => {
+    try {
+       const createdBy = req.user.userId;
+       const {id} = req.params; 
+        if(!createdBy || !id) {
+            console.log("no user or no community");
+            return; 
+        }
+        const owner = await sequelize.query(`
+           SELECT * FROM dev_connect.communities WHERE createdBy = ? AND id = ?;
+            `, {
+                    replacements:[createdBy, id], 
+                    type: sequelize.QueryTypes.SELECT
+            });
+        if(!owner || owner.length === 0) {
+            console.log("Not the owner no return");
+        }   
+         return res.json({owner: owner});
+
+    } catch(error) {
+        console.log(error, "error getting community Owner");
+        res.json({error});
+    }
+}
+
+
 //Retrieving Community Membership
 export const getCommunityMemberShip = async (req, res) => {
     try {
@@ -321,7 +348,7 @@ export const getCommunityAdmins = async (req, res) => {
                 navigate(`/communities`);
                 return;
                 }
-        res.json({admin: admins}); 
+        res.json({admin: true}); 
         
     } catch(error) {
         console.log(error, "Something Went Wrong Trying to fetch the communityAdmins");

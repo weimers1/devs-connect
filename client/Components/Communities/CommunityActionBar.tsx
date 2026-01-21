@@ -85,7 +85,11 @@ useEffect(() => {
 } ,[]);
     const navigate = useNavigate();
     const handleEditCommunity = () => {
+        if(isOwner === true) {
         navigate(`/edit-community/${community.id}`);
+        }else {
+            return;
+        }
     };
     return (
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">

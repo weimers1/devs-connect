@@ -22,13 +22,16 @@ export interface UserProfile {
     lastName: string,
     pfp: string,
 }
-
+export interface communities {
+    createdBy: string,
+}
 const CommunityMembers: React.FC<CommunityMembers> = () => {
 const {communityId} = useParams<{communityId: string}>();
 const [communityMembers, setCommunityMember] = useState<CommunityMembers[]>([]);
 const [editUsers, seteditUsers] = useState(false);
 const [currentUserInfo, setCurrentUser] = useState<UserProfile | null>(null); //User Profile Information
 const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+const [isOwner, setisOwner] = useState(''); //is Owner
 const [isAdmin, setisAdmin] = useState(false);
 
 
@@ -47,10 +50,13 @@ useEffect(() => {
             try {
                 const userId = await API.getCurrentUser();
                 if(communityId && userId) {
-                 const checkAdmin = await API.getCommunityAdmins(communityId, userId);
-                    setisAdmin(checkAdmin.admin);
+                 const checkAdmin = await API.getCommunityAdmins(communityId, userId.userId);   
+                 setisAdmin(checkAdmin.admin);
+                    //Check is Owner
+                  const checkIsOwner = await API.isCommunityOwner(communityId, userId.userId); 
+                  setisOwner(checkIsOwner.owner[0]?.createdBy.toString());
+                    // console.log(isOwner);
                 }
-               
             } catch(error) {
                 console.log(error, "error getting admin status");
             }
@@ -60,6 +66,7 @@ useEffect(() => {
     },[])
     // const navigate = useNavigate();
     //Handle Click
+
 const HandleClick = async (userId: string) => {
     editUsers === false ? seteditUsers(true) : seteditUsers(false);
     if(selectedUserId === userId) {
@@ -86,8 +93,8 @@ const HandleClick = async (userId: string) => {
 }
     const HandleKick= async () => {
         try {   
-            if(!selectedUserId || !communityId) {
-                console.log("no one selected or no user in community or no community"); 
+            if(!selectedUserId || !communityId || isAdmin != true) {
+                console.log("no one selected or no user in community or no community or not an admin"); 
                 return;
             }
             const kickMember = await API.kickCommunityMember(communityId, selectedUserId);
@@ -103,13 +110,15 @@ const handleClose = () => {
     seteditUsers(false);
 }
     return( 
-        <>
         <div className="bg-white rounded-none  md:border shadow-sm w-full md:w-1/3 md:rounded-xl ">
             <div className="flex items-center mt-4 justify-center">
                 <h1 className="text-2xl font-bold mb-5">Members</h1>
             </div>
-             {communityMembers.map((members, index) => (
-                <div key={index} className="mt-3 relative">
+                {communityMembers.map((members, index) => (
+                    (members.id == isOwner ? ( 
+                        <div className="relative" key={index}></div>
+                    ) : (
+                        <div key={index} className="mt-3 relative">
                     <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer">
                         <div className="flex items-center space-x-3">
                             <div className="relative">
@@ -127,7 +136,6 @@ const handleClose = () => {
                         </div>
                          {editUsers && selectedUserId === members.id &&  (
                       <div className="absolute rounded-xl flex bg-stone-200 w-25 ml-60 md:ml-46 justify-center z-[9999] h-[16vh] md:h-[11vh] before:content-[''] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:-translate-x-full before:w-0 before:h-0 before:border-t-[8px] before:border-b-[8px] before:border-r-[8px] before:border-t-transparent before:border-b-transparent before:border-r-stone-200">
-
                                 <h1 className="items-center flex "></h1>
                             <div className="flex flex-col items-center gap-1.5">
                                 <h1 className="text-bold mt-0.5">{members.firstName}</h1>
@@ -156,10 +164,12 @@ const handleClose = () => {
                     </div >
                     <hr className="border-gray-300"></hr>
                 </div>
-                  ))}  
+                  )))
+                  )}
+        
         </div>
-       
-        </>
+
+
     )
 }
 
