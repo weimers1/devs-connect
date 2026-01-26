@@ -11,7 +11,7 @@ interface CommunityHeaderProps {
         color: string;
         icon: string;
         tags: string[];
-        coverImage: string;
+        image: string;
     };
 }
 
@@ -21,9 +21,9 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community }) => {
     return (
         <div className="relative h-64 md:h-80 overflow-hidden">
             <img 
-                src={community.coverImage} 
+                src={community.image} 
                 alt={community.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
             

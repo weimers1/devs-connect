@@ -41,7 +41,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     const navigate = useNavigate();
     const { requireAuth } = useAuthRedirect();
     const [isLiked, setIsLiked] = useState(false);
-    
     const [likes, setLikes] = useState("");
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState<any[]>([]);
@@ -49,8 +48,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     const [loadingComments, setLoadingComments] = useState(false);
     const [wantingToDelete, setWantingToDelete] = useState(false); //State to determine if a user wants to
     // delete a post.
+    const [currentUser, setCurrentUser] = useState(Number);
+    // const [canDelete, setCanDelete] = useState(true);
     
-  post.canDelete = true;
     useEffect(() => {
           const fetchlikes = async () => { 
         try { 
@@ -69,6 +69,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
             try {
              const user = await API.getCurrentUser();
              const userId = user.userId;
+             setCurrentUser(userId);
+      
              const getLikeStatus = await API.getLikeStatus(post.id, userId);
             setIsLiked(getLikeStatus.postLiked);
             if(!userId) {
@@ -81,14 +83,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     }
         getLikeStatus();
         fetchlikes();
-    }, [post.id]);
+    }, [post.id, post.userId]);
+
     const handleProfileClick = async () => {
         if (!post.userId) return;
         
         requireAuth(async () => {
             try {
                 const currentUser = await API.getCurrentUser();
-                if (post.id.toString() === currentUser.id.toString()) {
+                if (post.id.toString() === currentUser.userId.toString()) {
                     navigate('/profile');
                 } else {
                     navigate(`/profile/${post.userId}`);
@@ -131,17 +134,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
         });
     };
 
-    const handleInterest = async () => {
-        requireAuth(async () => {
-            try {
-                await API.expressInterest(post.id.toString());
-                loadComments();
-                onPostUpdate?.();
-            } catch (error) {
-                console.error('Failed to express interest:', error);
-            }
-        });
-    };
+    // const handleInterest = async () => {
+    //     requireAuth(async () => {
+    //         try {
+    //             await API.expressInterest(post.id.toString());
+    //             loadComments();
+    //             onPostUpdate?.();
+    //         } catch (error) {
+    //             console.error('Failed to express interest:', error);
+    //         }
+    //     });
+    // };
     
     const areYouSure = async () => {
         setWantingToDelete(true);
@@ -151,7 +154,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     }
 
     const handleDelete = async () => {
-        if (wantingToDelete) {
+        if (wantingToDelete && post.userId?.toString() == currentUser.toString()) {
         try {
             await API.deletePost(post.id.toString());
             onPostDelete?.(post.id);
@@ -222,7 +225,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                             </div>
                             <span className="text-gray-500 text-sm">{post.timestamp}</span>
                         </div>
-                        {post.canDelete && (
+                        {post.userId?.toString() == currentUser.toString() && (
                             <button 
                                 onClick={areYouSure}
                                 className="text-gray-400 hover:text-red-600 transition-colors"
@@ -231,8 +234,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                                 <Icon icon="mdi:delete" className="w-4 h-4" />
                             </button>
                         )}
-                      {wantingToDelete && (
-    <div className="fixed inset-0 bg-gray-400 bg-opacity-10 flex items-center justify-center z-50">
+                      {wantingToDelete  && (
+    <div className="fixed inset-0  bg-gray/20 backdrop-invert backdrop-opacity-20 flex items-center justify-center z-50">
         <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
             <h2 className="text-xl font-bold mb-6 text-center">Permanently Delete Post?</h2>
             <div className="flex flex-col gap-3">

@@ -105,7 +105,10 @@ export const getCommunityById = async (req, res) => {
 export const updateCommunity = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, icon, color, isPrivate, rules } = req.body;
+        const { name, description, icon, color, isPrivate, rules, image } = req.body;
+        if (!req.user) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
 
         const community = await Community.findByPk(id);
 
@@ -126,6 +129,7 @@ export const updateCommunity = async (req, res) => {
             description: description?.trim() || community.description,
             icon: icon !== undefined ? icon : community.icon,
             color: color !== undefined ? color : community.color,
+            image: image !== undefined ? image : community.image,
             isPrivate: isPrivate !== undefined ? isPrivate : community.isPrivate,
         });
 

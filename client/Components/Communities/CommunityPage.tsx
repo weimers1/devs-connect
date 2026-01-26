@@ -122,11 +122,11 @@ const CommunityPage: React.FC = () => {
         membersTotal: members.length > 0 ? members.length.toString() : (community.memberCount?.toString() || '1'),
         membersOnline: members.length > 0 ? members.filter(m => m.isOnline).length.toString() : '0',
         category: 'Development',
-        coverImage: community.image || 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=400&fit=crop',
+        image: community.image || 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=400&fit=crop',
         tags: [],
         createdDate: community.createdAt,
         members: members,
-        rules: []
+        rules: community.rules
     };
 
     return (

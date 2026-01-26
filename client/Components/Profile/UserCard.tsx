@@ -30,83 +30,88 @@ function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
         }
     };
 
-    const handleImageUpload = async (file: File) => {
-            setImageUploading(true);
+    function handleClick() {
+       navigate("/profile?showProfModal=true");
+       window.location.reload();
+    }
+
+    // const handleImageUpload = async (file: File) => {
+    //         setImageUploading(true);
     
-            try {
-                // Upload to S3
-                const formData = new FormData();
-                formData.append('profileImage', file);
+    //         try {
+    //             // Upload to S3
+    //             const formData = new FormData();
+    //             formData.append('profileImage', file);
     
-                const baseUrl =
-                   process.env.VITE_API_URL ||
-                    'http://localhost:6969';
-                const uploadResponse = await fetch(
-                    `${baseUrl}/api/upload/profile-image`,
-                    {
-                        method: 'POST',
-                        body: formData,
-                    }
-                );
+    //             const baseUrl =
+    //                process.env.VITE_API_URL ||
+    //                 'http://localhost:6969';
+    //             const uploadResponse = await fetch(
+    //                 `${baseUrl}/api/upload/profile-image`,
+    //                 {
+    //                     method: 'POST',
+    //                     body: formData,
+    //                 }
+    //             );
     
-                if (!uploadResponse.ok) {
-                    throw new Error(`Upload failed: ${uploadResponse.status}`);
-                }
+    //             if (!uploadResponse.ok) {
+    //                 throw new Error(`Upload failed: ${uploadResponse.status}`);
+    //             }
     
-                const uploadResult = await uploadResponse.json();
+    //             const uploadResult = await uploadResponse.json();
     
-                if (!uploadResult.success) {
-                    throw new Error('Upload to S3 failed');
-                }
+    //             if (!uploadResult.success) {
+    //                 throw new Error('Upload to S3 failed');
+    //             }
     
-                // Validate returned URL to prevent SSRF
-                if (!validateImageUrl(uploadResult.imageUrl)) {
-                    throw new Error('Invalid image URL returned from server');
-                }
+    //             // Validate returned URL to prevent SSRF
+    //             if (!validateImageUrl(uploadResult.imageUrl)) {
+    //                 throw new Error('Invalid image URL returned from server');
+    //             }
     
-                // Save URL to database
-                const token = localStorage.getItem('session_token');
-                if (!token) {
-                    throw new Error('No authentication token found');
-                }
-                const saveResponse = await fetch(
-                    `${baseUrl}/api/settings/profile-image`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: 'Bearer ' + token,
-                        },
-                        body: JSON.stringify({
-                            imageUrl: uploadResult.imageUrl,
-                        }),
-                    }
-                );
+    //             // Save URL to database
+    //             const token = localStorage.getItem('session_token');
+    //             if (!token) {
+    //                 throw new Error('No authentication token found');
+    //             }
+    //             const saveResponse = await fetch(
+    //                 `${baseUrl}/api/settings/profile-image`,
+    //                 {
+    //                     method: 'PUT',
+    //                     headers: {
+    //                         'Content-Type': 'application/json',
+    //                         Authorization: 'Bearer ' + token,
+    //                     },
+    //                     body: JSON.stringify({
+    //                         imageUrl: uploadResult.imageUrl,
+    //                     }),
+    //                 }
+    //             );
     
-                if (!saveResponse.ok) {
-                    throw new Error(`Database save failed: ${saveResponse.status}`);
-                }
+    //             if (!saveResponse.ok) {
+    //                 throw new Error(`Database save failed: ${saveResponse.status}`);
+    //             }
     
-                let saveResult;
-                try {
-                    saveResult = await saveResponse.json();
-                } catch (jsonError) {
-                    throw new Error('Invalid response from server');
-                }
+    //             let saveResult;
+    //             try {
+    //                 saveResult = await saveResponse.json();
+    //             } catch (jsonError) {
+    //                 throw new Error('Invalid response from server');
+    //             }
     
-                if (!saveResult || saveResult.error) {
-                    throw new Error(saveResult?.error || 'Database save failed');
-                }
+    //             if (!saveResult || saveResult.error) {
+    //                 throw new Error(saveResult?.error || 'Database save failed');
+    //             }
     
-                setCurrentProfileImage(uploadResult.imageUrl);
-                console.log('Profile image saved to database!');
-            } catch (error) {
-                console.error('Upload failed:', error);
-                alert('Failed to upload profile image. Please try again.');
-            } finally {
-                setImageUploading(false);
-            }
-        };
+    //             setCurrentProfileImage(uploadResult.imageUrl);
+    //             console.log('Profile image saved to database!');
+    //         } catch (error) {
+    //             console.error('Upload failed:', error);
+    //             alert('Failed to upload profile image. Please try again.');
+    //         } finally {
+    //             setImageUploading(false);
+    //         }
+    //     };
  
     useEffect(() => {
         setCurrentProfileImage(profileData.pfp || '');
@@ -218,7 +223,9 @@ function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
                             About
                         </p>
                         {isOwnProfile && (
-                            <button className="text-gray-400">
+                            <button className="text-gray-400"
+                            onClick={handleClick}
+                            >
                                 <Icon
                                     icon="mdi:pencil"
                                     className="w-5 h-5"

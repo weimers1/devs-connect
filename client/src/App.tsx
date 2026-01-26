@@ -9,6 +9,7 @@ import CommunityPage from '../Components/Communities/CommunityPage';
 import CreateCommunity from '../Components/Communities/CreateCommunity';
 import EditCommunity from '../Components/Communities/EditCommunity';
 import React from 'react';
+import PostTypes from '../Components/Communities/PostTypes';
 
 const AppRoutes = () => {
     return (
@@ -56,6 +57,10 @@ const AppRoutes = () => {
                     <Route
                         path="/edit-community/:communityId"
                         element={<EditCommunity />}
+                    />
+                    <Route
+                    path="/profile/:userId"
+                    element={<PostTypes/>}
                     />
                 </Routes>
             </BrowserRouter>

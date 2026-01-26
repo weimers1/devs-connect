@@ -6,6 +6,7 @@ import Profile from '/assets/images/Nav-Profile.png';
 
 
 
+
 //Shows A Active List of community Members
 interface CommunityMembers {
     id: string, 
@@ -31,7 +32,9 @@ const [communityMembers, setCommunityMember] = useState<CommunityMembers[]>([]);
 const [editUsers, seteditUsers] = useState(false);
 const [currentUserInfo, setCurrentUser] = useState<UserProfile | null>(null); //User Profile Information
 const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+const [areyouSure, setareyouSure] = useState(false);
 const [isOwner, setisOwner] = useState(''); //is Owner
+
 const [isAdmin, setisAdmin] = useState(false);
 
 
@@ -65,8 +68,7 @@ useEffect(() => {
         fetchMembers();
     },[])
     // const navigate = useNavigate();
-    //Handle Click
-
+    //Handle Click When clicking on a user
 const HandleClick = async (userId: string) => {
     editUsers === false ? seteditUsers(true) : seteditUsers(false);
     if(selectedUserId === userId) {
@@ -107,7 +109,13 @@ const HandleClick = async (userId: string) => {
     }   
 //handle Close
 const handleClose = () => {
-    seteditUsers(false);
+    setareyouSure(false);
+}
+
+const areYouSure = () => {
+  setareyouSure(true);
+  seteditUsers(false);
+   
 }
     return( 
         <div className="bg-white rounded-none  md:border shadow-sm w-full md:w-1/3 md:rounded-xl ">
@@ -140,21 +148,46 @@ const handleClose = () => {
                             <div className="flex flex-col items-center gap-1.5">
                                 <h1 className="text-bold mt-0.5">{members.firstName}</h1>
 
-                                <button className="bg-linear-to-tr from-blue-700 to-slate-950 rounded-xl hover:bg-white-800">
+                                <button className="bg-linear-to-tr from-blue-700 to-slate-950 rounded-xl hover:bg-white-800"
+                                   onClick={() => areYouSure()}
+                                >
                                     <p className="text-lg font-semibold text-gray-300 color-blue rounded-xl border w-20">Promote</p>
                                 </button>
                                 <button className="bg-red-600 rounded-xl hover:bg-red-700 "
-                                onClick={() => HandleKick()}
+                                   onClick={() => areYouSure()}
                                 >
                                     <p className="text-lg font-semibold text-gray-800 bg-blue border rounded-xl w-20"
                                     >Kick</p>
                                   
                                 </button>
-                                <button className="bg-red-700 rounded-xl hover:bg-red-800">
+                                <button className="bg-red-700 rounded-xl hover:bg-red-800"
+                                     onClick={() => areYouSure()}
+                                >
                                     <p className="text-lg font-semibold text-gray-800 bg-blue border rounded-xl w-20">Ban</p>
                                 </button>
                             </div>
                         </div>
+                    )}
+                    {areyouSure && (
+                            <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-20 inset-0 flex items-center justify-center ">
+        <div className="bg-white rounded-xl p-6 max-w-md md:w-90 mx-4">
+            <h2 className="text-xl font-bold mb-6 text-center">{`Are You Sure You Want to Kick ${members.firstName}?`}</h2>
+            <div className="flex flex-col gap-3">
+                <button 
+                    onClick={HandleKick}
+                    className="w-full py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold"
+                >
+                    Confirm
+                </button>
+                <button 
+                    onClick={handleClose}
+                    className="w-full py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold"
+                >   
+                    Cancel                  
+                </button>
+            </div>
+        </div> 
+    </div>
                     )}
                         <button className="text-gray-400 hover:text-gray-600"
                          onClick={() => HandleClick(members.id)}
@@ -164,6 +197,7 @@ const handleClose = () => {
                     </div >
                     <hr className="border-gray-300"></hr>
                 </div>
+                
                   )))
                   )}
         
