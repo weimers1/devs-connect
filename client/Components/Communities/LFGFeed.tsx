@@ -5,10 +5,11 @@ import type {Post} from './PostTypes';
 import API from '../../Service/service';
 
 interface LFGFeedProps {
-    communityId: string;
+    communityId: string,
+    activeTab: string,
 }
 
-const LFGFeed: React.FC<LFGFeedProps> = ({ communityId }) => {
+const LFGFeed: React.FC<LFGFeedProps> = ({ communityId, activeTab }) => {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -48,7 +49,7 @@ const LFGFeed: React.FC<LFGFeedProps> = ({ communityId }) => {
     if (loading) {
         return (
             <div className="space-y-6">
-                <CreatePost onPostCreate={handlePostCreate} />
+                <CreatePost onPostCreate={handlePostCreate} activeTab={activeTab} />
                 <div className="text-center py-8">
                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                     <p className="text-gray-500">Loading LFG posts...</p>
@@ -59,7 +60,7 @@ const LFGFeed: React.FC<LFGFeedProps> = ({ communityId }) => {
 
     return (
         <div className="space-y-6">
-            <CreatePost onPostCreate={handlePostCreate} />
+            <CreatePost onPostCreate={handlePostCreate} activeTab={activeTab} />
             
             {posts.length > 0 ? (
                 posts.map((post) => (

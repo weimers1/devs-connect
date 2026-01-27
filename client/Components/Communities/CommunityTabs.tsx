@@ -17,7 +17,7 @@ const CommunityTabs: React.FC<CommunityTabsProps> = ({ activeTab, onTabChange, c
                 {[
                     { key: 'posts', label: 'Posts', icon: 'mdi:code-tags' },
                     { key: 'lfg', label: 'LFG', icon: 'mdi:account-group' },
-                    { key: 'qa', label: 'Q&A', icon: 'mdi:help-circle' },
+                    { key: 'qanda', label: 'Q&A', icon: 'mdi:help-circle' },
                     { key: 'events', label: 'Events', icon: 'mdi:calendar' },
                     { key: 'resources', label: 'Resources', icon: 'mdi:book-open' }
                 ].map((tab) => (
@@ -35,13 +35,13 @@ const CommunityTabs: React.FC<CommunityTabsProps> = ({ activeTab, onTabChange, c
                     </button>
                 ))}
             </div>
-
+        
             <div className="p-6">
-                {activeTab === 'posts' && <PostsFeed communityId={communityId} />}
+                {activeTab === 'posts' && <PostsFeed communityId={communityId} activeTab={activeTab} />}
                 
-                {activeTab === 'lfg' && <LFGFeed communityId={communityId} />}
+                {activeTab === 'lfg' && <LFGFeed communityId={communityId} activeTab={activeTab} />}
                 
-                {activeTab === 'qa' && <QAFeed communityId={communityId} />}
+                {activeTab === 'qanda' && <QAFeed communityId={communityId}  activeTab={activeTab}/>}
 
                 {activeTab === 'events' && (
                     <div className="text-center py-12">

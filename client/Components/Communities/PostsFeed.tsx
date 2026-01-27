@@ -6,16 +6,16 @@ import API from '../../Service/service';
 
 interface PostsFeedProps {
     communityId: string;
+    activeTab: string,
 }
 
-const PostsFeed: React.FC<PostsFeedProps> = ({ communityId }) => {
+const PostsFeed: React.FC<PostsFeedProps> = ({ communityId, activeTab }) => {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
-
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                const postsData = await API.getCommunityPosts(communityId, 'programming');
+                const postsData = await API.getCommunityPosts(communityId, 'posts');
                 setPosts(postsData);
             } catch (error) {
                 console.error('Failed to fetch posts:', error);
@@ -29,12 +29,12 @@ const PostsFeed: React.FC<PostsFeedProps> = ({ communityId }) => {
     }, [communityId]);
 
     const handlePostCreate = async (postData: any) => {
-        if (postData.type !== 'programming') return;
+        if (postData.type !== 'posts') return;
         
         try {
             await API.createCommunityPost(communityId, postData);
             // Refresh posts after creating
-            const updatedPosts = await API.getCommunityPosts(communityId, 'programming');
+            const updatedPosts = await API.getCommunityPosts(communityId, 'posts');
             setPosts(updatedPosts);
         } catch (error) {
             console.error('Failed to create post:', error);
@@ -48,7 +48,7 @@ const PostsFeed: React.FC<PostsFeedProps> = ({ communityId }) => {
     if (loading) {
         return (
             <div className="space-y-6">
-                <CreatePost onPostCreate={handlePostCreate} />
+                <CreatePost onPostCreate={handlePostCreate} activeTab={activeTab} />
                 <div className="text-center py-8">
                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                     <p className="text-gray-500">Loading posts...</p>
@@ -59,7 +59,7 @@ const PostsFeed: React.FC<PostsFeedProps> = ({ communityId }) => {
 
     return (
         <div className="space-y-6">
-            <CreatePost onPostCreate={handlePostCreate} />
+            <CreatePost onPostCreate={handlePostCreate} activeTab={activeTab}/>
             
             {posts.length > 0 ? (
                 posts.map((post) => (
@@ -68,7 +68,7 @@ const PostsFeed: React.FC<PostsFeedProps> = ({ communityId }) => {
                         post={post} 
                         onPostUpdate={() => {
                             // Refresh posts when interactions happen
-                            API.getCommunityPosts(communityId, 'programming').then(setPosts).catch(console.error);
+                            API.getCommunityPosts(communityId, 'posts').then(setPosts).catch(console.error);
                         }}
                         onPostDelete={handlePostDelete}
                     />

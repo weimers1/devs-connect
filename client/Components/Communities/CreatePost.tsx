@@ -1,40 +1,52 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
 
 interface CreatePostProps {
-    onPostCreate: (postData: any) => void;
+    onPostCreate: (postData: any) => void,
+    activeTab: string;
 }
 
-const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
+const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
     const { requireAuth } = useAuthRedirect();
-    const [postType, setPostType] = useState<'programming' | 'lfg' | 'qa'>('programming');
     const [content, setContent] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
     
+  
+ 
+    //Different Post Types
+
+    const PostTypes = 
+    [
+    { type: 'posts', icon: 'mdi:code-tags', label: 'Posts', color: 'blue' },
+    { type: 'lfg', icon: 'mdi:account-group', label: 'LFG', color: 'green' },
+    { type: 'qanda', icon: 'mdi:help-circle', label: 'Q&A', color: 'purple' }
+    ];
+
+    
+
     // Programming post fields
     const [codeSnippet, setCodeSnippet] = useState('');
     const [language, setLanguage] = useState('javascript');
-    
+
     // LFG post fields
     const [projectType, setProjectType] = useState('');
     const [skillsNeeded, setSkillsNeeded] = useState('');
     const [duration, setDuration] = useState('');
-    
+
     // Q&A post fields
     const [question, setQuestion] = useState('');
-
     const handleSubmit = () => {
         const basePost = {
-            type: postType,
+            type: activeTab.toLowerCase().toString(),
             content,
             tags: []
         };
 
         let postData = { ...basePost };
 
-        switch (postType) {
-            case 'programming':
+        switch (activeTab) {
+            case 'posts':
                 postData = {
                     ...postData,
                     codeSnippet,
@@ -51,7 +63,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
                     tags: ['collaboration', 'project']
                 };
                 break;
-            case 'qa':
+            case 'qanda':
                 postData = {
                     ...postData,
                     question,
@@ -60,7 +72,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
                 };
                 break;
         }
-
+      
         onPostCreate(postData);
         
         // Reset form
@@ -71,6 +83,9 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
         setDuration('');
         setQuestion('');
         setIsExpanded(false);
+   
+       
+
     };
 
     return (
@@ -82,6 +97,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
                     </div>
                     <input
                         type="text"
+                        value={''}
                         placeholder="Share something with the community..."
                         className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                         onClick={() => requireAuth(() => setIsExpanded(true))}
@@ -92,28 +108,27 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
                 <div className="space-y-4">
                     {/* Post Type Selector */}
                     <div className="flex space-x-2">
-                        {[
-                            { type: 'programming', icon: 'mdi:code-tags', label: 'Code', color: 'blue' },
-                            { type: 'lfg', icon: 'mdi:account-group', label: 'LFG', color: 'green' },
-                            { type: 'qa', icon: 'mdi:help-circle', label: 'Q&A', color: 'purple' }
-                        ].map(({ type, icon, label, color }) => (
+                        
+                        {PostTypes.filter(posttype => posttype.type.toLowerCase() == activeTab.toLowerCase()).map(({ type, icon, label, color }) => (
                             <button
+                                
                                 key={type}
-                                onClick={() => setPostType(type as any)}
                                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                    postType === type
+                                           activeTab.toLowerCase()
                                         ? `bg-${color}-100 text-${color}-700 border border-${color}-200`
                                         : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                                }`}
+                                }`
+                                
+                            }
                             >
+                                
                                 <Icon icon={icon} className="w-4 h-4 mr-1" />
                                 {label}
                             </button>
                         ))}
                     </div>
-
                     {/* Q&A Question Field */}
-                    {postType === 'qa' && (
+                    {activeTab == 'qanda' && (
                         <input
                             type="text"
                             placeholder="What's your question?"
@@ -126,8 +141,8 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
                     {/* Main Content */}
                     <textarea
                         placeholder={
-                            postType === 'programming' ? "Describe your code or ask for help..." :
-                            postType === 'lfg' ? "Describe your project and what you're looking for..." :
+                            activeTab === 'posts' ? "Post an exciting accomplishment or something you learned..." :
+                            activeTab === 'lfg' ? "Describe your project and what you're looking for..." :
                             "Provide more details about your question..."
                         }
                         value={content}
@@ -136,7 +151,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
                     />
 
                     {/* Programming Post Fields */}
-                    {postType === 'programming' && (
+                    {activeTab == 'posts' && (
                         <div className="space-y-3">
                             <select
                                 value={language}
@@ -157,10 +172,10 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
                                 className="w-full bg-gray-900 text-green-400 font-mono text-sm border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px] resize-none"
                             />
                         </div>
-                    )}
+                    ) }
 
                     {/* LFG Post Fields */}
-                    {postType === 'lfg' && (
+                    {activeTab === 'lfg' && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <input
                                 type="text"
@@ -196,7 +211,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate }) => {
                         </button>
                         <button
                             onClick={() => requireAuth(handleSubmit)}
-                            disabled={!content.trim() || (postType === 'qa' && !question.trim())}
+                            disabled={!content.trim() || (activeTab === 'qanda' && !question.trim())}
                             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Post

@@ -5,7 +5,7 @@ const Post = sequelize.define('Post', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   communityId: { type: DataTypes.INTEGER, allowNull: false },
   userId: { type: DataTypes.INTEGER, allowNull: false },
-  type: { type: DataTypes.ENUM('programming', 'lfg', 'qa'), allowNull: false },
+  type: { type: DataTypes.ENUM('posts', 'lfg', 'qanda'), allowNull: false },
   content: { type: DataTypes.TEXT, allowNull: false },
   title: { type: DataTypes.STRING },
   codeSnippet: { type: DataTypes.TEXT },

@@ -7,7 +7,7 @@ import { useAuthRedirect } from '../Auth/useAuthRedirect';
 export interface Post {
     id: number;
     userId?: number;
-    type: 'programming' | 'lfg' | 'qa';
+    type: 'posts' | 'lfg' | 'qanda';
     author: string;
     avatar: string;
     timestamp: string;
@@ -134,17 +134,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
         });
     };
 
-    // const handleInterest = async () => {
-    //     requireAuth(async () => {
-    //         try {
-    //             await API.expressInterest(post.id.toString());
-    //             loadComments();
-    //             onPostUpdate?.();
-    //         } catch (error) {
-    //             console.error('Failed to express interest:', error);
-    //         }
-    //     });
-    // };
+    const handleInterest = async () => {
+        requireAuth(async () => {
+            try {
+                await API.expressInterest(post.id.toString());
+                loadComments();
+                onPostUpdate?.();
+            } catch (error) {
+                console.error('Failed to express interest:', error);
+            }
+        });
+    };
     
     const areYouSure = async () => {
         setWantingToDelete(true);
@@ -186,11 +186,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     };
     const getPostTypeIcon = () => {
         switch (post.type) {
-            case 'programming':
+            case 'posts':
                 return { icon: 'mdi:code-tags', color: 'text-blue-600', bg: 'bg-blue-100' };
             case 'lfg':
                 return { icon: 'mdi:account-group', color: 'text-green-600', bg: 'bg-green-100' };
-            case 'qa':
+            case 'qanda':
                 return { icon: 'mdi:help-circle', color: 'text-purple-600', bg: 'bg-purple-100' };
         }
     };
@@ -259,7 +259,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                         </div>
                     {/* Post Content */}
                     <div className="mb-3">
-                        {post.type === 'qa' && post.question && (
+                        {post.type === 'qanda' && post.question && (
                             <div className="mb-3">
                                 <h5 className="font-semibold text-gray-900 mb-2">Q: {post.question}</h5>
                                 {post.isAnswered && (
@@ -277,7 +277,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                         <p className="text-gray-700">{post.content}</p>
                         
                         {/* Programming Post - Code Snippet */}
-                        {post.type === 'programming' && post.codeSnippet && (
+                        {post.type === 'posts' && post.codeSnippet && (
                             <div className="mt-3 bg-gray-900 rounded-lg p-4 overflow-x-auto">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-gray-400 text-xs font-medium">{post.language}</span>
