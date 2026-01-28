@@ -21,7 +21,6 @@ const QAFeed: React.FC<QAFeedProps> = ({ communityId, activeTab }) => { //Tells 
             try {
                 const postsData = await API.getCommunityPosts(communityId, 'qanda'); //Calls API to get posts for this community, filtered by type 'qa'
                 setPosts(postsData);
-                console.log(postsData);
             } catch (error) {
                 console.error('Failed to fetch Q&A posts:', error);
                 setPosts([]);

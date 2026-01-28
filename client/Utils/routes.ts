@@ -60,7 +60,15 @@ export const protectedRoutes: RouteConfig[] = [
         alt: 'Create',
         showInNav: true,
     },
-    {
+    {   //Viewing other peoples profiles 
+        path: '/profile/:userId',
+        component: Profile,
+        title: 'Profile',
+        icon: 'mdi:account-circle-outline',
+        alt: 'Profile',
+        showInNav: true,
+    },
+    { //Person User Profile
         path: '/profile',
         component: Profile,
         title: 'Profile',

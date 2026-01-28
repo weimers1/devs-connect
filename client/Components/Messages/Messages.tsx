@@ -11,7 +11,7 @@ import Layout from '../Layout';
 const Messages = () => {
     const [searchParams] = useSearchParams();
     const targetUserId = searchParams.get('user');
-    const [currentUserId, setCurrentUserId] = useState<string>('1');
+    const [currentUserId, setCurrentUserId] = useState<string>();
 
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(
         null
@@ -21,7 +21,8 @@ const Messages = () => {
         const getCurrentUserId = async () => {
             try {
                 const user = await API.getCurrentUser();
-                setCurrentUserId(user.id.toString());
+         
+                setCurrentUserId(user.userId);
             } catch (error) {
                 console.error('Failed to get current user:', error);
             }
@@ -78,10 +79,12 @@ const Messages = () => {
         }
     }, [targetUserId, messages, currentUserId]);
     // Extract other user ID from conversation ID (e.g., "1-2" -> "2")
-    const selectedUserId = selectedMessage?.id
-        ? selectedMessage.id.split('-').find((id) => id !== currentUserId) ||
-          null
-        : null;
+  const selectedUserId = selectedMessage?.id
+  ? selectedMessage.id
+      .split('-')
+      .map(String)
+      .find((id) => id !== String(currentUserId)) ?? null
+  : null;
     // BUG FIX: Added fetchChatMessages to load actual chat messages when conversation selected
     const { chatMessages, sendMessage, fetchChatMessages, socket } =
         useChat(selectedUserId);

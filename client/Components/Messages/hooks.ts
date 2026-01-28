@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Message, ChatMessage, UseMessagesReturn, UseChatReturn } from './types';
 import {io, Socket} from "socket.io-client";
 import messageApi from '../../Service/service';
+import API from '../../Service/service';
 
 // Security utilities || Without sanitization  for Example 
 // an attack can send a script fetch /api/user/delete, {method: 'POST}
@@ -67,7 +68,7 @@ export const checkRateLimit = (userId: number): boolean => {
 // Get current user ID from API
 export const getCurrentUserId = async (): Promise<number> => {
   try {
-    const response = await fetch(`${//import.meta.env.VITE_API_URL || 
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 
     'http://localhost:6969'}/api/users/me`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('session_token')}`
@@ -277,7 +278,9 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
     // Get current user ID with error handling
     let currentUserId: number;
     try {
-      currentUserId = await getCurrentUserId();
+      const currentid = await API.getCurrentUser();
+      currentUserId = currentid.userId;
+      console.log(currentUserId);   
     } catch (error) {
       setError('Authentication failed');
       return;

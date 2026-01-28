@@ -83,7 +83,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     }
         getLikeStatus();
         fetchlikes();
-    }, [post.id, post.userId]);
+    }, [post?.id, post?.userId]);
 
     const handleProfileClick = async () => {
         if (!post.userId) return;
@@ -91,7 +91,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
         requireAuth(async () => {
             try {
                 const currentUser = await API.getCurrentUser();
-                if (post.id.toString() === currentUser.userId.toString()) {
+                if (post.userId?.toString() === currentUser.userId.toString()) {
                     navigate('/profile');
                 } else {
                     navigate(`/profile/${post.userId}`);
@@ -185,7 +185,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
         }
     };
     const getPostTypeIcon = () => {
-        switch (post.type) {
+        switch (post?.type) {
             case 'posts':
                 return { icon: 'mdi:code-tags', color: 'text-blue-600', bg: 'bg-blue-100' };
             case 'lfg':
@@ -203,8 +203,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
             <div className="flex items-start space-x-3 mb-4">
                 <button onClick={handleProfileClick}>
                     <img
-                        src={post.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author)}&background=random`}
-                        alt={post.author}
+                        src={post?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post?.author)}&background=random`}
+                        alt={post?.author}
                         className="w-10 h-10 rounded-full object-cover hover:ring-2 hover:ring-blue-500 transition-all"
                     />
                 </button>
@@ -216,16 +216,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                                 onClick={handleProfileClick}
                                 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
                             >
-                                {post.author}
+                                {post?.author}
 
                             </button>
-                            <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeInfo.bg} ${typeInfo.color}`}>
-                                <Icon icon={typeInfo.icon} className="w-3 h-3 mr-1" />
-                                {post.type.toUpperCase()}
+                            <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeInfo?.bg} ${typeInfo?.color}`}>
+                                <Icon icon={typeInfo?.icon} className="w-3 h-3 mr-1" />
+                                {post?.type.toUpperCase()}
                             </div>
-                            <span className="text-gray-500 text-sm">{post.timestamp}</span>
+                            <span className="text-gray-500 text-sm">{post?.timestamp}</span>
                         </div>
-                        {post.userId?.toString() == currentUser.toString() && (
+                        {post?.userId?.toString() == currentUser.toString() && (
                             <button 
                                 onClick={areYouSure}
                                 className="text-gray-400 hover:text-red-600 transition-colors"
@@ -259,54 +259,54 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                         </div>
                     {/* Post Content */}
                     <div className="mb-3">
-                        {post.type === 'qanda' && post.question && (
+                        {post?.type === 'qanda' && post?.question && (
                             <div className="mb-3">
                                 <h5 className="font-semibold text-gray-900 mb-2">Q: {post.question}</h5>
-                                {post.isAnswered && (
+                                {/* {post.isAnswered && (
                                     <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
                                         <div className="flex items-center mb-1">
                                             <Icon icon="mdi:check-circle" className="w-4 h-4 text-green-600 mr-1" />
                                             <span className="text-green-800 font-medium text-sm">Best Answer</span>
                                         </div>
                                         <p className="text-green-700 text-sm">{post.bestAnswer}</p>
-                                    </div>
-                                )}
+                                    </div> */}
+                                {/* )} */}
                             </div>
                         )}
                         
-                        <p className="text-gray-700">{post.content}</p>
+                        <p className="text-gray-700">{post?.content}</p>
                         
                         {/* Programming Post - Code Snippet */}
-                        {post.type === 'posts' && post.codeSnippet && (
+                        {post?.type === 'posts' && post?.codeSnippet && (
                             <div className="mt-3 bg-gray-900 rounded-lg p-4 overflow-x-auto">
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-gray-400 text-xs font-medium">{post.language}</span>
+                                    <span className="text-gray-400 text-xs font-medium">{post?.language}</span>
                                     <button className="text-gray-400 hover:text-white text-xs">
                                         <Icon icon="mdi:content-copy" className="w-4 h-4" />
                                     </button>
                                 </div>
                                 <pre className="text-green-400 text-sm font-mono">
-                                    <code>{post.codeSnippet}</code>
+                                    <code>{post?.codeSnippet}</code>
                                 </pre>
                             </div>
                         )}
                         
                         {/* LFG Post - Project Details */}
-                        {post.type === 'lfg' && (
+                        {post?.type === 'lfg' && (
                             <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-4">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                                     <div>
                                         <span className="font-medium text-green-800">Project:</span>
-                                        <p className="text-green-700">{post.projectType}</p>
+                                        <p className="text-green-700">{post?.projectType}</p>
                                     </div>
                                     <div>
                                         <span className="font-medium text-green-800">Duration:</span>
-                                        <p className="text-green-700">{post.duration}</p>
+                                        <p className="text-green-700">{post?.duration}</p>
                                     </div>
                                     <div>
                                         <span className="font-medium text-green-800">Skills Needed:</span>
                                         <div className="flex flex-wrap gap-1 mt-1">
-                                            {post.skillsNeeded?.map((skill, index) => (
+                                            {post?.skillsNeeded?.map((skill, index) => (
                                                 <span key={index} className="px-2 py-1 bg-green-200 text-green-800 text-xs rounded-full">
                                                     {skill}
                                                 </span>
@@ -320,7 +320,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                     
                     {/* Tags */}
                     <div className="flex flex-wrap gap-2 mb-3">
-                        {post.tags.map((tag, index) => (
+                        {post?.tags.map((tag, index) => (
                             <span
                                 key={index}
                                 className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
@@ -346,13 +346,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                             className="flex items-center space-x-1 hover:text-blue-600 transition-colors"
                         >
                             <Icon icon="mdi:comment-outline" className="w-4 h-4" />
-                            <span className="text-sm">{comments.length || post.comments || 0}</span>
+                            <span className="text-sm">{comments?.length || post?.comments || 0}</span>
                         </button>
                         <button className="flex items-center space-x-1 hover:text-blue-600 transition-colors">
                             <Icon icon="mdi:share-outline" className="w-4 h-4" />
                             <span className="text-sm">Share</span>
                         </button>
-                        {post.type === 'lfg' && (
+                        {post?.type === 'lfg' && (
                             <button 
                                 onClick={handleInterest}
                                 className="flex items-center space-x-1 hover:text-green-600 transition-colors ml-auto"
