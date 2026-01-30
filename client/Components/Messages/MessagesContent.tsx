@@ -14,14 +14,15 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
     const messagesEndRef = useRef<HTMLDivElement>(null); //Reference to invisible div at bottom of messages | Autoscroll to show newest messages
     const inputRef = useRef<HTMLTextAreaElement>(null); //Reference to the message input textarea | Purpose: to focus management and potential future features
     const scrollToBottom = useCallback(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        messagesEndRef.current?.scrollIntoView  ({ behavior: 'smooth' });
     }, []);
+
 
     // UX FIX: Prevent auto-scroll when clicking on conversations
     // Only scroll when new messages are added, not when loading existing messages
     const prevMessagesLength = useRef(0);
     const isInitialLoad = useRef(true);
-
+    console.log(messages);
     useEffect(() => {
         if (isInitialLoad.current) {
             isInitialLoad.current = false;
@@ -70,7 +71,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
             minute: '2-digit',
         });
     }, []);
-
+    
     if (!selectedMessage) {
         return (
             <div
@@ -141,6 +142,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                             message.isOwn ? 'justify-end' : 'justify-start'
                         }`}
                     >
+            
                         <div
                             className={`max-w-xs lg:max-w-md px-3 py-2 rounded-2xl ${
                                 message.isOwn
@@ -173,7 +175,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                         </div>
                     </div>
                 ))}
-
+                   
                 {isTyping && (
                     <div className="flex justify-start">
                         <div className="bg-gray-100 rounded-r-2xl rounded-tl-2xl rounded-bl-md px-4 py-2">

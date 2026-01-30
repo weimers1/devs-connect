@@ -52,6 +52,14 @@ export const protectedRoutes: RouteConfig[] = [
         alt: 'Messages',
         showInNav: true,
     },
+     {
+        path: '/messages/:userId',
+        component: Messages,
+        title: 'Messages',
+        icon: 'mdi:message-reply-text-outline',
+        alt: 'Messages',
+        showInNav: false,
+    },
     {
         path: '/Create',
         component: Create,
@@ -63,10 +71,10 @@ export const protectedRoutes: RouteConfig[] = [
     {   //Viewing other peoples profiles 
         path: '/profile/:userId',
         component: Profile,
-        title: 'Profile',
-        icon: 'mdi:account-circle-outline',
-        alt: 'Profile',
-        showInNav: true,
+        title: '',
+        icon: '',
+        alt: '',
+        showInNav: false,
     },
     { //Person User Profile
         path: '/profile',

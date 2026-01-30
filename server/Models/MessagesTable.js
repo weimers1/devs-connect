@@ -35,6 +35,7 @@ const Message = sequelize.define('Message', {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
     },
+  
 }, {
     tableName: 'messages',
     timestamps: false,

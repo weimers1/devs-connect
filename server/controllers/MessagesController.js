@@ -131,7 +131,9 @@ export const sendMessage = async (req, res) => {
     try {
         const { receiver_id, content } = req.body; //Gets who to send to and the message content from the frontend
         const sender_id = req.user.userId; // Get authenticated user ID from auth middleware
-
+             
+      
+        // const userId = API.getCurrentUserId(); // Get authenticated user ID from auth middleware
         // Create conversation_id | Purpose is to group messages between same two users
         const conversationId = [sender_id, receiver_id] //Example User 1 -> User -> 2 = 1-2 This is how we can create a consistent Conversation
             .sort((a, b) => a - b)
@@ -144,6 +146,7 @@ export const sendMessage = async (req, res) => {
             conversation_id: conversationId, // Which conversation ("1-2")
             message_type: 'text', // Type of message
             status: 'sent', // Initial status
+         // Marks if the message is sent by the authenticated user
         });
         //  Emit Socket.io event after saving to DB
         //  Emit Socket.io event after saving
@@ -154,6 +157,7 @@ export const sendMessage = async (req, res) => {
             receiver_id: message.receiver_id,
             content: message.content,
             timestamp: message.timestamp,
+         
         };
 
         // Sanitize content before emitting to prevent XSS
@@ -189,63 +193,63 @@ export const sendMessage = async (req, res) => {
     }
 };
 
-// SEND REPLY (simulate other user replying) | This is just for testing at the moment with postman
-export const sendReply = async (req, res) => {
-    try {
-        const { content } = req.body;
-        const sender_id = req.user.userId; // Get authenticated user ID from auth middleware
-        const receiver_id = 1; // Always reply to User 1 for now
+// // SEND REPLY (simulate other user replying) | This is just for testing at the moment with postman
+// export const sendReply = async (req, res) => {
+//     try {
+//         const { content, receiver_id } = req.body;
+//         const sender_id = req.user.userId; // Get authenticated user ID from auth middleware
+//          // Always reply to User 1 for now
 
-        // Create conversation_id
-        const conversationId = [sender_id, receiver_id]
-            .sort((a, b) => a - b)
-            .join('-');
+//         // Create conversation_id
+//         const conversationId = [sender_id, receiver_id]
+//             .sort((a, b) => a - b)
+//             .join('-');
 
-        const message = await Messages.create({
-            sender_id,
-            receiver_id,
-            content,
-            conversation_id: conversationId,
-            message_type: 'text',
-            status: 'sent',
-        });
+//         const message = await Messages.create({
+//             sender_id,
+//             receiver_id,
+//             content,
+//             conversation_id: conversationId,
+//             message_type: 'text',
+//             status: 'sent',
+//         });
 
-        // Sanitize content before emitting to prevent XSS
-        const sanitizedContent = message.content.replace(
-            /[<>"'&]/g,
-            (match) => {
-                const entities = {
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#x27;',
-                    '&': '&amp;',
-                };
-                return entities[match];
-            }
-        );
+//         // Sanitize content before emitting to prevent XSS
+//         const sanitizedContent = message.content.replace(
+//             /[<>"'&]/g,
+//             (match) => {
+//                 const entities = {
+//                     '<': '&lt;',
+//                     '>': '&gt;',
+//                     '"': '&quot;',
+//                     "'": '&#x27;',
+//                     '&': '&amp;',
+//                 };
+//                 return entities[match];
+//             }
+//         );
 
-        //  Emit Socket.io event (same as sendMessage)
-        const messageData = {
-            id: message.id,
-            sender_id: message.sender_id,
-            conversation_id: message.conversation_id,
-            receiver_id: message.receiver_id,
-            content: sanitizedContent,
-            timestamp: message.timestamp,
-        };
+//         //  Emit Socket.io event (same as sendMessage)
+//         const messageData = {
+//             id: message.id,
+//             sender_id: message.sender_id,
+//             conversation_id: message.conversation_id,
+//             receiver_id: message.receiver_id,
+//             content: sanitizedContent,
+//             timestamp: message.timestamp,
+//         };
 
-        // Get the io instance and emit to conversation room
-        const io = req.app.get('io'); //This will help with the simulation of a PostMan Request so that we can have the socket pickup on the Postman Request
-        io.to(`user-${receiver_id}`).emit('receiver-message', messageData);
+//         // Get the io instance and emit to conversation room
+//         const io = req.app.get('io'); //This will help with the simulation of a PostMan Request so that we can have the socket pickup on the Postman Request
+//         io.to(`user-${receiver_id}`).emit('receiver-message', messageData);
 
 
-        res.json({ success: true, data: message });
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: 'Failed to send reply' });
-    }
-};
+//         res.json({ success: true, data: message });
+//     } catch (error) {
+//         console.error('Error:', error);
+//         res.status(500).json({ error: 'Failed to send reply' });
+//     }
+// };
 
 // CREATE TEST USERS (for testing only)
 export const createTestUsers = async (req, res) => {

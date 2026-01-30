@@ -66,7 +66,7 @@ export const checkRateLimit = (userId: number): boolean => {
 };
 
 // Get current user ID from API
-export const getCurrentUserId = async (): Promise<number> => {
+export const getCurrentUserId = async (): Promise<any> => {
   try {
     const response = await fetch(`${import.meta.env.VITE_API_URL || 
     'http://localhost:6969'}/api/users/me`, {
@@ -80,7 +80,7 @@ export const getCurrentUserId = async (): Promise<number> => {
     }
     
     const user = await response.json();
-    return Number(user.id);
+    return (user);
   } catch (error) {
     console.error('Failed to get current user ID:', error);
     throw new Error('Authentication failed');
@@ -217,7 +217,6 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
   const { socket } = useSocket(); //Destructured so we can share throughout the other hooks
   
 
-
   //calls the backend API and gets all messages between current user and selected user
   const fetchChatMessages = useCallback(async (id: string) => {
     // SECURITY: Removed console.log statements that exposed user IDs and API responses
@@ -240,6 +239,7 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
     
     try {
       const response = await messageApi.getChatMessages(id);
+      console.log(response);
       // Sanitize response data for logging
       const sanitizedResponse = {
         status: response.status || 'unknown',
@@ -254,9 +254,10 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
         id: msg.id.toString(),
         content: sanitizeContent(msg.content || ''),
         timestamp: validateTimestamp(msg.createdAt),
-        isOwn: msg.sender_id === currentUserId,
+        isOwn: currentUserId.userId === msg.sender_id,
         status: msg.status || 'read'
-      }));
+      }
+      ));
    
       setChatMessages(transformedMessages); // Update the state so we can update the message state.
       // Mark all unread messages as read when opening conversation
@@ -279,8 +280,7 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
     let currentUserId: number;
     try {
       const currentid = await API.getCurrentUser();
-      currentUserId = currentid.userId;
-      console.log(currentUserId);   
+      currentUserId = currentid.userId; 
     } catch (error) {
       setError('Authentication failed');
       return;
@@ -306,7 +306,7 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
 
     try {
       // Saves the messages to database
-      const messageApiUrl = //import.meta.env.VITE_API_URL ||
+      const messageApiUrl = import.meta.env.VITE_API_URL ||
         'http://localhost:6969';
       
       // Validate API URL to prevent SSRF
@@ -314,11 +314,11 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
         throw new Error('Invalid API URL');
       }
       // Validate userId before parsing
-      const receiverIdNum = Number(userId);
+      const receiverIdNum = Number(userId); // NEED TO FIX
       if (isNaN(receiverIdNum) || receiverIdNum <= 0) {
         throw new Error('Invalid user ID');
       }
-      
+
       // Send HTTP POST request to backend to save message to database
       const token = localStorage.getItem('session_token');
       if (!token) {
@@ -392,7 +392,7 @@ export const useChat = (userId: string | null): UseChatReturn => { //Takes Useri
         throw new Error('No authentication token found');
       }
       
-      const messageApiUrl = //import.meta.env.VITE_API_URL || 
+      const messageApiUrl = import.meta.env.VITE_API_URL || 
       'http://localhost:6969';
       
       // Validate API URL
@@ -430,7 +430,7 @@ export const useSocket = () => {
 
   useEffect(() => {
     try {
-      const socketUrl = //import.meta.env.VITE_API_URL || 
+      const socketUrl = import.meta.env.VITE_API_URL || 
       'http://localhost:6969';
       
       // Validate socket URL

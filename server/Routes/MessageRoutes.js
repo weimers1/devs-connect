@@ -5,7 +5,7 @@ import {
     getConversations,
     getConversationMessages,
     sendMessage,
-    sendReply,
+    // sendReply,
     createTestUsers,
     markAsRead,
 } from '../controllers/MessagesController.js';
@@ -20,7 +20,7 @@ router.get('/conversation/:userId', authMiddleware, getConversationMessages);
 //Send Message Route
 router.post('/send', authMiddleware, sendMessage);
 //Send Reply Route (simulate other user replying)
-router.post('/reply', authMiddleware, sendReply);
+// router.post('/reply', authMiddleware, sendReply);
 //Mark Messages as Read Route
 router.post('/mark-read', authMiddleware, markAsRead);
 //Create Test Users Route

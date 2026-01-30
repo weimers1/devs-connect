@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MessagesContent from './MessagesContent';
 import MessageSidebar from './MessageSidebar';
@@ -21,20 +21,19 @@ const Messages = () => {
         const getCurrentUserId = async () => {
             try {
                 const user = await API.getCurrentUser();
-         
                 setCurrentUserId(user.userId);
+
             } catch (error) {
                 console.error('Failed to get current user:', error);
             }
         };
         getCurrentUserId();
     }, []);
-
     // Use custom hooks for state management
     const { messages, error, searchMessages } = useMessages();
-
     // Auto-select conversation if coming from profile
     useEffect(() => {
+         if (!currentUserId) return;
         if (targetUserId) {
             const existingConversation = messages.find((msg) =>
                 msg.id.includes(targetUserId)
@@ -48,8 +47,12 @@ const Messages = () => {
                         const userProfile = await API.getUserProfile(
                             targetUserId
                         );
+                        const createConversationId = (userA: string | number, userB: string | number) => {
+                    return [Number(userA), Number(userB)].sort((a, b) => a - b).join('-');
+};
+                const conversationId = createConversationId(currentUserId, targetUserId);
                         const newConversation: Message = {
-                            id: `${currentUserId}-${targetUserId}`,
+                            id: conversationId,
                             name: `${userProfile.firstName} ${userProfile.lastName}`,
                             lastMessage: 'Start a conversation...',
                             timestamp: new Date().toISOString(),
@@ -79,12 +82,13 @@ const Messages = () => {
         }
     }, [targetUserId, messages, currentUserId]);
     // Extract other user ID from conversation ID (e.g., "1-2" -> "2")
-  const selectedUserId = selectedMessage?.id
-  ? selectedMessage.id
-      .split('-')
-      .map(String)
-      .find((id) => id !== String(currentUserId)) ?? null
-  : null;
+  const selectedUserId = useMemo(() => {
+  if (!selectedMessage || !currentUserId) return null;
+  return selectedMessage.id
+    .split('-')
+    .find(id => id !== String(currentUserId)) ?? null;
+}, [selectedMessage, currentUserId]);
+ 
     // BUG FIX: Added fetchChatMessages to load actual chat messages when conversation selected
     const { chatMessages, sendMessage, fetchChatMessages, socket } =
         useChat(selectedUserId);
@@ -118,11 +122,11 @@ const Messages = () => {
             // This was missing, causing empty chat windows
             const otherUserId = message.id
                 .split('-')
-                .find((id) => id !== currentUserId);
-            if (otherUserId && fetchChatMessages) {
-                fetchChatMessages(otherUserId);
+                .find((id) => id !== String(currentUserId));
+            if (otherUserId) {
+                fetchChatMessages?.(otherUserId);
             }
-
+            console.log(otherUserId);
             if (socket) {
                 try {
                     socket.emit('user-login', { userId: currentUserId });

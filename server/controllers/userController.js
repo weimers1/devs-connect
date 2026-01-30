@@ -44,9 +44,6 @@ export const getCurrentUser = async (req, res) => {
 
         res.json({
             userId: userId,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
         });
     } catch (error) {
         console.error('Error fetching current user:', error);

@@ -3,6 +3,8 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import type { MessageSidebarProps, Message } from './types';
 
 import { useMessages } from './hooks';
+import { useNavigate } from 'react-router-dom';
+
 
 const MessageSidebar: React.FC<MessageSidebarProps> = ({
     onMessageSelect,
@@ -11,7 +13,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     className = '',
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
-
+    const navigate = useNavigate();
     // Use the proper hook that returns Message types
     const { messages, isLoading, error, searchMessages } = useMessages();
     //When a user types this function runs, showed typed text in input, calls hooks search function
@@ -28,6 +30,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     const handleMessageClick = useCallback(
         (message: Message) => {
             onMessageSelect(message);
+            navigate(`/messages?user=${message.id[2]}`);
         },
         [onMessageSelect]
     );
