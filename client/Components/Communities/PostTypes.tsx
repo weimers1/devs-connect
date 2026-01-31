@@ -49,6 +49,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     const [wantingToDelete, setWantingToDelete] = useState(false); //State to determine if a user wants to
     // delete a post.
     const [currentUser, setCurrentUser] = useState(Number);
+    const [userProfileImage, setUserProfileImage] = useState('');
+    const [firstName, setFirstName] = useState('');
     // const [canDelete, setCanDelete] = useState(true);
     
     useEffect(() => {
@@ -81,6 +83,27 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
             console.log("Error fetching like status for post", error);
         }
     }
+    const getProfileImage = async () => {
+        try{
+             const user = await API.getCurrentUser();
+             const userId = user.userId;
+         const userProfile = await API.getUserProfile(userId);
+         const userPfp = userProfile.pfp;
+         const Firstname = userProfile.firstName;
+        if(!userProfile || !Firstname) {
+            console.log("No user profile found");
+            navigate('/login');
+            return;
+        }
+        setFirstName(Firstname);
+        setUserProfileImage(userPfp);
+         }catch(error) {
+            console.log(error, "error while trying to obtain the user profile image");
+            return;
+        }
+
+    }
+       getProfileImage();
         getLikeStatus();
         fetchlikes();
     }, [post?.id, post?.userId]);
@@ -118,7 +141,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
         });
     };
   
-  
+    
     const handleComment = async () => {
         if (!newComment.trim()) return;
         
@@ -171,11 +194,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
         try {
             const commentsData = await API.getPostComments(post.id.toString());
             setComments(commentsData);
+          
         } catch (error) {
             console.error('Failed to load comments:', error);
         } finally {
             setLoadingComments(false);
         }
+   
     };
 
     const toggleComments = () => {
@@ -184,6 +209,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
             loadComments();
         }
     };
+
     const getPostTypeIcon = () => {
         switch (post?.type) {
             case 'posts':
@@ -196,7 +222,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     };
 
     const typeInfo = getPostTypeIcon();
-
+ 
     return (
         <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
             {/* Post Header */}
@@ -369,7 +395,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                             {/* Add Comment */}
                             <div className="flex space-x-3 mb-4">
                                 <img
-                                    src="https://ui-avatars.com/api/?name=You&background=random"
+                                    src={userProfileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(`${firstName[0]}`)}&background=random`}
                                     alt="You"
                                     className="w-8 h-8 rounded-full"
                                 />
