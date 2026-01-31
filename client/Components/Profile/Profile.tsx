@@ -153,7 +153,7 @@ function Profile() {
         school: '',
         github: '',
     });
-    const [profileSaving, setProfileSaving] = useState(false);
+    const [profileSaving, setProfileSaving] = useState(false);  
     const [profileSaveStatus, setProfileSaveStatus] = useState('');
     useEffect(() => {
         const loadProfileData = async () => {

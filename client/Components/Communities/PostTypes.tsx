@@ -85,11 +85,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     }
     const getProfileImage = async () => {
         try{
-             const user = await API.getCurrentUser();
-             const userId = user.userId;
-         const userProfile = await API.getUserProfile(userId);
-         const userPfp = userProfile.pfp;
-         const Firstname = userProfile.firstName;
+            const userProfile = await API.getProfileInformation();
+            const userPfp = userProfile.pfp;
+            const Firstname = userProfile.firstName;
         if(!userProfile || !Firstname) {
             console.log("No user profile found");
             navigate('/login');

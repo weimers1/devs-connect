@@ -16,7 +16,7 @@ import {
     getGitHubInformation,
 } from '../controllers/settingsController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
-import { addCertification, linkGitHub } from '../controllers/profileController.js';
+import { linkGitHub } from '../controllers/profileController.js';
 import { updateProfileImage } from '../controllers/uploadController.js';
 import { getCertifications } from '../controllers/profileController.js';
 import { get } from 'http';
