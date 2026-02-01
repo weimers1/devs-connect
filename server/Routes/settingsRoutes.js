@@ -2,8 +2,8 @@ import express from 'express';
 import {
     getProfileSettings,
     updateProfileSettings,
-    getDisplaySettings,
-    updateDisplaySettings,
+    // getDisplaySettings,
+    // updateDisplaySettings,
     getGeneralPreferences,
     updateGeneralPreferences,
     updatePrivacySecuritySettings,
@@ -18,13 +18,10 @@ import {
 import authMiddleware from '../middleware/authMiddleware.js';
 import { linkGitHub } from '../controllers/profileController.js';
 import { updateProfileImage } from '../controllers/uploadController.js';
-import { getCertifications } from '../controllers/profileController.js';
+// import { getCertifications } from '../controllers/profileController.js';
 import { get } from 'http';
 
-import {
-    updateCertifications,
-    deleteCertification,
-} from '../controllers/profileController.js';
+
 const router = express.Router();
 
 router.use(authMiddleware);
@@ -33,9 +30,9 @@ router.get('/profile', getProfileSettings);
 //Update Profile Settings
 router.put('/profile', updateProfileSettings);
 //Update || add to profile settings
-router.post('/certifications', addCertification);
-//Get Certs
-router.get('/get-certifications', getCertifications);
+// router.post('/certifications', addCertification);
+// //Get Certs
+// router.get('/get-certifications', getCertifications);
 //Update Certifications
 // router.put('/update-certifications/:id', updateCertifications);
 //Delete Certification

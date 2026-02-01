@@ -69,10 +69,10 @@ const Navbar: React.FC = () => {
             //     //     : 'bg-white border-gray-200'
             // }`}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-20">
+            <div className="">
+                <div className="flex justify-between relative items-center h-20">
                     {/* Logo */}
-                    <div className="flex-shrink-0 flex items-center">
+                    <div className="flex-shrink-0 flex items-center ml-3">
                         <Link
                             to="/"
                             className="flex items-center space-x-2"
@@ -92,32 +92,8 @@ const Navbar: React.FC = () => {
                                 DevConnect
                             </span>
                         </Link>
-                    </div>
-
-                    {/* Mobile Search Bar  */}
-                    <div className="md:hidden flex-1 max-w-sm mx-4">
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Icon
-                                    icon="mdi:magnify"
-                                    className="h-4 w-4 text-gray-400"
-                                />
-                            </div>
-                            <input
-                                type="text"
-                                className={`block w-full pl-9 pr-3 py-1.5 text-sm border rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                                   
-                                    // theme === 'dark'
-                                    //     ? 'bg-gray-700 border-gray-600 text-white'
-                                    //     : 'bg-white border-gray-300'
-                                }`}
-                                placeholder="Search..."
-                            />
-                        </div>
-                    </div>
-
-                    {/* Desktop Search Bar */}
-                    <div className="hidden md:block flex-1 max-w-sm ml-3 mt-0.5">
+                         {/* Desktop Search Bar */}
+                    <div className="hidden md:block flex-1 max-w-sm ml-3 mt-0.5 ">
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Icon
@@ -136,10 +112,30 @@ const Navbar: React.FC = () => {
                             />
                         </div>
                     </div>
-
-                    {/* Desktop Navigation Links */}
-                    <div className="hidden md:flex items-center space-x-3 mx-10"
-                    >
+                                      {/* Mobile Search Bar  */}
+                    <div className="md:hidden flex-1 max-w-xl mx-3">
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Icon
+                                    icon="mdi:magnify"
+                                    className="h-6 w-6 text-gray-400"
+                                />
+                            </div>
+                            <input
+                                type="text"
+                                className={`block w-full pl-9 pr-3 py-1.5 text-sm border rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                                   
+                                    // theme === 'dark'
+                                    //     ? 'bg-gray-700 border-gray-600 text-white'
+                                    //     : 'bg-white border-gray-300'
+                                }`}
+                                placeholder="Search..."
+                            />
+                        </div>
+                    </div>
+                      </div>
+              
+                        <div className=" hidden md:flex items-center pr-22">
                         {pages.map((page, i) => {
                             const active = isActive(page.route);
                             return (
@@ -147,7 +143,7 @@ const Navbar: React.FC = () => {
                                     key={`desktop-link-${i}`}
                                 
                                     to={page.route}
-                                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
+                                    className={`px-6 py-2 rounded-lg text-me font-medium transition-all duration-200 flex items-center space-x-2 ${
                                         active
                                         // ? theme === 'dark'
                                         //     ? 'bg-blue-900 text-blue-300 shadow-sm'
@@ -159,13 +155,17 @@ const Navbar: React.FC = () => {
                                 >
                                     <Icon
                                         icon={page.icon}
-                                        className="w-5 h-5"
+                                        className="w-7 h-7"
                                     />
                                     <span>{page.title}</span>
                                 </Link>
                             );
                         })}
+                        </div>
 
+                    {/* Desktop Navigation Links */}
+                    <div className="hidden md:flex items-center  space-x-3 mx-10">
+                                  
                         {/* User Profile / DROPDOWN - Only show if authenticated */}
                         {isAuthenticated && (
                             <div className="ml-4 flex items-center space-x-3">
@@ -178,7 +178,7 @@ const Navbar: React.FC = () => {
                                 >
                                     <Icon
                                         icon="mdi:bell-outline"
-                                        className="w-6 h-6"
+                                        className="w-7 h-7"
                                     />
                                 </button>
                                 <div className="relative">
@@ -223,7 +223,7 @@ const Navbar: React.FC = () => {
                     </div>
 
                     {/* Mobile menu button */}
-                    <div className="md:hidden">
+                    <div className="md:hidden ">
                         <button
                             onClick={() =>
                                 setIsMobileMenuOpen(!isMobileMenuOpen)
