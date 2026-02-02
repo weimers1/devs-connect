@@ -27,6 +27,7 @@ const CommunityExplore = () => {
             try {
                  const data = await API.getCommunities();
                 setCommunities(data);
+              
             } catch (error) {
                 console.error('Failed to fetch communities:', error);
             } finally {
@@ -36,6 +37,7 @@ const CommunityExplore = () => {
         fetchCommunities();
         
     }, []);
+          console.log(communities);
     //Constantly updating the name
     const handleChange = (e) => {
         setName(e.target.value);

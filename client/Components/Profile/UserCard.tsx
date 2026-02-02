@@ -123,7 +123,7 @@ function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
     }
 
     return (
-        <div className="w-full  bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2">
+        <div className=" max-w-3xl bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2">
             {/* Banner - Full width on mobile */}
             <div className="relative">
                 <div className="w-full">

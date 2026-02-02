@@ -111,7 +111,7 @@ function Sidebar() {
             >
                 <button
                     type="button"
-                    className={`border border-gray-200 md:mt-3 mt-15 rounded-s-lg bg-white opacity-75 hover:opacity-100 ps-2 pe-1 py-2 lg:ps-3 lg:pe-2 lg:py-4 transition-all cursor-pointer flex `}
+                    className={`border border-gray-200 md:mt-63 mt-15 rounded-s-lg bg-white opacity-75 hover:opacity-100 ps-2 pe-1 py-2 lg:ps-3 lg:pe-2 lg:py-4 transition-all cursor-pointer flex `}
                     onClick={toggleSidebar}
                 >
                     <Icon

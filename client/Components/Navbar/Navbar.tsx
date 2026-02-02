@@ -164,13 +164,13 @@ const Navbar: React.FC = () => {
                         </div>
 
                     {/* Desktop Navigation Links */}
-                    <div className="hidden md:flex items-center  space-x-3 mx-10">
+                    <div className="hidden md:flex items-center  space-x-3 mx-12">
                                   
                         {/* User Profile / DROPDOWN - Only show if authenticated */}
                         {isAuthenticated && (
                             <div className="ml-4 flex items-center space-x-3">
                                 <button
-                                    className={`p-2 rounded-lg transition-colors 
+         s                           className={`p-2 rounded-lg transition-colors 
                                         // theme === 'dark'
                                         //     ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
                                         //     : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
@@ -202,10 +202,12 @@ const Navbar: React.FC = () => {
                                             </span>
                                         )}
                                     </button>
+                         
+                                </div>
+                                        
                                     {isProfileDropdownOpen && (
                                         <ProfileDropdown />
                                     )}
-                                </div>
                             </div>
                         )}
 

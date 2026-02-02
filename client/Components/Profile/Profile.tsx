@@ -365,11 +365,7 @@ function Profile() {
     return (
         <Layout>
             {/* Main container - centered for other users, full width for own profile */}
-            <div
-                className={`bg-gradient-to-b  mt-4  ${
-                    isOwnProfile ? ' md:mr-7 md:w-auto' : 'max-w-4xl mx-auto px-4'
-                }`}
-            >
+           <div className="flex mt-3 flex-col items-center space-y-4">
                 {/* User Profile Card */}
                 <UserCard
                     userId={userId}
@@ -378,7 +374,7 @@ function Profile() {
                 />
 
                 {/* Profile sections */}
-                <div className="divide-y-0 divide-transparent">
+                <div className="divide-y-0 divide-transparent w-full mx-auto ">
                     <Communities userId={userId} />
                 </div>
 

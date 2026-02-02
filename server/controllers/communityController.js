@@ -220,6 +220,33 @@ export const getCommunitiesFromUser = async(req, res) => {
     }
 }
 
+//Getting all of the communities a user is in but obtaining the data. 
+export const getCommunitiesDataFromUser = async(req, res) => {
+    try { 
+        const { userId } = req.params;
+        
+        const communitiesDatafromuser = await sequelize.query(
+            ` SELECT uc.name, uc.description, uc.createdBy, uc.icon, uc.color, uc.image, uc.memberCount, uc.id, uc.isOwner
+                FROM communities uc
+                LEFT JOIN usercommunities u ON  uc.id = u.communityId
+                WHERE u.userId = ?;
+             `,
+            {
+                replacements: [userId],
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+        
+        res.json(communitiesDatafromuser);
+    } catch(queryError) {
+        console.log("No Communities found for user:", queryError);
+        res.status(500).json({
+            error: 'Failed to fetch communities: ' + queryError.message
+        });
+    }
+}
+
+
 export const getCommunityMembers = async (req, res) => {
     try {
         const { id } = req.params;

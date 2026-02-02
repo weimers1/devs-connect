@@ -75,7 +75,7 @@ function ProfileDropdown() {
 
     return (
         <div
-            className={`absolute -right-4 top-10 w-56 rounded-lg shadow-xl border z-50 
+            className={`absolute -right-1 top-20 ml-2 w-70 rounded-lg shadow-xl border z-50 
                 // theme === 'dark'
                 //     ? 'bg-gray-800 border-gray-700'
                 //     : 'bg-white border-gray-200'
@@ -92,7 +92,7 @@ function ProfileDropdown() {
                         <img
                             alt="Profile"
                             src={userProfile || assets.Profile}
-                            className="w-8 h-8 rounded-3xl"
+                            className="w-10 h-10 rounded-3xl"
                             onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                             }}
@@ -102,7 +102,7 @@ function ProfileDropdown() {
                     )}
                     <div className="flex-1 min-w-0">
                         <p
-                            className={`text-sm font-medium truncate 
+                            className={`text-me font-medium truncate 
                                 // theme === 'dark'
                                 //     ? 'text-white'
                                 //     : 'text-gray-900'
@@ -111,7 +111,7 @@ function ProfileDropdown() {
                             {firstName} {lastName}
                         </p>
                         <p
-                            className={`text-xs truncate 
+                            className={`text-me truncate 
                                 // theme === 'dark'
                                 //     ? 'text-gray-400'
                                 //     : 'text-gray-500'
@@ -129,7 +129,7 @@ function ProfileDropdown() {
                     <Link
                         key={item.to}
                         to={item.to}
-                        className={`flex items-center px-4 py-2 text-sm transition-colors 
+                        className={`flex items-center px-4 py-2 text-me transition-colors 
                             // theme === 'dark'
                             //     ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
                             //     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
@@ -155,7 +155,7 @@ function ProfileDropdown() {
             <div className="py-1">
                 <button
                     onClick={handleLogout}
-                    className={`w-full flex items-center px-4 py-2 text-sm text-left transition-colors 
+                    className={`w-full flex items-center px-4 py-2 text-me text-left transition-colors 
                         // theme === 'dark'
                         //     ? 'text-red-400 hover:bg-gray-700 hover:text-red-300'
                         //     : 'text-red-600 hover:bg-red-50 hover:text-red-700'
