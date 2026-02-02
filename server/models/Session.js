@@ -27,8 +27,8 @@ const Session = sequelize.define('Session', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    stytchSessionId: {
-        type: DataTypes.STRING,
+    sessionJwt: {
+        type: DataTypes.TEXT,
         allowNull: false,
     },
     expiresAt: {

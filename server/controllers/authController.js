@@ -74,6 +74,14 @@ export const verifyMagicLink = async (req, res) => {
             token: token,
             session_duration_minutes: 5, // temporarily using 1 minute for testing
         });
+        console.log(
+            '[verifyMagicLink] authenticated token returned following session info:',
+            JSON.stringify(session),
+        );
+
+        if (!session.user || !session.user.emails) {
+            throw Error('No session.user or session.user.emails found');
+        }
 
         // grab their email from the created stytch session
         const email = session.user.emails[0].email;
@@ -108,19 +116,28 @@ export const verifyMagicLink = async (req, res) => {
         const dbSession = await Session.create({
             userId: user.id,
             token: session.session_token,
-            stytchSessionId: session.session_id,
+            sessionJwt: session.session_jwt,
             isActive: true,
-            expiresAt: new Date(session.expires_at),
+            expiresAt: new Date(session.session.expires_at),
         });
+        console.error(
+            '[verifyMagicLink] Created dbSession:',
+            JSON.stringify(dbSession),
+        );
 
         // if they're a new user, mark them as verified
         if (isNewUser) {
             user.verifiedAt = new Date();
-            user.save();
+            await user.save();
         }
 
         res.status(200).json({ isNewUser, session_token: dbSession.token });
     } catch (error) {
+        console.error(
+            '🚨 [verifyMagicLink] Full error:',
+            JSON.stringify(error),
+        );
+
         // general error catch
         res.status(error.status || error.status_code || 500).json({
             error: {
@@ -132,74 +149,90 @@ export const verifyMagicLink = async (req, res) => {
 };
 
 export const checkSessionStatus = async (sessionToken) => {
-    console.log('🔍 [checkSessionStatus] Starting session check for token:', sessionToken?.substring(0, 10) + '...');
-    
     try {
+        console.log('[checkSessionStatus] Checking session:', sessionToken);
+
         // Check if session exists in our database
         const dbSession = await Session.findOne({
             where: { token: sessionToken },
         });
-        console.log('📊 [checkSessionStatus] DB session found:', !!dbSession);
-        
+
         if (!dbSession) {
-            console.log('❌ [checkSessionStatus] No session found in database for token');
             return { success: false, reason: 'session_not_found_in_db' };
         }
 
-        console.log('🔗 [checkSessionStatus] Checking session with Stytch API...');
-        
-        // Check session status with Stytch
-        const stytchSession = await stytchClient.sessions.get({
-            session_token: sessionToken,
+        // Authenticate JWT with Stytch
+        const stytchResp = await stytchClient.sessions.authenticate({
+            session_jwt: dbSession.sessionJwt,
         });
-        
-        console.log('📡 [checkSessionStatus] Stytch response status:', stytchSession.status_code);
-        console.log('📡 [checkSessionStatus] Stytch session active:', stytchSession.status_code === 200);
 
-        if (stytchSession.status_code === 200) {
-            // Session is active in Stytch - update our DB
-            console.log('✅ [checkSessionStatus] Session active - updating DB');
+        if (stytchResp.status_code === 200) {
+            // Check if JWT needs refresh (within 5 minutes of expiry)
+            const now = new Date();
+            const expiryTime = new Date(stytchResp.session.expires_at);
+            const timeUntilExpiry = expiryTime.getTime() - now.getTime();
+            const fiveMinutes = 5 * 60 * 1000;
+
+            let updatedJwt = dbSession.sessionJwt;
+
+            if (timeUntilExpiry < fiveMinutes) {
+                console.log(
+                    '[checkSessionStatus] JWT expiring soon, refreshing...',
+                );
+
+                // Refresh the session to get new JWT
+                const refreshResp = await stytchClient.sessions.authenticate({
+                    session_jwt: dbSession.sessionJwt,
+                    session_duration_minutes: 60, // Extend for 1 hour
+                });
+
+                if (refreshResp.status_code === 200) {
+                    updatedJwt = refreshResp.session_jwt;
+                    console.log(
+                        '[checkSessionStatus] JWT refreshed successfully',
+                    );
+                }
+            }
+
+            // Update session in database
             dbSession.isActive = true;
-            dbSession.expiresAt = new Date(stytchSession.session.expires_at);
+            dbSession.sessionJwt = updatedJwt;
+            dbSession.expiresAt = new Date(stytchResp.session.expires_at);
             dbSession.lastRenewedAt = new Date();
             await dbSession.save();
-            console.log('💾 [checkSessionStatus] DB session updated successfully');
+
             return {
                 isActive: true,
                 session: dbSession,
             };
         } else {
-            // Session is inactive in Stytch - mark as inactive
-            console.log('❌ [checkSessionStatus] Session inactive in Stytch - marking DB as inactive');
+            // Session is inactive - mark as inactive
             dbSession.isActive = false;
             await dbSession.save();
-            console.log('💾 [checkSessionStatus] DB session marked inactive');
             return { isActive: false };
         }
     } catch (error) {
-        console.error('🚨 [checkSessionStatus] Error occurred:', error.message);
-        console.error('🚨 [checkSessionStatus] Error details:', error);
-        
-        // If Stytch returns error, mark session as inactive
+        console.error('[checkSessionStatus] Error:', error.message);
+
+        // Mark session as inactive on error
         try {
             const dbSession = await Session.findOne({
                 where: { token: sessionToken },
             });
             if (dbSession) {
-                console.log('🔧 [checkSessionStatus] Marking session inactive due to error');
                 dbSession.isActive = false;
                 await dbSession.save();
-                console.log('💾 [checkSessionStatus] DB session marked inactive after error');
             }
         } catch (dbError) {
-            console.error('🚨 [checkSessionStatus] Failed to update DB after error:', dbError.message);
+            console.error(
+                '[checkSessionStatus] DB update failed:',
+                dbError.message,
+            );
         }
-        
+
         return {
             isActive: false,
-            error:
-                error.message ??
-                'Something went wrong when checking the session status.',
+            error: error.message ?? 'Session validation failed',
         };
     }
 };

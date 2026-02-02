@@ -95,8 +95,6 @@ const Authenticate: React.FC = () => {
     };
 
     useEffect(() => {
-        console.log('🔄 [AuthCallback] useEffect triggered - token:', token, 'isThemeLoaded:', isThemeLoaded);
-        
         if (!token) {
             navigate('/login');
             return;
@@ -111,16 +109,11 @@ const Authenticate: React.FC = () => {
         const verifyToken = async () => {
             // avoid duplicate calls
             if (calledVerify.current) {
-                console.log('🚫 [AuthCallback] Already called verify, skipping');
                 return;
             }
             calledVerify.current = true;
-            console.log('✅ [AuthCallback] Starting token verification');
 
             try {
-                console.log('🌐 [AuthCallback] Calling verify endpoint with token:', token);
-                console.log('🔗 [AuthCallback] Full URL:', `http://localhost:6969/auth/verify?token=${token}`);
-                
                 const response = await fetch(
                     `http://localhost:6969/auth/verify?token=${token}`,
                     {
@@ -128,12 +121,8 @@ const Authenticate: React.FC = () => {
                         credentials: 'include',
                     },
                 );
-                
-                console.log('📡 [AuthCallback] Response received:', response.status, response.statusText);
-                console.log('📊 [AuthCallback] Response headers:', Object.fromEntries(response.headers.entries()));
 
                 const data = await response.json();
-                console.log('📦 [AuthCallback] Response data:', data);
 
                 if (data.error) {
                     const errorObject =
@@ -192,14 +181,11 @@ const Authenticate: React.FC = () => {
                     });
                     setIsNewUser(true);
                 } else {
-                    navigate('/home');
+                    navigate('/');
                 }
             } catch (error) {
-                console.error('🚨 [AuthCallback] Fetch error occurred:', error);
-                console.error('🚨 [AuthCallback] Error type:', error.constructor.name);
-                console.error('🚨 [AuthCallback] Error message:', error.message);
-                console.error('🚨 [AuthCallback] Full error:', error);
-                
+                console.error('🚨 [AuthCallback] Full error:', JSON.stringify(error));
+
                 showModal({
                     icon: 'mdi-emoticon-frown-outline',
                     title: 'Our Bad...',
