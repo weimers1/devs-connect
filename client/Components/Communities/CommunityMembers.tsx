@@ -32,7 +32,10 @@ const [communityMembers, setCommunityMember] = useState<CommunityMembers[]>([]);
 const [editUsers, seteditUsers] = useState(false);
 const [currentUserInfo, setCurrentUser] = useState<UserProfile | null>(null); //User Profile Information
 const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-const [areyouSure, setareyouSure] = useState(false);
+const [areyouSure, setareyouSure] = useState({
+    state: false,
+    value: "",
+});
 const [isOwner, setisOwner] = useState(''); //is Owner
 
 const [isAdmin, setisAdmin] = useState(false);
@@ -67,8 +70,7 @@ useEffect(() => {
         getAdminStatus();
         fetchMembers();
     },[])
-    // const navigate = useNavigate();
-    //Handle Click When clicking on a user
+ 
 const HandleClick = async (userId: string) => {
     editUsers === false ? seteditUsers(true) : seteditUsers(false);
     if(selectedUserId === userId) {
@@ -93,30 +95,51 @@ const HandleClick = async (userId: string) => {
         console.log(error, "Problem trying to perform operations on current selected user");
     } 
 }
-    const HandleKick= async () => {
+
+    //Handle Close
+const handleClose = () => {
+    setareyouSure({state: false, value: ""});
+    seteditUsers(false);
+    
+}
+    const HandleUserKPB = async (value: string) => {
         try {   
-            if(!selectedUserId || !communityId || isAdmin != true) {
+            if(!selectedUserId || !communityId || isAdmin != true || value == null) {
                 console.log("no one selected or no user in community or no community or not an admin"); 
                 return;
             }
+            if(value.toLowerCase() == "kick") {
             const kickMember = await API.kickCommunityMember(communityId, selectedUserId);
             if(!kickMember) {
             console.log(`member with ${selectedUserId} couldn't be kicked from ${communityId}`);
+                return;
+        }
+        }
+            if(value.toLowerCase() == "promote"){
+            const userId = selectedUserId;
+            const promoteMember = await API.promoteUser(userId, communityId);
+            if(!promoteMember) {
+                console.log(`member with ${selectedUserId} couldn't be promoted from ${communityId}`);
+                return
             }
-        } catch(error) {
-            console.log(error, "the were an error kicking the member");
+        }
+            handleClose();
+            setSelectedUserId(null);
+            setareyouSure({state: false, value: ""});
+        }  catch(error) {
+            console.log(error, "the were an error with operating on the member");
         }
     }   
-//handle Close
-const handleClose = () => {
-    setareyouSure(false);
-}
 
-const areYouSure = () => {
-  setareyouSure(true);
+
+const areYouSure = (value: string) => {
+  setareyouSure({state:true, value: value.toLowerCase()});
   seteditUsers(false);
    
 }
+console.log(communityMembers);
+console
+
     return( 
         <div className="bg-white rounded-none  md:border shadow-sm w-full md:w-1/3 md:rounded-xl ">
             <div className="flex items-center mt-4 justify-center">
@@ -149,32 +172,32 @@ const areYouSure = () => {
                                 <h1 className="text-bold mt-0.5">{members.firstName}</h1>
 
                                 <button className="bg-linear-to-tr from-blue-700 to-slate-950 rounded-xl hover:bg-white-800"
-                                   onClick={() => areYouSure()}
+                                   onClick={() => areYouSure("Promote")}
                                 >
                                     <p className="text-lg font-semibold text-gray-300 color-blue rounded-xl border w-20">Promote</p>
                                 </button>
                                 <button className="bg-red-600 rounded-xl hover:bg-red-700 "
-                                   onClick={() => areYouSure()}
+                                   onClick={() => areYouSure("Kick")}
                                 >
                                     <p className="text-lg font-semibold text-gray-800 bg-blue border rounded-xl w-20"
                                     >Kick</p>
                                   
                                 </button>
                                 <button className="bg-red-700 rounded-xl hover:bg-red-800"
-                                     onClick={() => areYouSure()}
+                                     onClick={() => areYouSure("Ban")}
                                 >
                                     <p className="text-lg font-semibold text-gray-800 bg-blue border rounded-xl w-20">Ban</p>
                                 </button>
                             </div>
                         </div>
                     )}
-                    {areyouSure && (
+                    {areyouSure.state && (
                             <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-20 inset-0 flex items-center justify-center ">
         <div className="bg-white rounded-xl p-6 max-w-md md:w-90 mx-4">
-            <h2 className="text-xl font-bold mb-6 text-center">{`Are You Sure You Want to Kick ${members.firstName}?`}</h2>
+            <h2 className="text-xl font-bold mb-6 text-center">{`Are You Sure You Want to ${areyouSure.value} ${members.firstName}?`}</h2>
             <div className="flex flex-col gap-3">
                 <button 
-                    onClick={HandleKick}
+                    onClick={() => HandleUserKPB(areyouSure.value.toLowerCase())}
                     className="w-full py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold"
                 >
                     Confirm

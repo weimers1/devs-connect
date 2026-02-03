@@ -170,7 +170,7 @@ const Navbar: React.FC = () => {
                         {isAuthenticated && (
                             <div className="ml-4 flex items-center space-x-3">
                                 <button
-         s                           className={`p-2 rounded-lg transition-colors 
+                                    className={`p-2 rounded-lg transition-colors 
                                         // theme === 'dark'
                                         //     ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
                                         //     : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'

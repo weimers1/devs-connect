@@ -20,7 +20,8 @@ import {
     getCommunityAdmins, 
     kickCommunityMember,
     isCommunityOwner,
-     getCommunitiesDataFromUser
+     getCommunitiesDataFromUser,
+     PromoteCommunityMember
 } from '../controllers/communityController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
@@ -48,4 +49,6 @@ router.get("/:communityId/communityAdmin/:userId", authMiddleware, getCommunityA
 router.delete("/member/:userId/community/:communityId", authMiddleware, kickCommunityMember); //Kick a member from a community; 
 router.get('/communityOwner/:id/communities/:communityId', authMiddleware, isCommunityOwner); //Gets a community Owner
 router.get('/:userId/communities/Data', authMiddleware,  getCommunitiesDataFromUser) //Get Data from communiites
+router.put('/:userId/community/:communityId/promote', authMiddleware, PromoteCommunityMember);
+
 export default router;

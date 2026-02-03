@@ -159,6 +159,7 @@ export const isCommunityOwner = async (req, res) => {
             });
         if(!owner || owner.length === 0) {
             console.log("Not the owner no return");
+            return res.json({owner: false});
         }   
          return res.json({owner: owner});
 
@@ -451,6 +452,35 @@ export const getCommunityPosts = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch community posts' });
     }
 };
+
+//Promote Community Member 
+
+export const PromoteCommunityMember = async (req, res) => {
+    try {
+        const requesterId = req.user.userId; // Person making the request
+        const { userId, communityId } = req.params; // Target user and community
+        
+        if(!requesterId || !userId || !communityId) {
+            return res.status(400).json({ error: "Missing required parameters" });
+        }
+        
+        const PromoteMember = await sequelize.query(`
+            UPDATE dev_connect.usercommunities 
+            SET role = "admin" 
+            WHERE userId = ? AND communityId = ?
+        `, {
+            replacements: [userId, communityId], // Target userId, not requester
+            type: sequelize.QueryTypes.UPDATE,
+        });
+
+        res.json({ message: "User promoted successfully", PromoteMember });
+        
+    } catch(error) {
+        console.log(error, "Problem Promoting User In community");
+        res.status(500).json({ error: "Failed to promote user" });
+    }
+}
+
 
 export const createCommunityPost = async (req, res) => {
     try {

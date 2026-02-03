@@ -199,6 +199,15 @@ const API = {
         return response.json();
     },
 
+    //Promomte User In Community
+    promoteUser: async(userId: string, communityId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/${userId}/community/${communityId}/promote`, {
+        headers: getAuthHeaders(true),
+        method: "PUT"
+    });
+      if (!response.ok) throw new Error('Failed to fetch community');
+        return response.json();
+    },
     //Upload Community Image
     uploadCommunityImage: async (file: File) => {
         const formData = new FormData();
