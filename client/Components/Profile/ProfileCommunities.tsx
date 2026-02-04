@@ -42,9 +42,11 @@ function Communities({ userId }: CommunitiesProps) {
    
 
     return (
-        <div className="bg-white shadow-md p-4 sm:p-6 w-full max-w-2xl mx-auto sm:rounded-lg mt-2">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-4">
+        <div className="w-full max-w-2xl bg-white overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2 mx-auto">
+
+            <div className="p-4 sm:p-6">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-800">Communities</h2>
                 {isOwnProfile && (
                     <button className="text-blue-600 hover:text-blue-800">
@@ -118,6 +120,7 @@ function Communities({ userId }: CommunitiesProps) {
                         />
                     </button>
                 )}
+            </div>
             </div>
         </div>
     );

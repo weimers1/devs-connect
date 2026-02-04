@@ -339,7 +339,6 @@ export const kickCommunityMember = async (req, res) => {
         if (!memberRecord || memberRecord.length === 0) {
             return res.status(404).json({error: "Member not found or not a member"});
         }
-
         const primaryKeyId = memberRecord[0].id;
 
         // Now delete using the primary key
@@ -350,7 +349,10 @@ export const kickCommunityMember = async (req, res) => {
             replacements: [primaryKeyId],
             type: sequelize.QueryTypes.DELETE,
         });
-
+         await sequelize.query(`UPDATE dev_connect.communities SET memberCount = memberCount-1 WHERE id=?;`, {
+            replacements: [communityId],
+            type: sequelize.QueryTypes.UPDATE,
+        })
         res.json({message: "Member kicked successfully", kick: kickMember});
         
     } catch(error) {
@@ -365,8 +367,9 @@ export const getCommunityAdmins = async (req, res) => {
         const userId = req.user.userId;
         const {communityId} = req.params; 
 
-        if(! userId || communityId) {
+        if(!userId || !communityId) {
             console.log("need user and communityId to fetch admins");
+            return res.status(400).json({error: "Missing userId or communityId"});
         }
 
         const admins = await sequelize.query(`
@@ -377,9 +380,8 @@ export const getCommunityAdmins = async (req, res) => {
             }) 
             if(!admins || admins.length === 0) {
                 console.log("User is not an admin of the community");
-                navigate(`/communities`);
-                return;
-                }
+                return res.status(403).json({error: "User is not an admin of this community"});
+            }
         res.json({admin: true}); 
         
     } catch(error) {
@@ -558,7 +560,10 @@ export const joinCommunity = async (req, res) => {
             communityId: communityId,
             role: 'member',
         });
-
+        await sequelize.query(`UPDATE dev_connect.communities SET memberCount = memberCount+1 WHERE id=?;`, {
+            replacements: [communityId],
+            type: sequelize.QueryTypes.UPDATE,
+        })
         res.json({ message: 'Successfully joined community' });
     } catch (error) {
         console.error('Error joining community:', error);

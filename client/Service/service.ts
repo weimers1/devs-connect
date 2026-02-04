@@ -193,7 +193,7 @@ const API = {
     //Get Community by ID
     getCommunityById: async (id: string) => {
         const response = await fetch(`${BASE_URL}/api/communities/${id}`, {
-            headers: getAuthHeaders(true),
+            // headers: getAuthHeaders(true),
         });
         if (!response.ok) throw new Error('Failed to fetch community');
         return response.json();
@@ -355,7 +355,7 @@ const API = {
         if (!response.ok) throw new Error('Failed to get current user');
         return response.json();
     },
-    //Get Data from a the communities a user is in. 
+    //Get Data from the communities a user is in. 
     getCommunitiesDataFromUser: async (userId : string) => {
         const response = await fetch(`${BASE_URL}/api/communities/${userId}/communities/Data`, {
             headers: getAuthHeaders(),

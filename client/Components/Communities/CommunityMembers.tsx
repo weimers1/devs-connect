@@ -137,8 +137,6 @@ const areYouSure = (value: string) => {
   seteditUsers(false);
    
 }
-console.log(communityMembers);
-console
 
     return( 
         <div className="bg-white rounded-none  md:border shadow-sm w-full md:w-1/3 md:rounded-xl ">
@@ -163,7 +161,10 @@ console
                                      <p className="font-medium">John Doe</p>
                                 )}
                                 <p className="text-xs text-gray-500">Online</p>
-                            </div>   
+                            </div>  
+                             {members.role === 'admin' && (
+                                        <span className=" text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Admin</span>
+                                    )} 
                         </div>
                          {editUsers && selectedUserId === members.id &&  (
                       <div className="absolute rounded-xl flex bg-stone-200 w-25 ml-60 md:ml-46 justify-center z-[9999] h-[16vh] md:h-[11vh] before:content-[''] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:-translate-x-full before:w-0 before:h-0 before:border-t-[8px] before:border-b-[8px] before:border-r-[8px] before:border-t-transparent before:border-b-transparent before:border-r-stone-200">
@@ -193,7 +194,7 @@ console
                     )}
                     {areyouSure.state && (
                             <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-20 inset-0 flex items-center justify-center ">
-        <div className="bg-white rounded-xl p-6 max-w-md md:w-90 mx-4">
+        <div className="bg-white rounded-xl p-6  md:w-90 mx-4">
             <h2 className="text-xl font-bold mb-6 text-center">{`Are You Sure You Want to ${areyouSure.value} ${members.firstName}?`}</h2>
             <div className="flex flex-col gap-3">
                 <button 

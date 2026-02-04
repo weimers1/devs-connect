@@ -37,7 +37,6 @@ const CommunityExplore = () => {
         fetchCommunities();
         
     }, []);
-          console.log(communities);
     //Constantly updating the name
     const handleChange = (e) => {
         setName(e.target.value);

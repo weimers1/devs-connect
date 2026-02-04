@@ -8,6 +8,18 @@ import ProfileDropdown from '../DropDown/ProfileDropDown';
 import { useAuth } from '../Auth/AuthContext';
 import { defaultRoutes, protectedRoutes } from '../../Utils/routes';
 import API from '../../Service/service';
+import NavBarSearch from './NavBarSearch';
+
+export interface Community {
+    id: string;
+    name:  string;
+    description?: string;
+    memberCount: number;
+    image?: string;
+    color?: string;
+    icon?: string;
+    isPrivate: boolean;
+}
 
 const Navbar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -17,6 +29,9 @@ const Navbar: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const [userProfile, setUserProfile] = useState('');
     const [loading, setLoading] = useState(true);
+    const [name, setName] = useState('');
+    const [communities, setCommunities] = useState<Community[]>([]); // Community Data
+    const [CommunityName, setCommunityName] = useState(''); 
 
     useEffect(() => {
         const loadProfileData = async () => {
@@ -37,9 +52,28 @@ const Navbar: React.FC = () => {
                 setLoading(false);
             }
         };
+             const fetchCommunities = async () => {  //Load Community Data
+            try {
+                 const data = await API.getCommunities();
+                setCommunities(data);
+              
+            } catch (error) {
+                console.error('Failed to fetch communities:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCommunities();
         loadProfileData();
     }, [isAuthenticated]);
 
+
+    //Overall Search Bar Udpdate
+    const handleChange = (e) => {
+        setName(e.target.value);
+        console.log(name);
+    }
+ const filteredCommunities = communities.filter((community) => community.name.toLowerCase().includes(name.toLowerCase()));
     // Combine routes based on auth status and filter by showInNav
     const availableRoutes = isAuthenticated
         ? [
@@ -92,6 +126,7 @@ const Navbar: React.FC = () => {
                                 DevConnect
                             </span>
                         </Link>
+                        
                          {/* Desktop Search Bar */}
                     <div className="hidden md:block flex-1 max-w-sm ml-3 mt-0.5 ">
                         <div className="relative">
@@ -109,9 +144,25 @@ const Navbar: React.FC = () => {
                                     //     : 'bg-white border-black'
                                 `}
                                 placeholder="Search..."
+                                onChange={handleChange}
+                          
                             />
-                        </div>
+                        </div> 
+                            
                     </div>
+                          {name != "" && isAuthenticated &&  (
+                            <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-10 inset-0 "
+                            onClick={() => setName('')}
+                            >
+                            
+                            <NavBarSearch
+                            community={filteredCommunities}
+
+                            />
+                            </div>
+                        )}
+
+                    
                                       {/* Mobile Search Bar  */}
                     <div className="md:hidden flex-1 max-w-xl mx-3">
                         <div className="relative">
@@ -130,11 +181,14 @@ const Navbar: React.FC = () => {
                                     //     : 'bg-white border-gray-300'
                                 }`}
                                 placeholder="Search..."
+                                onChange={handleChange}
                             />
                         </div>
                     </div>
                       </div>
               
+                            
+
                         <div className=" hidden md:flex items-center pr-22">
                         {pages.map((page, i) => {
                             const active = isActive(page.route);
@@ -162,7 +216,7 @@ const Navbar: React.FC = () => {
                             );
                         })}
                         </div>
-
+                        
                     {/* Desktop Navigation Links */}
                     <div className="hidden md:flex items-center  space-x-3 mx-12">
                                   
@@ -243,8 +297,11 @@ const Navbar: React.FC = () => {
                                 className="w-6 h-6"
                             />
                         </button>
+                        
                     </div>
+                    
                 </div>
+                
             </div>
 
             {/* Mobile menu */}
@@ -312,7 +369,9 @@ const Navbar: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
+                            
                         </div>
+                        
                     ) : (
                         <div
                             className={`border-t px-4 py-3 
@@ -332,7 +391,9 @@ const Navbar: React.FC = () => {
                     )}
                 </div>
             )}
+             
         </nav>
+   
     );
 };
 
