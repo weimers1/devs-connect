@@ -407,6 +407,7 @@ const API = {
                 headers: getAuthHeaders(),
             }
         ) 
+        if(response.status === 403) return {admin : false}
         if(!response.ok) throw new Error('Failed to get community admin status');
         return response.json();
     }, 
@@ -419,6 +420,15 @@ const API = {
             } )
 
         if(!response.ok) throw new Error('Failed to get kick community Member');
+        return response.json();
+    },
+    //Leave Community
+    LeaveCommunity: async(userId: string, communityId: string) => {
+        const response = await fetch (`${BASE_URL}/api/communities/leave/communityMember/${userId}/community/${communityId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+        })
+        if(!response.ok) throw new Error("Failed to leave community");
         return response.json();
     },
     isCommunityOwner: async (communityId: string, id: string) => {

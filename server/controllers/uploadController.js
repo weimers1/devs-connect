@@ -70,12 +70,14 @@ export const uploadProfileImage = async (req, res) => {
             ContentType: req.file.mimetype,
         };
 
-        // Upload to S3 using SDK v3 helper
         const result = await uploadToS3(params);
+        
+        const baseUrl = process.env.BASE_URL || 'http://localhost:6969';
+        const proxyUrl = `${baseUrl}/api/upload/images/${fileName}`;
 
         res.json({
             success: true,
-            imageUrl: result.Location,
+            imageUrl: proxyUrl,
             message: 'Image uploaded successfully!',
         });
     } catch (error) {
@@ -99,9 +101,11 @@ export const updateProfileImage = async (req, res) => {
             return res.status(400).json({ error: 'Invalid image URL' });
         }
 
-        // Validate URL format and ensure it's from expected S3 bucket
-        const urlPattern = /^https:\/\/[a-zA-Z0-9.-]+\.amazonaws\.com\/.+/;
-        if (!urlPattern.test(imageUrl)) {
+        // Validate URL format - accepting both S3 URLs and proxy URLs
+        const s3UrlPattern = /^https:\/\/[a-zA-Z0-9.-]+\.amazonaws\.com\/.+/;
+        const proxyUrlPattern = /^https?:\/\/[a-zA-Z0-9.-]+(:[0-9]+)?\/api\/upload\/images\/.+/;
+        
+        if (!s3UrlPattern.test(imageUrl) && !proxyUrlPattern.test(imageUrl)) {
             return res.status(400).json({ error: 'Invalid image URL format' });
         }
 
@@ -146,9 +150,16 @@ export const uploadCommunityImage = async (req, res) => {
 
         const result = await uploadToS3(params);
 
+        // Extract the S3 key from the fileName
+        const s3Key = fileName;
+        
+        // Return proxy URL instead of direct S3 URL
+        const baseUrl = process.env.BASE_URL || 'http://localhost:6969';
+        const proxyUrl = `${baseUrl}/api/upload/images/${s3Key}`;
+
         res.json({
             success: true,
-            imageUrl: result.Location,
+            imageUrl: proxyUrl,
             message: 'Community image uploaded successfully!',
         });
     } catch (error) {

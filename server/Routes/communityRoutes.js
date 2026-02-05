@@ -21,7 +21,9 @@ import {
     kickCommunityMember,
     isCommunityOwner,
      getCommunitiesDataFromUser,
-     PromoteCommunityMember
+     PromoteCommunityMember,
+     LeaveCommunity
+     
 } from '../controllers/communityController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
@@ -29,6 +31,7 @@ const router = express.Router();
 
 router.get('/', getCommunities);
 router.delete("/member/:userId/community/:communityId", authMiddleware, kickCommunityMember); //Kick a member from a community
+router.delete('/leave/communityMember/:userId/community/:communityId',authMiddleware, LeaveCommunity);
 router.get('/:id', getCommunityById);
 router.get('/:id/posts', getCommunityPosts);
 router.get('/:id/members', getCommunityMembers);
@@ -50,5 +53,6 @@ router.get("/:communityId/communityAdmin/:userId", authMiddleware, getCommunityA
 router.get('/communityOwner/:id/communities/:communityId', authMiddleware, isCommunityOwner); //Gets a community Owner
 router.get('/:userId/communities/Data', authMiddleware,  getCommunitiesDataFromUser) //Get Data from communiites
 router.put('/:userId/community/:communityId/promote', authMiddleware, PromoteCommunityMember);
+
 
 export default router;

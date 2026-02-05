@@ -19,11 +19,12 @@ function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
      const validateImageUrl = (url: string) => {
         try {
             const parsedUrl = new URL(url);
-            const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com'];
+            const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com', 'localhost'];
             return (
-                  allowedHosts.some((host) =>
+                  (allowedHosts.some((host) =>
                     parsedUrl.hostname.endsWith(host)
-                ) && parsedUrl.protocol === 'https:'
+                ) && parsedUrl.protocol === 'https:') ||
+                (parsedUrl.hostname === 'localhost' && parsedUrl.protocol === 'http:')
             );
         } catch {
             return false;
@@ -114,7 +115,8 @@ function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
     //     };
  
     useEffect(() => {
-        setCurrentProfileImage(profileData.pfp || '');
+        const decodedUrl = profileData.pfp ? decodeURIComponent(profileData.pfp) : '';
+        setCurrentProfileImage(decodedUrl);
     }, [profileData]);
 
     function handleImageClick() {
@@ -134,13 +136,15 @@ function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
                     />
                 </div>
 
-                {/* Profile Picture - Different positioning for mobile vs desktop */}
                 <div className="absolute -bottom-10 sm:-bottom-12 md:-bottom-16 left-4 sm:left-6 md:left-8">
                     <img
-                        src={currentProfileImage || assets.Profile}
+                        src={currentProfileImage && validateImageUrl(currentProfileImage) ? currentProfileImage : assets.Profile}
                         alt="Profile"
                         className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg object-cover"
                         onClick={handleImageClick}
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = assets.Profile;
+                        }}
                     />     
                 </div>
             </div>

@@ -361,6 +361,59 @@ export const kickCommunityMember = async (req, res) => {
     }       
 }
 
+//Leave Community
+export const LeaveCommunity = async (req, res) => {
+    try {
+        const {userId, communityId} = req.params;  
+        
+                const requesterId = req.user.userId;
+    
+        // Only allow users to leave themselves (not others)
+        if (parseInt(userId) !== parseInt(requesterId)) {
+            console.log('Permission denied: userId !== requesterId');
+            return res.status(403).json({ error: "You can only leave communities for yourself" });
+        }
+
+        if(!userId || !communityId) {
+            return res.status(400).json({error: "need user and communityId to kick member"});
+        }
+
+        // First, find the record to get the primary key (id)
+        const memberRecord = await sequelize.query(`
+            SELECT id FROM dev_connect.usercommunities 
+            WHERE userId = ? AND communityId = ?
+        `, {
+            replacements: [userId, communityId],
+            type: sequelize.QueryTypes.SELECT,
+        });
+
+        if (!memberRecord || memberRecord.length === 0) {
+            return res.status(404).json({error: "You are not a member of this community"});
+        }
+        const primaryKeyId = memberRecord[0].id;
+
+        // Now delete using the primary key
+        const MemberLeaves = await sequelize.query(`
+            DELETE FROM dev_connect.usercommunities 
+            WHERE id = ?
+        `, {
+            replacements: [primaryKeyId],
+            type: sequelize.QueryTypes.DELETE,
+        });
+         await sequelize.query(`UPDATE dev_connect.communities SET memberCount = memberCount-1 WHERE id=?;`, {
+            replacements: [communityId],
+            type: sequelize.QueryTypes.UPDATE,
+        })
+        res.json({message: "Successfully left the community", success: true});
+        
+    } catch(error) {
+        console.log(error, "Can't kick member from community");
+        res.status(500).json({error: "Failed to kick member"});
+    }       
+}
+
+
+
 //Getting Community to determine OwnerShip.
 export const getCommunityAdmins = async (req, res) => {
     try {
@@ -379,7 +432,6 @@ export const getCommunityAdmins = async (req, res) => {
                   type: sequelize.QueryTypes.SELECT,
             }) 
             if(!admins || admins.length === 0) {
-                console.log("User is not an admin of the community");
                 return res.status(403).json({error: "User is not an admin of this community"});
             }
         res.json({admin: true}); 

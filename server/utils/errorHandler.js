@@ -1,4 +1,4 @@
-const errorHandler = (err, req, res) => {
+const errorHandler = (err, req, res, next) => {
     // Validate error object and request/response to prevent crashes
     if (!err) {
         err = new Error('Unknown error occurred');

@@ -71,7 +71,6 @@ const Navbar: React.FC = () => {
     //Overall Search Bar Udpdate
     const handleChange = (e) => {
         setName(e.target.value);
-        console.log(name);
     }
  const filteredCommunities = communities.filter((community) => community.name.toLowerCase().includes(name.toLowerCase()));
     // Combine routes based on auth status and filter by showInNav

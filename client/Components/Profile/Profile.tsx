@@ -26,11 +26,12 @@ import { assets } from '../../assets/assets';
    export const validateImageUrl = (url: string) => {
         try {
             const parsedUrl = new URL(url);
-            const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com'];
+            const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com', 'localhost'];
             return (
-                  allowedHosts.some((host) =>
+                  (allowedHosts.some((host) =>
                     parsedUrl.hostname.endsWith(host)
-                ) && parsedUrl.protocol === 'https:'
+                ) && parsedUrl.protocol === 'https:') ||
+                (parsedUrl.hostname === 'localhost' && parsedUrl.protocol === 'http:')
             );
         } catch {
             return false;
@@ -133,7 +134,6 @@ function Profile() {
             }
 
             setCurrentProfileImage(uploadResult.imageUrl);
-            console.log('Profile image saved to database!');
         } catch (error) {
             console.error('Upload failed:', error);
             alert('Failed to upload profile image. Please try again.');
@@ -161,8 +161,9 @@ function Profile() {
                 const response = isOwnProfile
                     ? await API.getProfileInformation()
                     : await API.getUserProfile(userId!);
+                const decodedPfp = response.pfp ? decodeURIComponent(response.pfp) : '';
                 setProfileData(response);
-                setCurrentProfileImage(response.pfp || '');
+                setCurrentProfileImage(decodedPfp);
             } catch (error) {
                 console.error('Failed to load profile data:', error);
                 setProfileData({
@@ -717,11 +718,11 @@ function Profile() {
                                 }}
                                 className="w-20 h-20 rounded-full border-4 border-gray-300 shadow-lg object-cover mb-3"
                             />
-                            <input
-                                type="file"
-                                accept="image/*"
-                                data-testId="profile-upload-input"
-                                onChange={(e) => {
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    data-testid="profile-upload-input"
+                                    onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
                                         // Check file type
@@ -854,7 +855,7 @@ function Profile() {
                                     Bio
                                 </label>
                                 <textarea
-                                    value={profileData.bio}
+                                    value={profileData.bio || ''}
                                     onChange={(e) =>
                                         handleProfileChange(
                                             'bio',

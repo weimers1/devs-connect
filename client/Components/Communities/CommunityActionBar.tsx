@@ -38,10 +38,31 @@ const [isOwner, setOwnerStatus] = useState(false);
             if(!response.sucess){
                 console.log("Failed to join community");
             }
+          
         }
     } catch(error) {
         console.log("There was some issue with joining community", error);
         navigate('/login'); //No auth = no interactiing
+    }
+  }
+
+  const LeaveCommunity = async () => {
+    try {
+        const user = await API.getCurrentUser();
+        if(!user) {
+            console.log("no user logged in ");
+            return;
+        }
+        if(membershipStatus == true && user && communityId) {
+            const leavecommunity = await API.LeaveCommunity(user.userId, communityId);
+            setMembershipStatus(false);
+            window.location.reload();
+            if(!leavecommunity.success){
+                console.log("Failed to leave community");
+            }
+        }
+    } catch(error) {
+        console.log("There was some issue with leaving community", error);
     }
   }
 
@@ -75,7 +96,8 @@ useEffect(() => {
         if (userId && communityId) {
             const OwnerStatus = await API.getCommunityAdmins(communityId, userId);
                 setOwnerStatus(OwnerStatus.admin);      
-        }
+            }
+        
         } catch (error) {
             console.error("Error Fetching membership status:", error);
         }
@@ -121,7 +143,8 @@ useEffect(() => {
                         </>
                     ) : (
                         <button
-                            onClick={onJoin}
+                            
+                        onClick={membershipStatus ? LeaveCommunity : onJoin}
                             className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                                 membershipStatus
                                     ? 'bg-green-100 text-green-700 hover:bg-green-200'

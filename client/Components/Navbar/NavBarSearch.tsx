@@ -22,7 +22,7 @@ const handleCommunityClick = (communityId: string) => {
         navigate(`/community/${communityId}`);
     };
     return(
-        <div className="absolute top-16 ml-38 z-50 ml-2 fixed bg-white rounded-xl w-72">
+        <div className="absolute top-15 ml-10 md:top-16 md:ml-38 z-50 ml-2 fixed bg-white rounded-xl w-72">
             <div className="py-2 flex flex-col">
                 {community.map((communityItem, index) => (
                     <button 
