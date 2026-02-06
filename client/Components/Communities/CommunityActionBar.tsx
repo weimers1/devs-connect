@@ -34,7 +34,6 @@ const [isOwner, setOwnerStatus] = useState(false);
         if(userId && communityId) {
             const response = await API.joinCommunity(communityId);
             setMembershipStatus(true);
-            window.location.reload();
             if(!response.sucess){
                 console.log("Failed to join community");
             }
@@ -56,7 +55,6 @@ const [isOwner, setOwnerStatus] = useState(false);
         if(membershipStatus == true && user && communityId) {
             const leavecommunity = await API.LeaveCommunity(user.userId, communityId);
             setMembershipStatus(false);
-            window.location.reload();
             if(!leavecommunity.success){
                 console.log("Failed to leave community");
             }

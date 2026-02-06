@@ -440,6 +440,14 @@ const API = {
         if(!response.ok) throw new Error('Failed to get kick community Member');
         return response.json();
     },
+    //Demote Community Member
+    demoteCommunityMember: async(userId: string, communityId: string, currentUserId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/demote/${communityId}/member/${userId}/with/${currentUserId}`,{
+            headers: getAuthHeaders(),
+            method: "PUT" 
+        })
+        if(!response.ok) throw new Error('Failed to demote user');
+    }
 }
 
 export default API;

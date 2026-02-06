@@ -400,6 +400,7 @@ export const LeaveCommunity = async (req, res) => {
             replacements: [primaryKeyId],
             type: sequelize.QueryTypes.DELETE,
         });
+        if(!MemberLeaves) return;
          await sequelize.query(`UPDATE dev_connect.communities SET memberCount = memberCount-1 WHERE id=?;`, {
             replacements: [communityId],
             type: sequelize.QueryTypes.UPDATE,
@@ -439,6 +440,32 @@ export const getCommunityAdmins = async (req, res) => {
     } catch(error) {
         console.log(error, "Something Went Wrong Trying to fetch the communityAdmins");
         res.json({error: "Failed to fetch community admins" });
+    }
+}
+
+export const demoteCommunityMember = async (req, res) => {
+    try {
+        const {userId, communityId, currentUserId} = req.params;
+        if(!userId || !communityId) {
+            return res.status(400).json({ error: "Missing required parameters" });
+        }
+            const isadmin = await sequelize.query(`    
+            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {
+                replacements: [currentUserId, communityId],
+                  type: sequelize.QueryTypes.SELECT,
+            }) 
+            if(!isadmin || isadmin.length === 0) {
+                return res.status(403).json({error: "User is not an admin of this community"});
+            } 
+        const demoteMember = await sequelize.query(`
+        UPDATE dev_connect.usercommunities SET role ="member" WHERE userId = ? AND communityId = ?`, {
+                replacements: [userId, communityId],
+                type: sequelize.QueryTypes.UPDATE,
+})      
+        res.json({demote: demoteMember});
+    }catch (error) {
+        console.error('Error Demoting Community Member', error);
+        res.status(500).json({ error: 'Failed to fetch community posts' });
     }
 }
 

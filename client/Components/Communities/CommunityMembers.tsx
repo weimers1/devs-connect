@@ -30,20 +30,18 @@ const CommunityMembers: React.FC<CommunityMembers> = () => {
 const {communityId} = useParams<{communityId: string}>();
 const [communityMembers, setCommunityMember] = useState<CommunityMembers[]>([]);
 const [editUsers, seteditUsers] = useState(false);
-const [currentUserInfo, setCurrentUser] = useState<UserProfile | null>(null); //User Profile Information
+const [currentUserStatus, setSelectedtUser] = useState(false); //User Profile Information
 const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 const [areyouSure, setareyouSure] = useState({
     state: false,
     value: "",
 });
 const [isOwner, setisOwner] = useState(''); //is Owner
-
 const [isAdmin, setisAdmin] = useState(false);
 
 
 const Temppfp = Profile;
-useEffect(() => {   
-        const fetchMembers = async () => {
+    const fetchMembers = async () => {
             try {
                 if(!communityId) return;
             const getMembers = await API.getCommunityMembers(communityId);
@@ -52,13 +50,17 @@ useEffect(() => {
                 console.log("There was a problem fetching all the members");
             }
         }
+useEffect(() => {   
+    
         const getAdminStatus = async () => {
             try {
                 const userId = await API.getCurrentUser();
                 if(communityId && userId) {
+                    //Current User
                  const checkAdmin = await API.getCommunityAdmins(communityId, userId.userId);   
                  setisAdmin(checkAdmin.admin);
-                    //Check is Owner
+ 
+                   //Check is Owner
                   const checkIsOwner = await API.isCommunityOwner(communityId, userId.userId); 
                   setisOwner(checkIsOwner.owner[0]?.createdBy.toString());
                     // console.log(isOwner);
@@ -67,12 +69,12 @@ useEffect(() => {
                 console.log(error, "error getting admin status");
             }
         }
+
         getAdminStatus();
         fetchMembers();
     },[])
  
 const HandleClick = async (userId: string) => {
-    editUsers === false ? seteditUsers(true) : seteditUsers(false);
     if(selectedUserId === userId) {
         setSelectedUserId(null);
         seteditUsers(false);
@@ -82,15 +84,16 @@ const HandleClick = async (userId: string) => {
     }
       try { 
         //Current Selected User
-        const currentUser = userId; 
-        const getuser = await API.getUserProfile(currentUser);
+        const selectedUser = userId; 
+        if(!communityId) return;
+        const getuser = await API.getCommunityAdmins(communityId, selectedUser);
 
         //This should never perform simply because how would there be a user in a community without authentication    
         if(!getuser) {
             console.log("There was no user information associated with this user?");
             return; 
         }
-         setCurrentUser(getuser)  //user information via object
+         setSelectedtUser(getuser.admin)  //user information via object
     } catch(error) {
         console.log(error, "Problem trying to perform operations on current selected user");
     } 
@@ -102,13 +105,16 @@ const handleClose = () => {
     seteditUsers(false);
     
 }
+
     const HandleUserKPB = async (value: string) => {
         try {   
-            if(!selectedUserId || !communityId || isAdmin != true || value == null) {
+            const currentUserId = await API.getCurrentUser();
+            
+            if(!selectedUserId || !communityId || isAdmin != true || value == null || !currentUserId) {
                 console.log("no one selected or no user in community or no community or not an admin"); 
                 return;
             }
-            if(value.toLowerCase() == "kick") {
+            if(value.toLowerCase() == "kick" && isAdmin) {
             const kickMember = await API.kickCommunityMember(communityId, selectedUserId);
             if(!kickMember) {
             console.log(`member with ${selectedUserId} couldn't be kicked from ${communityId}`);
@@ -122,6 +128,16 @@ const handleClose = () => {
                 console.log(`member with ${selectedUserId} couldn't be promoted from ${communityId}`);
                 return
             }
+            fetchMembers();
+             setSelectedtUser(true);
+        }
+            if(value.toLowerCase() == "demote" && isAdmin) {
+            const demmoteMember = await API.demoteCommunityMember(selectedUserId, communityId, currentUserId.userId);
+            if(demmoteMember != null) {
+                console.log("problem demoting user member");
+            }
+             fetchMembers();
+            setSelectedtUser(false);
         }
             handleClose();
             setSelectedUserId(null);
@@ -131,12 +147,14 @@ const handleClose = () => {
         }
     }   
 
+  
 
 const areYouSure = (value: string) => {
   setareyouSure({state:true, value: value.toLowerCase()});
   seteditUsers(false);
    
 }
+       
 
     return( 
         <div className="bg-white rounded-none  md:border shadow-sm w-full md:w-1/3 md:rounded-xl ">
@@ -171,12 +189,17 @@ const areYouSure = (value: string) => {
                                 <h1 className="items-center flex "></h1>
                             <div className="flex flex-col items-center gap-1.5">
                                 <h1 className="text-bold mt-0.5">{members.firstName}</h1>
-
+                                 {members.role == "admin" ? (
                                 <button className="bg-linear-to-tr from-blue-700 to-slate-950 rounded-xl hover:bg-white-800"
-                                   onClick={() => areYouSure("Promote")}
-                                >
+                                   onClick={() => members.role == "admin" ? areYouSure("Demote") : null}
+                                >  <p className="text-lg font-semibold text-gray-300 color-blue rounded-xl border w-20">Demote</p></button>
+                                 ) : (<>
+                                     <button className="bg-linear-to-tr from-blue-700 to-slate-950 rounded-xl hover:bg-white-800"
+                                   onClick={() => members.role == "member" ? areYouSure("Promote") : null}>
                                     <p className="text-lg font-semibold text-gray-300 color-blue rounded-xl border w-20">Promote</p>
-                                </button>
+                                    </button>
+                                             </>
+                                    )}
                                 <button className="bg-red-600 rounded-xl hover:bg-red-700 "
                                    onClick={() => areYouSure("Kick")}
                                 >
