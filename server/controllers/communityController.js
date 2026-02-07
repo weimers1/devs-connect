@@ -366,13 +366,13 @@ export const LeaveCommunity = async (req, res) => {
     try {
         const {userId, communityId} = req.params;  
         
-                const requesterId = req.user.userId;
+                // const requesterId = req.user.userId;
     
         // Only allow users to leave themselves (not others)
-        if (parseInt(userId) !== parseInt(requesterId)) {
-            console.log('Permission denied: userId !== requesterId');
-            return res.status(403).json({ error: "You can only leave communities for yourself" });
-        }
+        // if (parseInt(userId) !== parseInt(requesterId)) {
+        //     console.log('Permission denied: userId !== requesterId');
+        //     return res.status(403).json({ error: "You can only leave communities for yourself" });
+        // }
 
         if(!userId || !communityId) {
             return res.status(400).json({error: "need user and communityId to kick member"});
@@ -400,7 +400,7 @@ export const LeaveCommunity = async (req, res) => {
             replacements: [primaryKeyId],
             type: sequelize.QueryTypes.DELETE,
         });
-        if(!MemberLeaves) return;
+
          await sequelize.query(`UPDATE dev_connect.communities SET memberCount = memberCount-1 WHERE id=?;`, {
             replacements: [communityId],
             type: sequelize.QueryTypes.UPDATE,
@@ -643,7 +643,7 @@ export const joinCommunity = async (req, res) => {
             replacements: [communityId],
             type: sequelize.QueryTypes.UPDATE,
         })
-        res.json({ message: 'Successfully joined community' });
+        res.json({ success: true });
     } catch (error) {
         console.error('Error joining community:', error);
         res.status(500).json({ error: 'Failed to join community' });

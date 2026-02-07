@@ -33,11 +33,10 @@ const [isOwner, setOwnerStatus] = useState(false);
         }
         if(userId && communityId) {
             const response = await API.joinCommunity(communityId);
-            setMembershipStatus(true);
-            if(!response.sucess){
+            if(!response.success){
                 console.log("Failed to join community");
             }
-          
+              setMembershipStatus(true);
         }
     } catch(error) {
         console.log("There was some issue with joining community", error);
@@ -54,10 +53,10 @@ const [isOwner, setOwnerStatus] = useState(false);
         }
         if(membershipStatus == true && user && communityId) {
             const leavecommunity = await API.LeaveCommunity(user.userId, communityId);
-            setMembershipStatus(false);
             if(!leavecommunity.success){
                 console.log("Failed to leave community");
             }
+              setMembershipStatus(false);
         }
     } catch(error) {
         console.log("There was some issue with leaving community", error);
