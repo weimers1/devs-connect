@@ -234,16 +234,16 @@ const Navbar: React.FC = () => {
                                         className="w-7 h-7"
                                     />
                                 </button>
-                                <div className="relative">
+                                <div className="relative ">
                                     <button
                                         onClick={toggleProfileDropdown}
-                                        className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
+                                        className="h-8 w-8 rounded-full  bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
                                     >
                                         {userProfile ? (
                                             <img
                                                 alt="Profile"
                                                 src={userProfile}
-                                                className="w-8 h-8 rounded-full object-cover"
+                                                className="w-8 h-8 fixed rounded-full object-cover"
                                                 onError={(e) => {
                                                     e.currentTarget.style.display =
                                                         'none';

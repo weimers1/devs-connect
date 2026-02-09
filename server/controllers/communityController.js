@@ -54,6 +54,7 @@ export const getCommunities = async (req, res) => {
         const communities = await Community.findAll({
             order: [['createdAt', 'DESC']],
         });
+      
         res.json(communities);
     } catch (error) {
         console.error('Error fetching communities:', error);
@@ -349,8 +350,14 @@ export const kickCommunityMember = async (req, res) => {
             replacements: [primaryKeyId],
             type: sequelize.QueryTypes.DELETE,
         });
-         await sequelize.query(`UPDATE dev_connect.communities SET memberCount = memberCount-1 WHERE id=?;`, {
-            replacements: [communityId],
+              await sequelize.query(`UPDATE dev_connect.communities
+SET memberCount = (
+    SELECT COUNT(*) 
+    FROM dev_connect.usercommunities 
+    WHERE communityId = ? 
+)
+WHERE id = ?;`, {
+            replacements: [communityId, communityId],
             type: sequelize.QueryTypes.UPDATE,
         })
         res.json({message: "Member kicked successfully", kick: kickMember});
@@ -400,11 +407,18 @@ export const LeaveCommunity = async (req, res) => {
             replacements: [primaryKeyId],
             type: sequelize.QueryTypes.DELETE,
         });
-
-         await sequelize.query(`UPDATE dev_connect.communities SET memberCount = memberCount-1 WHERE id=?;`, {
-            replacements: [communityId],
+        
+         await sequelize.query(`UPDATE dev_connect.communities
+SET memberCount = (
+    SELECT COUNT(*) 
+    FROM dev_connect.usercommunities 
+    WHERE communityId = ? 
+)
+WHERE id = ?;`, {
+            replacements: [communityId, communityId],
             type: sequelize.QueryTypes.UPDATE,
         })
+   
         res.json({message: "Successfully left the community", success: true});
         
     } catch(error) {
@@ -639,8 +653,14 @@ export const joinCommunity = async (req, res) => {
             communityId: communityId,
             role: 'member',
         });
-        await sequelize.query(`UPDATE dev_connect.communities SET memberCount = memberCount+1 WHERE id=?;`, {
-            replacements: [communityId],
+                await sequelize.query(`UPDATE dev_connect.communities
+SET memberCount = (
+    SELECT COUNT(*) 
+    FROM dev_connect.usercommunities 
+    WHERE communityId = ? 
+)
+WHERE id = ?;`, {
+            replacements: [communityId, communityId],
             type: sequelize.QueryTypes.UPDATE,
         })
         res.json({ success: true });
