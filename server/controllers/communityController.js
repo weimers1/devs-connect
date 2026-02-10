@@ -263,7 +263,7 @@ export const getCommunityMembers = async (req, res) => {
         try {
             members = await sequelize.query(
                 `
-                SELECT uc.userId, uc.role, uc.joinedAt, u.firstName, u.lastName, up.profileImageUrl
+                SELECT uc.userId, uc.role, uc.joinedAt, u.firstName, u.lastName, up.profileImageUrl, uc.BanStatus
                 FROM UserCommunities uc
                 LEFT JOIN Users u ON uc.userId = u.id
                 LEFT JOIN UserProfiles up ON u.id = up.userId
@@ -290,6 +290,7 @@ export const getCommunityMembers = async (req, res) => {
                 firstName: `User ${m.userId}`,
                 lastName: '',
                 profileImageUrl: m.profileImageUrl,
+                BanStatus: m.BanStatus
             }));
         }
 
@@ -306,6 +307,7 @@ export const getCommunityMembers = async (req, res) => {
                   role: member.role || 'member',
                   joinedAt: member.joinedAt,
                   isOnline: Math.random() > 0.5,
+                  BanStatus: member.BanStatus || false
               }))
             : [];
 
@@ -321,6 +323,7 @@ export const getCommunityMembers = async (req, res) => {
 };
     //kick CommunityMember
 export const kickCommunityMember = async (req, res) => {
+     const transaction = await sequelize.transaction();
     try {
         const {userId, communityId} = req.params;  
         
@@ -335,6 +338,7 @@ export const kickCommunityMember = async (req, res) => {
         `, {
             replacements: [userId, communityId],
             type: sequelize.QueryTypes.SELECT,
+             transaction
         });
 
         if (!memberRecord || memberRecord.length === 0) {
@@ -349,20 +353,23 @@ export const kickCommunityMember = async (req, res) => {
         `, {
             replacements: [primaryKeyId],
             type: sequelize.QueryTypes.DELETE,
+            transaction
         });
-              await sequelize.query(`UPDATE dev_connect.communities
-SET memberCount = (
-    SELECT COUNT(*) 
-    FROM dev_connect.usercommunities 
-    WHERE communityId = ? 
-)
-WHERE id = ?;`, {
-            replacements: [communityId, communityId],
+              await sequelize.query(`
+            UPDATE dev_connect.communities
+            SET memberCount = GREATEST(memberCount - 1, 0)
+            WHERE id = ?
+        `, {
+            replacements: [communityId],
             type: sequelize.QueryTypes.UPDATE,
-        })
+            transaction
+        });
+        
+        await transaction.commit();
         res.json({message: "Member kicked successfully", kick: kickMember});
         
     } catch(error) {
+        await transaction.rollback();
         console.log(error, "Can't kick member from community");
         res.status(500).json({error: "Failed to kick member"});
     }       
@@ -370,60 +377,59 @@ WHERE id = ?;`, {
 
 //Leave Community
 export const LeaveCommunity = async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {
         const {userId, communityId} = req.params;  
         
-                // const requesterId = req.user.userId;
-    
-        // Only allow users to leave themselves (not others)
-        // if (parseInt(userId) !== parseInt(requesterId)) {
-        //     console.log('Permission denied: userId !== requesterId');
-        //     return res.status(403).json({ error: "You can only leave communities for yourself" });
-        // }
-
         if(!userId || !communityId) {
-            return res.status(400).json({error: "need user and communityId to kick member"});
+            await transaction.rollback();
+            return res.status(400).json({error: "need user and communityId to leave community"});
         }
 
-        // First, find the record to get the primary key (id)
+        // Find the record to get the primary key (id)
         const memberRecord = await sequelize.query(`
             SELECT id FROM dev_connect.usercommunities 
             WHERE userId = ? AND communityId = ?
         `, {
             replacements: [userId, communityId],
             type: sequelize.QueryTypes.SELECT,
+            transaction
         });
 
         if (!memberRecord || memberRecord.length === 0) {
+            await transaction.rollback();
             return res.status(404).json({error: "You are not a member of this community"});
         }
         const primaryKeyId = memberRecord[0].id;
 
-        // Now delete using the primary key
-        const MemberLeaves = await sequelize.query(`
+        // Delete using the primary key
+        await sequelize.query(`
             DELETE FROM dev_connect.usercommunities 
             WHERE id = ?
         `, {
             replacements: [primaryKeyId],
             type: sequelize.QueryTypes.DELETE,
+            transaction
         });
         
-         await sequelize.query(`UPDATE dev_connect.communities
-SET memberCount = (
-    SELECT COUNT(*) 
-    FROM dev_connect.usercommunities 
-    WHERE communityId = ? 
-)
-WHERE id = ?;`, {
-            replacements: [communityId, communityId],
+        // Decrement memberCount (fast operation)
+        await sequelize.query(`
+            UPDATE dev_connect.communities
+            SET memberCount = GREATEST(memberCount - 1, 0)
+            WHERE id = ?
+        `, {
+            replacements: [communityId],
             type: sequelize.QueryTypes.UPDATE,
-        })
-   
+            transaction
+        });
+        
+        await transaction.commit();
         res.json({message: "Successfully left the community", success: true});
         
     } catch(error) {
-        console.log(error, "Can't kick member from community");
-        res.status(500).json({error: "Failed to kick member"});
+        await transaction.rollback();
+        console.log(error, "Can't leave community");
+        res.status(500).json({error: "Failed to leave community"});
     }       
 }
 
@@ -629,6 +635,7 @@ export const createCommunityPost = async (req, res) => {
 };
 
 export const joinCommunity = async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {
         const { communityId } = req.params;
         const userId = req.user.userId;
@@ -652,23 +659,81 @@ export const joinCommunity = async (req, res) => {
             userId: userId,
             communityId: communityId,
             role: 'member',
+            transaction
         });
-                await sequelize.query(`UPDATE dev_connect.communities
-SET memberCount = (
-    SELECT COUNT(*) 
-    FROM dev_connect.usercommunities 
-    WHERE communityId = ? 
-)
-WHERE id = ?;`, {
-            replacements: [communityId, communityId],
+        await sequelize.query(`
+            UPDATE dev_connect.communities
+            SET memberCount = GREATEST(memberCount + 1, 0)
+            WHERE id = ?
+        `, {
+            replacements: [communityId],
             type: sequelize.QueryTypes.UPDATE,
-        })
+            transaction
+        });
+        await transaction.commit();
         res.json({ success: true });
     } catch (error) {
+        await transaction.rollback();
         console.error('Error joining community:', error);
         res.status(500).json({ error: 'Failed to join community' });
     }
 };
+
+//Ban Member
+
+export const BanCommunityMember = async (req,res) => {
+     const transaction = await sequelize.transaction();
+    try {
+        const {userId, communityId} = req.params;  
+        
+        if(!userId || !communityId) {
+            return res.status(400).json({error: "need user and communityId to kick member"});
+        }
+
+        // First, find the record to get the primary key (id)
+        const memberRecord = await sequelize.query(`
+            SELECT id FROM dev_connect.usercommunities 
+            WHERE userId = ? AND communityId = ? AND role = "member"
+        `, {
+            replacements: [userId, communityId],
+            type: sequelize.QueryTypes.SELECT,
+             transaction
+        });
+
+        if (!memberRecord || memberRecord.length === 0) {
+            return res.status(404).json({error: "Member not found or not a member"});
+        }
+        const primaryKeyId = memberRecord[0].id;
+
+        // Now delete using the primary key
+        const BanMember = await sequelize.query(`
+            UPDATE dev_connect.usercommunities SET BanStatus = true WHERE id=?
+        `, {
+            replacements: [primaryKeyId],
+            type: sequelize.QueryTypes.DELETE,
+            transaction
+        });
+              await sequelize.query(`
+            UPDATE dev_connect.communities
+            SET memberCount = GREATEST(memberCount - 1, 0)
+            WHERE id = ?
+        `, {
+            replacements: [communityId],
+            type: sequelize.QueryTypes.UPDATE,
+            transaction
+        });
+        
+        await transaction.commit();
+        res.json({message: "Member Banned successfully", Banned: BanMember});
+        
+    } catch(error) {
+        await transaction.rollback();
+        console.log(error, "Can't kick member from community");
+        res.status(500).json({error: "Failed to kick member"});
+    }       
+}
+
+
 
 export const likePost = async (req, res) => {
     try {

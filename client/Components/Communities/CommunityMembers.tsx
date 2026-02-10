@@ -14,6 +14,7 @@ interface CommunityMembers {
     firstName: string, 
     lastName: string ,
     profileImageUrl: string,
+    BanStatus?: boolean;
     
 }
 //User Information
@@ -32,11 +33,12 @@ const [communityMembers, setCommunityMember] = useState<CommunityMembers[]>([]);
 const [editUsers, seteditUsers] = useState(false);
 const [currentUserStatus, setSelectedtUser] = useState(false); //User Profile Information
 const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+const [errorState, seterrorState] = useState(false);
 const [areyouSure, setareyouSure] = useState({
     state: false,
     value: "",
 });
-const [isOwner, setisOwner] = useState(''); //is Owner
+const [ownerId, setOwnerId] = useState<string | null>(null); //Owner's userId
 const [isAdmin, setisAdmin] = useState(false);
 
 
@@ -60,20 +62,21 @@ useEffect(() => {
                  const checkAdmin = await API.getCommunityAdmins(communityId, userId.userId);   
                  setisAdmin(checkAdmin.admin);
  
-                   //Check is Owner
-                  const checkIsOwner = await API.isCommunityOwner(communityId, userId.userId); 
-                  setisOwner(checkIsOwner.owner[0]?.createdBy.toString());
-                    // console.log(isOwner);
+                   //Get community data to find owner
+                  const communityData = await API.getCommunityById(communityId); 
+                  if(communityData && communityData.createdBy) {
+                      setOwnerId(communityData.createdBy.toString());
+                  }
                 }
             } catch(error) {
                 console.log(error, "error getting admin status");
             }
         }
-
+    // Cleanup function to clear the timeout if the component unmounts
+   
         getAdminStatus();
         fetchMembers();
     },[])
- 
 const HandleClick = async (userId: string) => {
     if(selectedUserId === userId) {
         setSelectedUserId(null);
@@ -104,16 +107,24 @@ const handleClose = () => {
     setareyouSure({state: false, value: ""});
     seteditUsers(false);
     
+
 }
 
     const HandleUserKPB = async (value: string) => {
         try {   
             const currentUserId = await API.getCurrentUser();
             
-            if(!selectedUserId || !communityId || isAdmin != true || value == null || !currentUserId) {
-                console.log("no one selected or no user in community or no community or not an admin"); 
-                return;
-            }
+            if(!selectedUserId || !communityId || isAdmin != true || value == null || !currentUserId || currentUserId == selectedUserId) {
+                console.log("no one selected or no user in community or no community or not an admin");
+                seterrorState(true); 
+                
+               setTimeout(() => {
+                seterrorState(false);
+            }, 3000);
+            handleClose();
+            return 
+        }
+           
             if(value.toLowerCase() == "kick" && isAdmin) {
             const kickMember = await API.kickCommunityMember(communityId, selectedUserId);
             if(!kickMember) {
@@ -121,14 +132,14 @@ const handleClose = () => {
                 return;
         }
         }
-            if(value.toLowerCase() == "promote"){
+            if(value.toLowerCase() == "promote" && isAdmin){
             const userId = selectedUserId;
             const promoteMember = await API.promoteUser(userId, communityId);
             if(!promoteMember) {
                 console.log(`member with ${selectedUserId} couldn't be promoted from ${communityId}`);
                 return
             }
-            fetchMembers();
+             fetchMembers();
              setSelectedtUser(true);
         }
             if(value.toLowerCase() == "demote" && isAdmin) {
@@ -139,11 +150,22 @@ const handleClose = () => {
              fetchMembers();
             setSelectedtUser(false);
         }
+           if(value.toLowerCase() == "ban" && isAdmin) {
+            const banMember = await API.banCommunityMember(selectedUserId, communityId);
+            if(!banMember) {
+            console.log(`member with ${selectedUserId} couldn't be banned from ${communityId}`);
+                return;
+        }
+             fetchMembers();
+    }
             handleClose();
             setSelectedUserId(null);
             setareyouSure({state: false, value: ""});
         }  catch(error) {
             console.log(error, "the were an error with operating on the member");
+            handleClose();
+            seterrorState(true);
+            seteditUsers(false);
         }
     }   
 
@@ -154,16 +176,16 @@ const areYouSure = (value: string) => {
   seteditUsers(false);
    
 }
-       
 
+       
     return( 
         <div className="bg-white rounded-none  md:border shadow-sm w-full md:w-1/3 md:rounded-xl ">
             <div className="flex items-center mt-4 justify-center">
                 <h1 className="text-2xl font-bold mb-5">Members</h1>
             </div>
-                {communityMembers.map((members, index) => (
-                    (members.id == isOwner ? ( 
-                        <div className="relative" key={index}></div>
+                {communityMembers.map((members, index) => {
+                    return (members.id.toString() === ownerId || members.BanStatus === true ? ( 
+                        <div className="hidden border bg-black " key={index}></div>
                     ) : (
                         <div key={index} className="mt-3 relative">
                     <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer">
@@ -236,6 +258,20 @@ const areYouSure = (value: string) => {
         </div> 
     </div>
                     )}
+                                {errorState && (
+                                    <>
+                <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-20 inset-0 flex items-center justify-center ">
+               
+        <div className="bg-white rounded-xl mb-12 p-6  md:w-90 mx-4">
+              <Icon icon="streamline-plump-color:sad-face-flat" className="mb-2 mx-auto" width="72" height="72" />
+            <h2 className="text-2xl font-bold mb-6 text-center">{`You Are Unable To Perform That Action At This Time`}</h2>
+            <div className="flex flex-col gap-3">
+            </div>
+        </div> 
+
+    </div>
+    </>
+                    )}
                         <button className="text-gray-400 hover:text-gray-600"
                          onClick={() => HandleClick(members.id)}
                         >
@@ -244,9 +280,8 @@ const areYouSure = (value: string) => {
                     </div >
                     <hr className="border-gray-300"></hr>
                 </div>
-                
-                  )))
-                  )}
+                ));
+                })}
         
         </div>
 

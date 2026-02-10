@@ -447,6 +447,15 @@ const API = {
             method: "PUT" 
         })
         if(!response.ok) throw new Error('Failed to demote user');
+    },
+    //Ban Member from Community
+    banCommunityMember: async(userId: string, communityId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/Ban/${communityId}/member/${userId}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+        })
+        if(!response.ok) throw new Error('Failed to ban user');
+        return response.json();
     }
 }
 
