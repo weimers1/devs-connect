@@ -1,4 +1,7 @@
 import React from 'react';
+import { useNavigate} from 'react-router-dom';
+import { useAuthRedirect } from '../Auth/useAuthRedirect';
+import API from '../../Service/service';
 
 interface CommunitySidebarProps {
     community: {
@@ -11,6 +14,26 @@ interface CommunitySidebarProps {
 }
 
 const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community }) => {
+    
+    const navigate = useNavigate();
+    const { requireAuth } = useAuthRedirect();
+
+    const handleProfileClick = async (userId: string) => {
+        requireAuth(async () => {
+            try {
+                const currentUser = await API.getCurrentUser();
+                    if(!currentUser) navigate('/login');
+                    if(userId == currentUser.userId) {
+                        navigate('/profile');
+                    } else
+                    navigate(`/profile/${userId}`);
+            } catch (error) {
+                console.error('Failed to get current user:', error);
+                // Fallback to other user profile
+                navigate(`/profile/${userId}`);
+            }
+        });
+    };
     return (
         <div className="space-y-6">
             {/* Community Stats */}
@@ -54,14 +77,17 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community }) => {
                                     <img
                                         src={member.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.firstName + ' ' + member.lastName)}&background=random`}
                                         alt={`${member.firstName} ${member.lastName}`}
-                                        className="w-8 h-8 rounded-full object-cover"
+                                        className="w-8 h-8 rounded-full object-cover hover:ring-2 hover:text-blue-500"
+                                        onClick={() => handleProfileClick(member.id)}
                                     />
                                     <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
                                         member.isOnline ? 'bg-green-400' : 'bg-gray-400'
                                     }`}></div>
                                 </div>
                                 <div className="flex-1">
-                                    <span className="text-sm text-gray-700">{member.firstName} {member.lastName}</span>
+                                    <span className="text-sm text-gray-700 hover:text-blue-500"
+                                     onClick={() => handleProfileClick(member.id)}
+                                    >{member.firstName} {member.lastName}</span>
                                     {member.role === 'admin' && (
                                         <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Admin</span>
                                     )}

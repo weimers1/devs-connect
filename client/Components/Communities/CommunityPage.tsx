@@ -32,6 +32,7 @@ const CommunityPage: React.FC = () => {
             try {
                 const communityData = await API.getCommunityById(communityId);
                 setCommunity(communityData);
+              
                 setIsJoined(communityData.isOwner || communityData.isMember || false);
                 
                 // Fetch members after community loads

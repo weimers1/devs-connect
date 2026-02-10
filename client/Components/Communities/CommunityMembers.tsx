@@ -31,7 +31,7 @@ const CommunityMembers: React.FC<CommunityMembers> = () => {
 const {communityId} = useParams<{communityId: string}>();
 const [communityMembers, setCommunityMember] = useState<CommunityMembers[]>([]);
 const [editUsers, seteditUsers] = useState(false);
-const [currentUserStatus, setSelectedtUser] = useState(false); //User Profile Information
+// const [currentUserStatus, setSelectedtUser] = useState(false); //User Profile Information
 const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 const [errorState, seterrorState] = useState(false);
 const [areyouSure, setareyouSure] = useState({
@@ -96,7 +96,6 @@ const HandleClick = async (userId: string) => {
             console.log("There was no user information associated with this user?");
             return; 
         }
-         setSelectedtUser(getuser.admin)  //user information via object
     } catch(error) {
         console.log(error, "Problem trying to perform operations on current selected user");
     } 
@@ -114,7 +113,7 @@ const handleClose = () => {
         try {   
             const currentUserId = await API.getCurrentUser();
             
-            if(!selectedUserId || !communityId || isAdmin != true || value == null || !currentUserId || currentUserId == selectedUserId) {
+            if(!selectedUserId || !communityId || isAdmin != true || value == null || !currentUserId || currentUserId.userId == selectedUserId) {
                 console.log("no one selected or no user in community or no community or not an admin");
                 seterrorState(true); 
                 
@@ -140,7 +139,6 @@ const handleClose = () => {
                 return
             }
              fetchMembers();
-             setSelectedtUser(true);
         }
             if(value.toLowerCase() == "demote" && isAdmin) {
             const demmoteMember = await API.demoteCommunityMember(selectedUserId, communityId, currentUserId.userId);
@@ -148,7 +146,6 @@ const handleClose = () => {
                 console.log("problem demoting user member");
             }
              fetchMembers();
-            setSelectedtUser(false);
         }
            if(value.toLowerCase() == "ban" && isAdmin) {
             const banMember = await API.banCommunityMember(selectedUserId, communityId);

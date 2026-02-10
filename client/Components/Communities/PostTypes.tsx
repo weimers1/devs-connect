@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate} from 'react-router-dom';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import API from '../../Service/service';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
