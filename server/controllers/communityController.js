@@ -8,8 +8,10 @@ import User from "../models/User.js";
 import { json } from 'sequelize';
 
 export const createCommunity = async (req, res) => {
+    
     try {
         const { name, description, icon, color, isPrivate } = req.body;
+        console.log('User:', req.user)
 
         if (!name || !description) {
             return res
@@ -25,6 +27,7 @@ export const createCommunity = async (req, res) => {
             color: color || null,
             isPrivate: isPrivate || false,
             isOwner: 1,
+            isMember: true
         });
 
         // Add creator as admin member
@@ -50,13 +53,25 @@ export const createCommunity = async (req, res) => {
 };
 
 export const getCommunities = async (req, res) => {
+
     try {
-        const communities = await Community.findAll({
-            order: [['createdAt', 'DESC']],
-        });
+        const {userId} = req.params;
+        const communities = await sequelize.query(`
+            SELECT 
+            uc.id,
+            uc.name, uc.description, uc.createdBy, uc.icon, uc.color, uc.image, uc.memberCount, uc.id, uc.isOwner
+            FROM communities uc
+            INNER JOIN usercommunities u 
+            ON u.communityId = uc.id
+            AND u.role != 'banned' WHERE u.userId = ?;`,{
+            replacements: [userId],
+            type: sequelize.QueryTypes.SELECT,
+     
+})
       
         res.json(communities);
     } catch (error) {
+      
         console.error('Error fetching communities:', error);
         res.status(500).json({
             error: 'Failed to fetch communities' + JSON.stringify(error),
@@ -707,7 +722,7 @@ export const BanCommunityMember = async (req,res) => {
 
         // Now delete using the primary key
         const BanMember = await sequelize.query(`
-            UPDATE dev_connect.usercommunities SET BanStatus = true WHERE id=?
+                        UPDATE dev_connect.usercommunities SET BanStatus = true, role='banned' WHERE id=?; 
         `, {
             replacements: [primaryKeyId],
             type: sequelize.QueryTypes.DELETE,
@@ -724,7 +739,7 @@ export const BanCommunityMember = async (req,res) => {
         });
         
         await transaction.commit();
-        res.json({message: "Member Banned successfully", Banned: BanMember});
+        res.json({message: "Member Banned successfully", Banned: true});
         
     } catch(error) {
         await transaction.rollback();

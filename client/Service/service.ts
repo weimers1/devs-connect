@@ -184,8 +184,8 @@ const API = {
     },
 
     //Get Communities
-    getCommunities: async () => {
-        const response = await fetch(`${BASE_URL}/api/communities`);
+    getCommunities: async (userId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/${userId}`);
         if (!response.ok) throw new Error('Failed to fetch communities');
         return response.json();
     },

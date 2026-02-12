@@ -8,7 +8,15 @@ import CommunitySidebar from './CommunitySidebar';
 import API from '../../Service/service';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
 
-
+interface CommunityMembers {
+    id: string, 
+    role: string,
+    firstName: string, 
+    lastName: string ,
+    profileImageUrl: string,
+    BanStatus?: boolean;
+    
+}
 
 const CommunityPage: React.FC = () => {
     const { communityId } = useParams<{ communityId: string }>();
@@ -116,7 +124,7 @@ const CommunityPage: React.FC = () => {
     const handleTabChange = (tab: string) => {
         setActiveTab(tab);
     };
-
+    // console.log(members);
     // Transform community data to match expected format
     const transformedCommunity = {
         ...community,
@@ -127,7 +135,8 @@ const CommunityPage: React.FC = () => {
         tags: [],
         createdDate: community.createdAt,
         members: members,
-        rules: community.rules
+        rules: community.rules,
+        isMember: members.role
     };
 
     return (

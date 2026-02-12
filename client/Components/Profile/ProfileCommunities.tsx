@@ -20,7 +20,9 @@ function Communities({ userId }: CommunitiesProps) {
         memberCount: '',
         id: '',
         isOwner: false,
+        role: ''
 }]);
+const [UserId, setUserId] = useState(false);
     const isOwnProfile = !userId;
 
     //Need to obtain community info 
@@ -29,9 +31,13 @@ function Communities({ userId }: CommunitiesProps) {
         const  fetchusercommunities = async() => {
                 try { 
                     const user = await API.getCurrentUser();
-                    
+                    if(!user) {
+                        console.log("No user is logged in")
+                    }
+                    setUserId(user.userId);
                     const communityData = await API.getCommunitiesDataFromUser(user.userId);
                     setCommunitiesData(communityData);
+                    console.log(communityData);
                 } catch(error) {
                     console.log(error, "error fetching user communities");
                 }
@@ -78,9 +84,9 @@ function Communities({ userId }: CommunitiesProps) {
                                 <h3 className="font-medium text-gray-900 truncate">
                                     {community.name}
                                 </h3>
-                                {community.isOwner && (
+                                {community.createdBy.toString() == UserId.toString() && (
                                     <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                        Admin
+                                        Owners
                                     </span>
                                 )}
                             </div>

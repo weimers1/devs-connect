@@ -25,7 +25,8 @@ const CommunityExplore = () => {
       useEffect(() => {
         const fetchCommunities = async () => { 
             try {
-                 const data = await API.getCommunities();
+                const currentUser = await API.getCurrentUser();
+                 const data = await API.getCommunities(currentUser.userId);
                 setCommunities(data);
               
             } catch (error) {
@@ -34,6 +35,8 @@ const CommunityExplore = () => {
                 setLoading(false);
             }
         };
+  
+        
         fetchCommunities();
         
     }, []);
@@ -41,8 +44,30 @@ const CommunityExplore = () => {
     const handleChange = (e) => {
         setName(e.target.value);
     }
+
+    //        const checkBanStatus = async (communityId: string) => {
+    //     try {
+    //         const user = API.getCurrentUser();
+    //         if(!user) {
+    //             navigate('/login');
+    //         }
+    //         //Check Is member banned from community
+    //         const banned = await API.getCommunityMembership(communityId, user.toString());
+    //         if(!banned) {
+    //             console.log("Unable to detect if user was banned from communitiy");
+    //         }   
+    //         if(banned.role.toLowerCase() == "banned") {
+    //             setBannedStatus(true);
+    //         }
+    //     } catch(error) {
+    //         console.log("error checking the ban status", error);
+    //     }
+    // } 
+
     //FilteredCommunities
     const filteredCommunities = communities.filter((community) => community.name.toLowerCase().includes(CommunityName.toLowerCase()));
+
+   
 
     // items.filter(item =>
     // item.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -125,7 +150,6 @@ const CommunityExplore = () => {
                         <p className="text-gray-600">No communities found</p>
                     </div>
                 ) : filteredCommunities.map((community, index) => (
-                    
                     <div
                         key={index}
                         onClick={() => handleCommunityClick(community.id)}

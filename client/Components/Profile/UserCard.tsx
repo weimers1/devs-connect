@@ -123,7 +123,7 @@ function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
         navigate('/profile?showProfModal=true');
         window.location.reload();
     }
-
+    console.log(currentProfileImage);
     return (
         <div className="w-full max-w-2xl bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2 mx-auto">
             {/* Banner - Full width on mobile */}
@@ -138,7 +138,7 @@ function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
 
                 <div className="absolute -bottom-10 sm:-bottom-12 md:-bottom-16 left-4 sm:left-6 md:left-8">
                     <img
-                        src={currentProfileImage && validateImageUrl(currentProfileImage) ? currentProfileImage : assets.Profile}
+                        src={currentProfileImage ? currentProfileImage : assets.Profile}
                         alt="Profile"
                         className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg object-cover"
                         onClick={handleImageClick}

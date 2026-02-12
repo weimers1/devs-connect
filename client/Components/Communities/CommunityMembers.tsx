@@ -149,10 +149,10 @@ const handleClose = () => {
         }
            if(value.toLowerCase() == "ban" && isAdmin) {
             const banMember = await API.banCommunityMember(selectedUserId, communityId);
-            if(!banMember) {
+            if(banMember != true) {
             console.log(`member with ${selectedUserId} couldn't be banned from ${communityId}`);
                 return;
-        }
+        }    handleClose();
              fetchMembers();
     }
             handleClose();
@@ -181,7 +181,7 @@ const areYouSure = (value: string) => {
                 <h1 className="text-2xl font-bold mb-5">Members</h1>
             </div>
                 {communityMembers.map((members, index) => {
-                    return (members.id.toString() === ownerId || members.BanStatus === true ? ( 
+                    return (members.id.toString() === ownerId || members.BanStatus == true ? ( 
                         <div className="hidden border bg-black " key={index}></div>
                     ) : (
                         <div key={index} className="mt-3 relative">

@@ -31,7 +31,7 @@ const Navbar: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [name, setName] = useState('');
     const [communities, setCommunities] = useState<Community[]>([]); // Community Data
-    const [CommunityName, setCommunityName] = useState(''); 
+  
 
     useEffect(() => {
         const loadProfileData = async () => {
@@ -54,7 +54,8 @@ const Navbar: React.FC = () => {
         };
              const fetchCommunities = async () => {  //Load Community Data
             try {
-                 const data = await API.getCommunities();
+                const currentUser = await API.getCurrentUser();
+                 const data = await API.getCommunities(currentUser.userId);
                 setCommunities(data);
               
             } catch (error) {
