@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate} from 'react-router-dom';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
 import API from '../../Service/service';
+import { Icon } from '@iconify/react/dist/iconify.js';
 
 interface CommunitySidebarProps {
     community: {
@@ -68,40 +69,61 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community }) => {
 
             {/* Active Members */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Community Members</h3>
-                <div className="space-y-3">
-                    {community.members && community.members.length > 0 ? (
-                        community.members.slice(0, 5).map((member, index) => (
-                            <div key={index} className="flex items-center space-x-3">
-                                <div className="relative">
-                                    <img
-                                        src={member.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.firstName + ' ' + member.lastName)}&background=random`}
-                                        alt={`${member.firstName} ${member.lastName}`}
-                                        className="w-8 h-8 rounded-full object-cover hover:ring-2 hover:text-blue-500"
-                                        onClick={() => handleProfileClick(member.id)}
-                                    />
-                                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
-                                        member.isOnline ? 'bg-green-400' : 'bg-gray-400'
-                                    }`}></div>
-                                </div>
-                                <div className="flex-1">
-                                    <span className="text-sm text-gray-700 hover:text-blue-500"
-                                     onClick={() => handleProfileClick(member.id)}
-                                    >{member.firstName} {member.lastName}</span>
-                                    {member.role === 'admin' && (
-                                        <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Admin</span>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-gray-500 text-sm">No members yet</p>
-                    )}
-                    {community.members && community.members.length > 5 && (
-                        <p className="text-xs text-gray-500 mt-2">+{community.members.length - 5} more members</p>
-                    )}
-                </div>
-            </div>
+  <h3 className="font-semibold text-gray-900 mb-4">Community Members</h3>
+
+  <div className="space-y-3">
+    {community.members && community.members.length > 0 ? (
+      community.members.filter(member => member.role !== "banned").slice(0, 5).map((member) => (
+        <div key={member.id} className="flex items-center space-x-3">
+          <div className="relative">
+              <>
+                <img
+                  src={
+                    member.profileImageUrl ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      member.firstName + " " + member.lastName
+                    )}&background=random`
+                  }
+                  alt={`${member.firstName} ${member.lastName}`}
+                  className="w-8 h-8 rounded-full object-cover hover:ring-2 hover:ring-blue-500 cursor-pointer"
+                  onClick={() => handleProfileClick(member.id)}
+                />
+
+                <div
+                  className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                    member.isOnline ? "bg-green-400" : "bg-gray-400"
+                  }`}
+                />
+              </>
+          </div>
+
+          <div className="flex-1">
+            <span
+              className="text-sm text-gray-700 hover:text-blue-500 cursor-pointer"
+              onClick={() => handleProfileClick(member.id)}
+            >
+              {member.firstName} {member.lastName}
+            </span>
+
+            {member.role === "admin" && (
+              <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">
+                Admin
+              </span>
+            )}
+          </div>
+        </div>
+      ))
+    ) : (
+      <p className="text-gray-500 text-sm">No members yet</p>
+    )}
+
+    {community.members && community.members.length > 5 && (
+      <p className="text-sm text-blue-500 cursor-pointer">
+        View all members
+      </p>
+    )}
+  </div>
+</div>
         </div>
     );
 };

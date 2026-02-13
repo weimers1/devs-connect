@@ -105,7 +105,7 @@ useEffect(() => {
     const navigate = useNavigate();
     const handleEditCommunity = () => {
         if(isOwner === true) {
-        navigate(`/edit-community/${community.id}`);
+        navigate(`/edit-community/${communityId}`);
         }else {
             return;
         }

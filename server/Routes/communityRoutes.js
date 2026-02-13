@@ -24,18 +24,20 @@ import {
      PromoteCommunityMember,
      LeaveCommunity,
      demoteCommunityMember,
-     BanCommunityMember
+     BanCommunityMember,
+     UnBanCommunityMember
      
 } from '../controllers/communityController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/:userId', getCommunities);
+router.get('/user/:userId', getCommunities);
 router.delete("/member/:userId/community/:communityId", authMiddleware, kickCommunityMember); //Kick a member from a community
 router.delete('/leave/communityMember/:userId/community/:communityId',authMiddleware, LeaveCommunity);
 router.put('/demote/:communityId/member/:userId/with/:currentUserId', authMiddleware, demoteCommunityMember);
 router.put('/Ban/:communityId/member/:userId', authMiddleware, BanCommunityMember)//Ban Community Member
+router.put('/Unban/communityMember/:userId/in/community/:communityId', authMiddleware, UnBanCommunityMember);
 router.get('/:id', getCommunityById);
 router.get('/:id/posts', getCommunityPosts);
 router.get('/:id/members', getCommunityMembers);

@@ -453,8 +453,7 @@ export const LeaveCommunity = async (req, res) => {
 //Getting Community to determine OwnerShip.
 export const getCommunityAdmins = async (req, res) => {
     try {
-        const userId = req.user.userId;
-        const {communityId} = req.params; 
+        const {communityId, userId} = req.params; 
 
         if(!userId || !communityId) {
             console.log("need user and communityId to fetch admins");
@@ -747,6 +746,62 @@ export const BanCommunityMember = async (req,res) => {
         res.status(500).json({error: "Failed to kick member"});
     }       
 }
+
+
+//Unban Community Member
+
+export const UnBanCommunityMember = async (req,res) => {
+     const transaction = await sequelize.transaction();
+    try {
+        const {userId, communityId} = req.params;  
+        
+        if(!userId || !communityId) {
+            return res.status(400).json({error: "need user and communityId to kick member"});
+        }
+
+        // First, find the record to get the primary key (id)
+        const memberRecord = await sequelize.query(`
+            SELECT id FROM dev_connect.usercommunities 
+            WHERE userId = ? AND communityId = ? AND role = "banned"
+        `, {
+            replacements: [userId, communityId],
+            type: sequelize.QueryTypes.SELECT,
+             transaction
+        });
+
+        if (!memberRecord || memberRecord.length === 0) {
+            return res.status(404).json({error: "Member not found or not a member"});
+        }
+        const primaryKeyId = memberRecord[0].id;
+
+        // Now delete using the primary key
+        const BanMember = await sequelize.query(`
+                        UPDATE dev_connect.usercommunities SET BanStatus = false, role='member' WHERE id=?; 
+        `, {
+            replacements: [primaryKeyId],
+            type: sequelize.QueryTypes.DELETE,
+            transaction
+        });
+              await sequelize.query(`
+            UPDATE dev_connect.communities
+            SET memberCount = GREATEST(memberCount + 1, 0)
+            WHERE id = ?
+        `, {
+            replacements: [communityId],
+            type: sequelize.QueryTypes.UPDATE,
+            transaction
+        });
+        
+        await transaction.commit();
+        res.json({message: "Member Banned successfully", Banned: true});
+        
+    } catch(error) {
+        await transaction.rollback();
+        console.log(error, "Can't kick member from community");
+        res.status(500).json({error: "Failed to kick member"});
+    }       
+}
+
 
 
 

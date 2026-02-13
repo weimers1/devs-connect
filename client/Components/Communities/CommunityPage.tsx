@@ -8,15 +8,7 @@ import CommunitySidebar from './CommunitySidebar';
 import API from '../../Service/service';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
 
-interface CommunityMembers {
-    id: string, 
-    role: string,
-    firstName: string, 
-    lastName: string ,
-    profileImageUrl: string,
-    BanStatus?: boolean;
-    
-}
+
 
 const CommunityPage: React.FC = () => {
     const { communityId } = useParams<{ communityId: string }>();
@@ -46,7 +38,7 @@ const CommunityPage: React.FC = () => {
                 // Fetch members after community loads
                 try {
                     const membersData = await API.getCommunityMembers(communityId);
-
+                
                     setMembers(membersData);
                 } catch (memberError) {
                     console.warn('Failed to fetch members:', memberError);
@@ -136,7 +128,6 @@ const CommunityPage: React.FC = () => {
         createdDate: community.createdAt,
         members: members,
         rules: community.rules,
-        isMember: members.role
     };
 
     return (

@@ -185,7 +185,7 @@ const API = {
 
     //Get Communities
     getCommunities: async (userId: string) => {
-        const response = await fetch(`${BASE_URL}/api/communities/${userId}`);
+        const response = await fetch(`${BASE_URL}/api/communities/user/${userId}`);
         if (!response.ok) throw new Error('Failed to fetch communities');
         return response.json();
     },
@@ -455,6 +455,14 @@ const API = {
             headers: getAuthHeaders(),
         })
         if(!response.ok) throw new Error('Failed to ban user');
+        return response.json();
+    },
+    UnBanCommunityMember: async(userId: string, communityId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/Unban/communityMember/${userId}/in/community/${communityId}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+        })
+        if(!response.ok) throw new Error('Failed to unban user');
         return response.json();
     }
 }

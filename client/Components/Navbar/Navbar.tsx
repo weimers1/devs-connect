@@ -31,7 +31,7 @@ const Navbar: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [name, setName] = useState('');
     const [communities, setCommunities] = useState<Community[]>([]); // Community Data
-  
+    
 
     useEffect(() => {
         const loadProfileData = async () => {
@@ -54,8 +54,7 @@ const Navbar: React.FC = () => {
         };
              const fetchCommunities = async () => {  //Load Community Data
             try {
-                const currentUser = await API.getCurrentUser();
-                 const data = await API.getCommunities(currentUser.userId);
+                 const data = await API.getCommunities();
                 setCommunities(data);
               
             } catch (error) {
@@ -129,13 +128,14 @@ const Navbar: React.FC = () => {
                         
                          {/* Desktop Search Bar */}
                     <div className="hidden md:block flex-1 max-w-sm ml-3 mt-0.5 ">
-                        <div className="relative">
+                        <div className="relative ">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Icon
                                     icon="mdi:magnify"
                                     className="h-5 w-5 text-gray-400"
                                 />
                             </div>
+                            
                             <input
                                 type="text"
                                 className={`block rounded-2xl w-full pl-10 pr-3 py-1.5 border leading-5 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out 

@@ -22,7 +22,7 @@ const handleCommunityClick = (communityId: string) => {
         navigate(`/community/${communityId}`);
     };
     return(
-        <div className="absolute top-15 ml-10 md:top-16 md:ml-38 z-50 ml-2 fixed bg-white rounded-xl w-72">
+        <div className="absolute top-15 ml-10 md:top-16 md:ml-38 z-50 ml-2 fixed bg-white rounded-xl w-82">
             <div className="py-2 flex flex-col">
                 {community.map((communityItem, index) => (
                     <button 
@@ -30,7 +30,7 @@ const handleCommunityClick = (communityId: string) => {
                         onClick={() => handleCommunityClick(communityItem.id)}
                         className="w-full text-left"
                     >
-                        <div className="flex items-center px-4 py-1.5 hover:bg-gray-50 cursor-pointer">
+                        <div className="flex items-center px-4 py-1 h-10 hover:bg-gray-50 cursor-pointer">
                             <div className="flex items-center space-x-3">
                                 <div className="relative">
                                     <Icon 
@@ -41,8 +41,11 @@ const handleCommunityClick = (communityId: string) => {
                                 <div>
                                     <p className="font-medium">{communityItem.name}</p>
                                     <p className="text-xs text-gray-500">{communityItem.memberCount} members</p>
+                                    
                                 </div>
+                                <br className="bg-red"/>
                             </div>
+                             
                         </div>
                     </button>
                 ))}
