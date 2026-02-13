@@ -55,15 +55,23 @@ export const createCommunity = async (req, res) => {
 export const getCommunities = async (req, res) => {
 
     try {
-        const {userId} = req.params;
+         const { userId } = req.params;
         const communities = await sequelize.query(`
-            SELECT 
-            uc.id,
-            uc.name, uc.description, uc.createdBy, uc.icon, uc.color, uc.image, uc.memberCount, uc.id, uc.isOwner
-            FROM communities uc
-            INNER JOIN usercommunities u 
-            ON u.communityId = uc.id
-            AND u.role != 'banned' WHERE u.userId = ?;`,{
+                      SELECT 
+  uc.id,
+  uc.name,
+   uc.icon,
+  uc.memberCount,
+  uc.description,
+  uc.color
+FROM communities uc
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM usercommunities u
+    WHERE u.communityId = uc.id
+      AND u.userId = ?
+      AND u.role = 'banned'
+);`,{
             replacements: [userId],
             type: sequelize.QueryTypes.SELECT,
      
@@ -714,6 +722,28 @@ export const joinCommunity = async (req, res) => {
     }
 };
 
+//Check banstatus
+export const checkBanStatus = async(req,res) => {
+    try{
+        const {userId, communityId} = req.params;
+           if(!userId || !communityId) {
+            return res.status(400).json({error: "need user and communityId to kick member"});
+        }
+        const banstatus = await sequelize.query(`SELECT BanStatus FROM dev_connect.usercommunities
+            WHERE userId = ? && communityId = ? 
+        `, {
+            replacements: [userId, communityId],
+            type: sequelize.QueryTypes.SELECT,
+            
+    })
+    if(!banstatus || banstatus.length === 0) {
+            return res.status(403).json({error: "user couldn't be found:"});
+        }
+        return res.json({banned: banstatus[0].BanStatus})
+} catch(error) {
+    console.log("was unable to checkbanstatus", error);
+}
+}
 //Ban Member
 
 export const BanCommunityMember = async (req,res) => {

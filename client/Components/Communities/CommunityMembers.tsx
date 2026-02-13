@@ -21,6 +21,7 @@ const CommunityMembers: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [errorstate, seterrorstate] = useState(false);
 
   const Temppfp = Profile;
 const navigate = useNavigate();
@@ -81,6 +82,7 @@ const navigate = useNavigate();
       fetchMembers();
     } catch (error) {
       console.error('Error performing action', error);
+      seterrorstate(true);
     }
   };
 
@@ -189,7 +191,20 @@ const navigate = useNavigate();
                     editUsers && selectedUserId === member.id ? 'bg-gray-100 text-gray-800' : 'text-gray-500'
                   }`}
                 >
-                        
+                        {errorstate && (
+                                    <>
+                <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-20 inset-0 flex items-center justify-center ">
+               
+        <div className="bg-white rounded-xl mb-12 p-6  md:w-90 mx-4">
+              <Icon icon="streamline-plump-color:sad-face-flat" className="mb-2 mx-auto" width="72" height="72" />
+            <h2 className="text-2xl font-bold mb-6 text-center">{`You Are Unable To Perform That Action At This Time`}</h2>
+            <div className="flex flex-col gap-3">
+            </div>
+        </div> 
+
+    </div>
+    </>
+                    )}
                   <Icon icon="mdi:account-remove" className="w-5 h-5" />
                 </button>
                 {editUsers && selectedUserId === member.id && isAdmin && (

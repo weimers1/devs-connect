@@ -25,7 +25,8 @@ import {
      LeaveCommunity,
      demoteCommunityMember,
      BanCommunityMember,
-     UnBanCommunityMember
+     UnBanCommunityMember,
+     checkBanStatus
      
 } from '../controllers/communityController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
@@ -59,6 +60,7 @@ router.get("/:communityId/communityAdmin/:userId", authMiddleware, getCommunityA
 router.get('/communityOwner/:id/communities/:communityId', authMiddleware, isCommunityOwner); //Gets a community Owner
 router.get('/:userId/communities/Data', authMiddleware,  getCommunitiesDataFromUser) //Get Data from communiites
 router.put('/:userId/community/:communityId/promote/from/:currentUserId', authMiddleware, PromoteCommunityMember);
+router.get('/checkBanStatus/:communityId/member/:userId', authMiddleware, checkBanStatus);
 
 
 

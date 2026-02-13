@@ -19,16 +19,18 @@ const CommunityPage: React.FC = () => {
     const [community, setCommunity] = useState<any>(null);
     const [members, setMembers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [banStatus, setbanStatus] = useState(true);
     
 
 
     useEffect(() => {
-        const fetchCommunity = async () => {
-            // SECURITY: Removed console.log statements that exposed community and member data
-            if (!communityId) {
+          if (!communityId) {
                 navigate('/communities');
                 return;
             }
+        const fetchCommunity = async () => {
+            // SECURITY: Removed console.log statements that exposed community and member data
+          
             try {
                 const communityData = await API.getCommunityById(communityId);
                 setCommunity(communityData);
@@ -51,8 +53,24 @@ const CommunityPage: React.FC = () => {
 
                 setLoading(false);
             }
+           
         };
-        
+         const checkBanStatus = async () => {
+                try{
+                    const currentUser = await API.getCurrentUser();
+                    if(!currentUser) {
+                        navigate('/login');
+                    }
+                    const banstatus = await API.checkBanStatus(communityId,currentUser.userId);
+                    setbanStatus(banstatus);
+                        if(!banstatus) {
+                            console.log("User is banned from this community")
+                        }
+                } catch(error) {
+                    console.log('there was an error checking ban status', error);
+                }
+            }
+        checkBanStatus();
         fetchCommunity();
     }, [communityId, navigate]);
 

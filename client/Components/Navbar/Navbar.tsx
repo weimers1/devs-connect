@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { assets } from '../../assets/assets';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useDropdown } from '../DropDown/DropDownContext';
 import ProfileDropdown from '../DropDown/ProfileDropDown';
@@ -22,6 +22,7 @@ export interface Community {
 }
 
 const Navbar: React.FC = () => {
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
     // const { theme } = useTheme();
@@ -54,7 +55,11 @@ const Navbar: React.FC = () => {
         };
              const fetchCommunities = async () => {  //Load Community Data
             try {
-                 const data = await API.getCommunities();
+                const currentUser = await API.getCurrentUser();
+            if(!currentUser) {
+                navigate('/login');
+            }
+                 const data = await API.getCommunities(currentUser.userId);
                 setCommunities(data);
               
             } catch (error) {
