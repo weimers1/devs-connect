@@ -340,12 +340,19 @@ export const getCommunityMembers = async (req, res) => {
 export const kickCommunityMember = async (req, res) => {
      const transaction = await sequelize.transaction();
     try {
-        const {userId, communityId} = req.params;  
-        
+        const {userId, communityId, currentUserId} = req.params;  
         if(!userId || !communityId) {
             return res.status(400).json({error: "need user and communityId to kick member"});
         }
-
+          const isadmin = await sequelize.query(`    
+            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {
+                replacements: [currentUserId, communityId],
+                  type: sequelize.QueryTypes.SELECT,
+                  transaction   
+            })
+            if(!isadmin || isadmin.length === 0) {
+                return res.status(403).json({error: "User is not an admin of this community"});
+            }
         // First, find the record to get the primary key (id)
         const memberRecord = await sequelize.query(`
             SELECT id FROM dev_connect.usercommunities 
@@ -478,6 +485,7 @@ export const getCommunityAdmins = async (req, res) => {
 }
 
 export const demoteCommunityMember = async (req, res) => {
+   
     try {
         const {userId, communityId, currentUserId} = req.params;
         if(!userId || !communityId) {
@@ -487,6 +495,7 @@ export const demoteCommunityMember = async (req, res) => {
             SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {
                 replacements: [currentUserId, communityId],
                   type: sequelize.QueryTypes.SELECT,
+               
             }) 
             if(!isadmin || isadmin.length === 0) {
                 return res.status(403).json({error: "User is not an admin of this community"});
@@ -495,9 +504,12 @@ export const demoteCommunityMember = async (req, res) => {
         UPDATE dev_connect.usercommunities SET role ="member" WHERE userId = ? AND communityId = ?`, {
                 replacements: [userId, communityId],
                 type: sequelize.QueryTypes.UPDATE,
+             
 })      
+       
         res.json({demote: demoteMember});
     }catch (error) {
+       
         console.error('Error Demoting Community Member', error);
         res.status(500).json({ error: 'Failed to fetch community posts' });
     }
@@ -571,14 +583,21 @@ export const getCommunityPosts = async (req, res) => {
 //Promote Community Member 
 
 export const PromoteCommunityMember = async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {
-        const requesterId = req.user.userId; // Person making the request
-        const { userId, communityId } = req.params; // Target user and community
-        
+        const { userId, communityId, currentUserId} = req.params; // Target user and community
         if(!requesterId || !userId || !communityId) {
             return res.status(400).json({ error: "Missing required parameters" });
         }
-        
+          const isadmin = await sequelize.query(`    
+            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {
+                replacements: [currentUserId, communityId],
+                  type: sequelize.QueryTypes.SELECT,
+                  transaction   
+            })
+            if(!isadmin || isadmin.length === 0) {
+                return res.status(403).json({error: "User is not an admin of this community"});
+            }
         const PromoteMember = await sequelize.query(`
             UPDATE dev_connect.usercommunities 
             SET role = "admin" 
@@ -586,11 +605,13 @@ export const PromoteCommunityMember = async (req, res) => {
         `, {
             replacements: [userId, communityId], // Target userId, not requester
             type: sequelize.QueryTypes.UPDATE,
+            transaction
         });
-
+        await transaction.commit();
         res.json({ message: "User promoted successfully", PromoteMember });
         
     } catch(error) {
+        await transaction.rollback();
         console.log(error, "Problem Promoting User In community");
         res.status(500).json({ error: "Failed to promote user" });
     }
@@ -696,14 +717,22 @@ export const joinCommunity = async (req, res) => {
 //Ban Member
 
 export const BanCommunityMember = async (req,res) => {
-     const transaction = await sequelize.transaction();
+   const transaction = await sequelize.transaction();
     try {
-        const {userId, communityId} = req.params;  
+        const {userId, communityId, currentUserId} = req.params;  
         
         if(!userId || !communityId) {
             return res.status(400).json({error: "need user and communityId to kick member"});
         }
-
+        const isadmin = await sequelize.query(`    
+            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {
+                replacements: [currentUserId, communityId],
+                  type: sequelize.QueryTypes.SELECT,
+                  transaction   
+            })
+            if(!isadmin || isadmin.length === 0) {
+                return res.status(403).json({error: "User is not an admin of this community"});
+            }
         // First, find the record to get the primary key (id)
         const memberRecord = await sequelize.query(`
             SELECT id FROM dev_connect.usercommunities 
@@ -711,7 +740,8 @@ export const BanCommunityMember = async (req,res) => {
         `, {
             replacements: [userId, communityId],
             type: sequelize.QueryTypes.SELECT,
-             transaction
+            transaction
+         
         });
 
         if (!memberRecord || memberRecord.length === 0) {
@@ -721,11 +751,12 @@ export const BanCommunityMember = async (req,res) => {
 
         // Now delete using the primary key
         const BanMember = await sequelize.query(`
-                        UPDATE dev_connect.usercommunities SET BanStatus = true, role='banned' WHERE id=?; 
+           UPDATE dev_connect.usercommunities SET BanStatus = true, role='banned' WHERE id=?; 
         `, {
             replacements: [primaryKeyId],
             type: sequelize.QueryTypes.DELETE,
             transaction
+           
         });
               await sequelize.query(`
             UPDATE dev_connect.communities
@@ -736,7 +767,6 @@ export const BanCommunityMember = async (req,res) => {
             type: sequelize.QueryTypes.UPDATE,
             transaction
         });
-        
         await transaction.commit();
         res.json({message: "Member Banned successfully", Banned: true});
         
@@ -753,12 +783,21 @@ export const BanCommunityMember = async (req,res) => {
 export const UnBanCommunityMember = async (req,res) => {
      const transaction = await sequelize.transaction();
     try {
-        const {userId, communityId} = req.params;  
+        const {userId, communityId, currentUserId} = req.params;  
         
         if(!userId || !communityId) {
             return res.status(400).json({error: "need user and communityId to kick member"});
         }
-
+         const isadmin = await sequelize.query(`    
+            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {
+                replacements: [currentUserId, communityId],
+                  type: sequelize.QueryTypes.SELECT,
+                  transaction
+               
+            })
+            if(!isadmin || isadmin.length === 0) {
+                return res.status(403).json({error: "User is not an admin of this community"});
+            }
         // First, find the record to get the primary key (id)
         const memberRecord = await sequelize.query(`
             SELECT id FROM dev_connect.usercommunities 
@@ -775,7 +814,7 @@ export const UnBanCommunityMember = async (req,res) => {
         const primaryKeyId = memberRecord[0].id;
 
         // Now delete using the primary key
-        const BanMember = await sequelize.query(`
+        const UnBanMember = await sequelize.query(`
                         UPDATE dev_connect.usercommunities SET BanStatus = false, role='member' WHERE id=?; 
         `, {
             replacements: [primaryKeyId],

@@ -70,11 +70,11 @@ const navigate = useNavigate();
         navigate('/login');
     }
     try {
-      if (action === 'kick') await API.kickCommunityMember(communityId, member.id);
-      if (action === 'ban') await API.banCommunityMember(member.id, communityId);
-      if (action === 'promote') await API.promoteUser(member.id, communityId);
+      if (action === 'kick') await API.kickCommunityMember(communityId, member.id, currentUser.userId);
+      if (action === 'ban') await API.banCommunityMember(member.id, communityId, currentUser.userId);
+      if (action === 'promote') await API.promoteUser(member.id, communityId, currentUser.userId);
       if (action === 'demote') await API.demoteCommunityMember(member.id, communityId, currentUser.userId);
-      if (action === 'unban') await API.UnBanCommunityMember(member.id, communityId);
+      if (action === 'unban') await API.UnBanCommunityMember(member.id, communityId, currentUser.userId);
 
       setSelectedUserId(null);
       setEditUsers(false);
@@ -196,7 +196,7 @@ const navigate = useNavigate();
                   <div className="absolute right-0 mt-2 w-36 bg-white shadow-lg rounded-lg border z-50 transition ease-out duration-150 transform scale-95 origin-top-right">
                     {member.role === 'banned' && (
                       <button
-                        className="w-full text-left px-3 py-2 hover:bg-red-grey text-red-800"
+                        className="w-full text-left px-3 py-2 hover:bg-red-grey text-red-800 hover:bg-gray-100"
                         onClick={() => handleAction('unban', member)}
                       >
                         unBan

@@ -200,8 +200,8 @@ const API = {
     },
 
     //Promomte User In Community
-    promoteUser: async(userId: string, communityId: string) => {
-        const response = await fetch(`${BASE_URL}/api/communities/${userId}/community/${communityId}/promote`, {
+    promoteUser: async(userId: string, communityId: string, currentUserId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/${userId}/community/${communityId}/promote/from/${currentUserId}`, {
         headers: getAuthHeaders(true),
         method: "PUT"
     });
@@ -412,8 +412,8 @@ const API = {
         return response.json();
     }, 
     //Kick a member from a community. 
-    kickCommunityMember: async (communityId: string, userId: string) => {
-        const response = await fetch(`${BASE_URL}/api/communities/member/${userId}/community/${communityId}`, 
+    kickCommunityMember: async (communityId: string, userId: string, currentUserId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/member/${userId}/community/${communityId}/from/${currentUserId}`, 
             { 
                 method: 'DELETE',
                 headers: getAuthHeaders(),
@@ -449,16 +449,16 @@ const API = {
         if(!response.ok) throw new Error('Failed to demote user');
     },
     //Ban Member from Community
-    banCommunityMember: async(userId: string, communityId: string) => {
-        const response = await fetch(`${BASE_URL}/api/communities/Ban/${communityId}/member/${userId}`, {
+    banCommunityMember: async(userId: string, communityId: string, currentUserId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/Ban/${communityId}/member/${userId}/from/${currentUserId}`, {
             method: 'PUT',
             headers: getAuthHeaders(),
         })
         if(!response.ok) throw new Error('Failed to ban user');
         return response.json();
     },
-    UnBanCommunityMember: async(userId: string, communityId: string) => {
-        const response = await fetch(`${BASE_URL}/api/communities/Unban/communityMember/${userId}/in/community/${communityId}`, {
+    UnBanCommunityMember: async(userId: string, communityId: string, currentUser: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/Unban/communityMember/${userId}/in/community/${communityId}/from/${currentUser}`, {
             method: 'PUT',
             headers: getAuthHeaders(),
         })

@@ -33,11 +33,11 @@ import authMiddleware from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 router.get('/user/:userId', getCommunities);
-router.delete("/member/:userId/community/:communityId", authMiddleware, kickCommunityMember); //Kick a member from a community
+router.delete("/member/:userId/community/:communityId/from/:currentUserId", authMiddleware, kickCommunityMember); //Kick a member from a community
 router.delete('/leave/communityMember/:userId/community/:communityId',authMiddleware, LeaveCommunity);
 router.put('/demote/:communityId/member/:userId/with/:currentUserId', authMiddleware, demoteCommunityMember);
-router.put('/Ban/:communityId/member/:userId', authMiddleware, BanCommunityMember)//Ban Community Member
-router.put('/Unban/communityMember/:userId/in/community/:communityId', authMiddleware, UnBanCommunityMember);
+router.put('/Ban/:communityId/member/:userId/from/:currentUserId', authMiddleware, BanCommunityMember)//Ban Community Member
+router.put('/Unban/communityMember/:userId/in/community/:communityId/from/:currentUserId', authMiddleware, UnBanCommunityMember);
 router.get('/:id', getCommunityById);
 router.get('/:id/posts', getCommunityPosts);
 router.get('/:id/members', getCommunityMembers);
@@ -58,7 +58,7 @@ router.get('/posts/:postId/likes/:userId', authMiddleware, getLikeStatus); //Get
 router.get("/:communityId/communityAdmin/:userId", authMiddleware, getCommunityAdmins); //Returns Community adminship
 router.get('/communityOwner/:id/communities/:communityId', authMiddleware, isCommunityOwner); //Gets a community Owner
 router.get('/:userId/communities/Data', authMiddleware,  getCommunitiesDataFromUser) //Get Data from communiites
-router.put('/:userId/community/:communityId/promote', authMiddleware, PromoteCommunityMember);
+router.put('/:userId/community/:communityId/promote/from/:currentUserId', authMiddleware, PromoteCommunityMember);
 
 
 
