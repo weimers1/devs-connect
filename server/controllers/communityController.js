@@ -723,27 +723,41 @@ export const joinCommunity = async (req, res) => {
 };
 
 //Check banstatus
-export const checkBanStatus = async(req,res) => {
-    try{
-        const {userId, communityId} = req.params;
-           if(!userId || !communityId) {
-            return res.status(400).json({error: "need user and communityId to kick member"});
+export const checkBanStatus = async (req, res) => {
+    try {
+        const { userId, communityId } = req.params;
+
+        if (!userId || !communityId) {
+            return res.status(400).json({
+                error: "Need userId and communityId"
+            });
         }
-        const banstatus = await sequelize.query(`SELECT BanStatus FROM dev_connect.usercommunities
-            WHERE userId = ? && communityId = ? 
-        `, {
-            replacements: [userId, communityId],
-            type: sequelize.QueryTypes.SELECT,
-            
-    })
-    if(!banstatus || banstatus.length === 0) {
-            return res.status(403).json({error: "user couldn't be found:"});
+
+        const result = await sequelize.query(
+            `SELECT BanStatus 
+             FROM dev_connect.usercommunities
+             WHERE userId = ? AND communityId = ?;`,
+            {
+                replacements: [userId, communityId],
+                type: sequelize.QueryTypes.SELECT,
+            }
+        );
+
+        if (!result.length) {
+            return res.json({ banned: false });
         }
-        return res.json({banned: banstatus[0].BanStatus})
-} catch(error) {
-    console.log("was unable to checkbanstatus", error);
-}
-}
+
+        return res.json({
+            banned: Boolean(result[0].BanStatus)
+        });
+
+    } catch (error) {
+        console.log("Unable to check ban status:", error);
+        return res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+};
 //Ban Member
 
 export const BanCommunityMember = async (req,res) => {

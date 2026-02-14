@@ -86,7 +86,7 @@ const [UserId, setUserId] = useState(false);
                                 </h3>
                                 {community.createdBy.toString() == UserId.toString() && (
                                     <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                        Owners
+                                        Owner
                                     </span>
                                 )}
                             </div>

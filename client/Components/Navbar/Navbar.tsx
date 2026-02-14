@@ -35,42 +35,38 @@ const Navbar: React.FC = () => {
     
 
     useEffect(() => {
-        const loadProfileData = async () => {
-            if (!isAuthenticated) {
-                setLoading(false);
-                return;
+    const loadProfileData = async () => {
+        try {
+            const response = await API.getProfileInformation();
+            if (response?.pfp) {
+                setUserProfile(response.pfp);
+            } else {
+                setUserProfile('');
             }
-            try {
-                const response = await API.getProfileInformation();
-                if (response.pfp) {
-                    setUserProfile(response.pfp);
-                } else {
-                    setUserProfile('');
-                }
-            } catch (error) {
-                console.error('Failed to Load UserProfile', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-             const fetchCommunities = async () => {  //Load Community Data
-            try {
-                const currentUser = await API.getCurrentUser();
-            if(!currentUser) {
-                navigate('/login');
-            }
-                 const data = await API.getCommunities(currentUser.userId);
-                setCommunities(data);
-              
-            } catch (error) {
-                console.error('Failed to fetch communities:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCommunities();
+        } catch (error) {
+            console.error('Failed to Load UserProfile', error);
+        }
+    };
+
+    const fetchCommunities = async () => {
+        try {
+            const currentUser = await API.getCurrentUser();
+            if (!currentUser) return;
+
+            const data = await API.getCommunities(currentUser.userId);
+            setCommunities(data);
+        } catch (error) {
+            console.error('Failed to fetch communities:', error);
+        }
+    };
+
+    if (isAuthenticated) {
         loadProfileData();
-    }, [isAuthenticated]);
+        fetchCommunities();
+    } else {
+        setLoading(false);
+    }
+}, [isAuthenticated]);
 
 
     //Overall Search Bar Udpdate

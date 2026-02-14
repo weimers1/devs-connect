@@ -7,6 +7,7 @@ import CommunityTabs from './CommunityTabs';
 import CommunitySidebar from './CommunitySidebar';
 import API from '../../Service/service';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
+import { Icon } from '@iconify/react/dist/iconify.js';
 
 
 
@@ -20,10 +21,12 @@ const CommunityPage: React.FC = () => {
     const [members, setMembers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [banStatus, setbanStatus] = useState(true);
+    const [seconds, setSeconds] = useState(3);
     
 
 
     useEffect(() => {
+          let intervalId;
           if (!communityId) {
                 navigate('/communities');
                 return;
@@ -61,10 +64,19 @@ const CommunityPage: React.FC = () => {
                     if(!currentUser) {
                         navigate('/login');
                     }
-                    const banstatus = await API.checkBanStatus(communityId,currentUser.userId);
-                    setbanStatus(banstatus);
-                        if(!banstatus) {
-                            console.log("User is banned from this community")
+                    const banstatus = await API.checkBanStatus(communityId,currentUser.userId);  
+                        setbanStatus(banstatus.banned);
+                        if(banstatus.banned == true) {
+                            const intervalId = setInterval(() => {
+                                setSeconds(prev => {
+                                    if (prev <= 0) {
+                                        clearInterval(intervalId);
+                                        navigate('/communities');
+                                        return 0;
+                                    }
+                                    return prev - 1;
+                                });
+                            }, 1000);
                         }
                 } catch(error) {
                     console.log('there was an error checking ban status', error);
@@ -72,6 +84,11 @@ const CommunityPage: React.FC = () => {
             }
         checkBanStatus();
         fetchCommunity();
+         return () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+};
     }, [communityId, navigate]);
 
     if (loading) {
@@ -149,7 +166,26 @@ const CommunityPage: React.FC = () => {
     };
 
     return (
+      
         <Layout>
+              {banStatus ? (
+                
+                           <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-20 inset-0 flex items-center justify-center ">
+                          
+                   <div className="bg-white rounded-xl mb-12 p-6  md:w-90 mx-4">
+                         <Icon icon="streamline-plump-color:sad-face-flat" className="mb-2 mx-auto" width="72" height="72" />
+                       <h2 className="text-2xl font-bold mb-6 text-center">{`You Are Unable To Perform That Action At This Time`}</h2>
+                         <div style={{ textAlign: 'center', marginTop: '5px' }} className="text-2xl font-bold">
+                             {seconds > 0 ? `Being Redirected in: ${seconds}s` : "Redirected!"}
+                                    </div>
+                       <div className="flex flex-col gap-3">
+                       </div>
+                   </div> 
+           
+               </div>
+        ) : (
+           
+        
             <div className="min-h-screen bg-gray-50">
                 <CommunityHeader community={transformedCommunity} />
                 
@@ -172,6 +208,7 @@ const CommunityPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+            )}
         </Layout>
     );
 };
