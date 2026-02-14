@@ -27,10 +27,10 @@ const CommunityPage: React.FC = () => {
 
     useEffect(() => {
           let intervalId;
-          if (!communityId) {
-                navigate('/communities');
-                return;
-            }
+              if (!communityId) {
+        const timeoutId = setTimeout(() => navigate('/communities'), 0);
+        return () => clearTimeout(timeoutId);
+    }
         const fetchCommunity = async () => {
             // SECURITY: Removed console.log statements that exposed community and member data
           
@@ -85,9 +85,9 @@ const CommunityPage: React.FC = () => {
         checkBanStatus();
         fetchCommunity();
          return () => {
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
+     return () => {
+        if (intervalId) clearInterval(intervalId);
+    };
 };
     }, [communityId, navigate]);
 

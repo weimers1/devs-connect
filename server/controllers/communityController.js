@@ -251,10 +251,23 @@ export const getCommunitiesDataFromUser = async(req, res) => {
         const { userId } = req.params;
         
         const communitiesDatafromuser = await sequelize.query(
-            ` SELECT uc.name, uc.description, uc.createdBy, uc.icon, uc.color, uc.image, uc.memberCount, uc.id, uc.isOwner
-                FROM communities uc
-                LEFT JOIN usercommunities u ON  uc.id = u.communityId
-                WHERE u.userId = ?;
+            ` SELECT
+              uc.id,
+                uc.name,
+                 uc.icon,
+                    uc.memberCount,
+                    uc.description,
+                    uc.color,
+                    uc.image,
+                    uc.isOwner,
+                    uc.createdBy
+                    FROM communities uc
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM usercommunities u
+                        WHERE u.communityId = uc.id
+                        AND u.userId = ?
+                        AND u.role = 'banned')
              `,
             {
                 replacements: [userId],
