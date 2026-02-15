@@ -11,7 +11,6 @@ export const createCommunity = async (req, res) => {
     
     try {
         const { name, description, icon, color, isPrivate } = req.body;
-        console.log('User:', req.user)
 
         if (!name || !description) {
             return res
@@ -34,7 +33,7 @@ export const createCommunity = async (req, res) => {
         await UserCommunity.create({
             userId: req.user.userId,
             communityId: community.id,
-            role: 'admin',
+            role: 'owner',
             joinedAt: new Date(),
         });
 
@@ -169,23 +168,24 @@ export const updateCommunity = async (req, res) => {
 
 export const isCommunityOwner = async (req, res) => {
     try {
-       const createdBy = req.user.userId;
-       const {id} = req.params; 
+    //    const createdBy = req.user.userId;
+       const {createdBy, id} = req.params; 
         if(!createdBy || !id) {
             console.log("no user or no community");
             return; 
         }
+    
         const owner = await sequelize.query(`
            SELECT * FROM dev_connect.communities WHERE createdBy = ? AND id = ?;
             `, {
                     replacements:[createdBy, id], 
                     type: sequelize.QueryTypes.SELECT
             });
-        if(!owner || owner.length === 0) {
+        if(owner.length === 0) {
             console.log("Not the owner no return");
             return res.json({owner: false});
         }   
-         return res.json({owner: owner});
+         return res.json({owner: true});
 
     } catch(error) {
         console.log(error, "error getting community Owner");
@@ -513,7 +513,7 @@ export const demoteCommunityMember = async (req, res) => {
             return res.status(400).json({ error: "Missing required parameters" });
         }
             const isadmin = await sequelize.query(`    
-            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {
+            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='owner'`, {
                 replacements: [currentUserId, communityId],
                   type: sequelize.QueryTypes.SELECT,
                
@@ -607,11 +607,11 @@ export const PromoteCommunityMember = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
         const { userId, communityId, currentUserId} = req.params; // Target user and community
-        if(!requesterId || !userId || !communityId) {
+        if(!currentUserId || !userId || !communityId) {
             return res.status(400).json({ error: "Missing required parameters" });
         }
           const isadmin = await sequelize.query(`    
-            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {
+            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='owner'`, {
                 replacements: [currentUserId, communityId],
                   type: sequelize.QueryTypes.SELECT,
                   transaction   

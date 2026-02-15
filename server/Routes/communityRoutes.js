@@ -57,7 +57,7 @@ router.get('/:userId/communities', authMiddleware, getCommunitiesFromUser); // G
 router.get('/posts/:postId/likes', authMiddleware, getLikes); //Get Likes from a Users Post
 router.get('/posts/:postId/likes/:userId', authMiddleware, getLikeStatus); //Get Likes from a Users Post
 router.get("/:communityId/communityAdmin/:userId", authMiddleware, getCommunityAdmins); //Returns Community adminship
-router.get('/communityOwner/:id/communities/:communityId', authMiddleware, isCommunityOwner); //Gets a community Owner
+router.get('/communityOwner/:id/communities/:createdBy', authMiddleware, isCommunityOwner); //Gets a community Owner
 router.get('/:userId/communities/Data', authMiddleware,  getCommunitiesDataFromUser) //Get Data from communiites
 router.put('/:userId/community/:communityId/promote/from/:currentUserId', authMiddleware, PromoteCommunityMember);
 router.get('/checkBanStatus/:communityId/member/:userId', authMiddleware, checkBanStatus);

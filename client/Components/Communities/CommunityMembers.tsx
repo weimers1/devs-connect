@@ -22,6 +22,7 @@ const CommunityMembers: React.FC = () => {
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [errorstate, seterrorstate] = useState(false);
+  const [currentUser, setCurrentUser] = useState('');
 
   const Temppfp = Profile;
 const navigate = useNavigate();
@@ -39,8 +40,12 @@ const navigate = useNavigate();
     if (!communityId) return;
     try {
       const user = await API.getCurrentUser();
+      if(!user) {
+        navigate('/login');
+      }
       const adminStatus = await API.getCommunityAdmins(communityId, user.userId);
       setIsAdmin(adminStatus.admin);
+      setCurrentUser(user.userId);
 
       const communityData = await API.getCommunityById(communityId);
       if (communityData && communityData.createdBy) setOwnerId(communityData.createdBy);
@@ -53,7 +58,7 @@ const navigate = useNavigate();
     fetchMembers();
     fetchAdminStatus();
   }, []);
-
+ 
   const handleClick = (userId: string) => {
     if (selectedUserId === userId) {
       setSelectedUserId(null);
@@ -87,7 +92,7 @@ const navigate = useNavigate();
   };
 
   return (
-    <div className="bg-white shadow-sm md:rounded-xl w-full md:w-1/3 p-4">
+    <div className="bg-white shadow-sm md:rounded-xl w-full md:w-1/3 p-4 md:border md:rounded-xl">
       <h1 className="text-2xl font-bold mb-5 text-center">Members</h1>
 
       {/* Active Members */}
@@ -114,12 +119,13 @@ const navigate = useNavigate();
                   <p className="text-xs text-gray-500">{member.isOnline ? 'Online' : 'Offline'}</p>
                 </div>
                 {member.role === 'admin' && (
-                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Admin</span>
+                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 mr-2 rounded">Admin</span>
                 )}
               </div>
 
               {/* Hamburger Menu */}
               <div className="relative">
+                {member.id != currentUser && (
                 <button
                   onClick={() => handleClick(member.id)}
                   className={`p-1 rounded hover:bg-gray-200 transition-colors ${
@@ -128,11 +134,12 @@ const navigate = useNavigate();
                 >
                   <Icon icon="mdi:menu" className="w-5 h-5" />
                 </button>
-
+                )}
                 {/* Popover */}
-                {editUsers && selectedUserId === member.id && isAdmin && (
+                {editUsers && selectedUserId === member.id && (isAdmin || ownerId === currentUser) && (
                   <div className="absolute right-0 mt-2 w-36 bg-white shadow-lg rounded-lg border z-50 transition ease-out duration-150 transform scale-95 origin-top-right">
-                    {member.role === 'admin' ? (
+                    {currentUser == ownerId && (
+                         member.role === 'admin' ? (
                       <button
                         className="w-full text-left px-3 py-2 hover:bg-gray-100"
                         onClick={() => handleAction('demote', member)}
@@ -146,7 +153,9 @@ const navigate = useNavigate();
                       >
                         Promote
                       </button>
-                    )}
+                    )
+                )}
+                   
                     <button
                       className="w-full text-left px-3 py-2 hover:bg-gray-100 text-red-600"
                       onClick={() => handleAction('kick', member)}

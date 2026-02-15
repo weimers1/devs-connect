@@ -69,8 +69,9 @@ const EditCommunity: React.FC<userCommunites> = () => {
             }
 
             try {
-                const data = await API.getCommunityAdmins(communityId, userId); //Only admins can edit community for now     
-                    if (!data.admin || data.admin.length === 0) {
+                const isAdmin = await API.getCommunityAdmins(communityId, userId); //Only admins can edit community for now
+                const isOwner = await API.isCommunityOwner(userId, communityId); //Owner Has Access
+                  if (!isAdmin.admin && !isOwner.owner) {
                     navigate(`/communities`);
                     return;
                 }
@@ -155,8 +156,7 @@ const EditCommunity: React.FC<userCommunites> = () => {
                 <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-4">
                     <div className="bg-white  rounded-none md:border md:rounded-xl shadow-sm p-8">
                         <div className="flex items-center mb-6">
-                            <button
-                                onClick={() => navigate(`/community/${communityId}`)}
+                            <button                                onClick={() => navigate(`/community/${communityId}`)}
                                 className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                             >
                                 <Icon icon="mdi:arrow-left" className="w-5 h-5" />

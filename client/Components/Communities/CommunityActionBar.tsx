@@ -21,6 +21,8 @@ const CommunityActionBar: React.FC<CommunityActionBarProps> = ({
 const { communityId } = useParams<{ communityId: string }>(); //Get the community ID FROM Browser
 const [membershipStatus, setMembershipStatus] = useState(false);
 const [isOwner, setOwnerStatus] = useState(false);
+const [isAdmin, setIsAdmin] = useState(false);
+// const [ownerId, setOwnerId] = useState<string | null>();
 
     const onJoin = async () =>  {
     // Implement join community logic here
@@ -91,25 +93,47 @@ useEffect(() => {
                 return;
             }
         if (userId && communityId) {
-            const OwnerStatus = await API.getCommunityAdmins(communityId, userId);
-                setOwnerStatus(OwnerStatus.admin);      
+            const OwnerStatus = await API.isCommunityOwner(userId, communityId);
+                if(OwnerStatus.owner == false) return; //not owner
+                setOwnerStatus(OwnerStatus.owner);     
             }
-        
+            
         } catch (error) {
             console.error("Error Fetching membership status:", error);
         }
     }
+     const fetchIsAdmin = async () => {
+             try{  
+            const user  = await API.getCurrentUser();
+            const userId = user.userId;  
+            if(!userId) {
+                console.log("No user Logged in");
+                return;
+            }
+        if (userId && communityId) {
+            const AdminStatus = await API.getCommunityAdmins(communityId, userId);
+                if(AdminStatus.admin == false) return; //not owner
+                setIsAdmin(AdminStatus.admin);   
+            }
+            
+        } catch (error) {
+            console.error("Error Fetching membership status:", error);
+        }
+    }
+    fetchIsAdmin();
     fetchHasUserJoined();
     fetchIsOwner();
 } ,[]);
+
     const navigate = useNavigate();
     const handleEditCommunity = () => {
-        if(isOwner === true) {
+        if(isOwner == true || isAdmin) {
         navigate(`/edit-community/${communityId}`);
         }else {
             return;
         }
     };
+   
     return (
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -124,7 +148,7 @@ useEffect(() => {
                     </p>
                 </div>
                 <div className="flex space-x-3">
-                    {isOwner ? (
+                    {isOwner || isAdmin  ? (
                         <>
                             <button 
                                 onClick={handleEditCommunity}
