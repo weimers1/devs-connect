@@ -125,7 +125,7 @@ const navigate = useNavigate();
 
               {/* Hamburger Menu */}
               <div className="relative">
-                {member.id != currentUser && (
+                {member.id != currentUser && !(isAdmin && member.role === 'admin' && currentUser !== ownerId)  && (
                 <button
                   onClick={() => handleClick(member.id)}
                   className={`p-1 rounded hover:bg-gray-200 transition-colors ${

@@ -37,7 +37,6 @@ const [UserId, setUserId] = useState(false);
                     setUserId(user.userId);
                     const communityData = await API.getCommunitiesDataFromUser(user.userId);
                     setCommunitiesData(communityData);
-                    console.log(communityData);
                 } catch(error) {
                     console.log(error, "error fetching user communities");
                 }
