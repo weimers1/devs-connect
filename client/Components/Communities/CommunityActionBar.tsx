@@ -148,7 +148,7 @@ useEffect(() => {
                     </p>
                 </div>
                 <div className="flex space-x-3">
-                    {isOwner || isAdmin  ? (
+                    {isOwner || isAdmin  && (
                         <>
                             <button 
                                 onClick={handleEditCommunity}
@@ -157,12 +157,19 @@ useEffect(() => {
                                 <Icon icon="mdi:cog" className="w-4 h-4 mr-2 inline" />
                                 Edit Community
                             </button>
-                            <div className="px-4 py-2 bg-green-100 text-green-700 rounded-lg">
+                            {/* {isOwner ?(
+                                     <div className="px-4 py-2 bg-green-100 text-green-700 rounded-lg">
                                 <Icon icon="mdi:crown" className="w-4 h-4 mr-2 inline" />
                                 Owner
                             </div>
+                            ) : (
+                                <div className="px-4 py-2 bg-green-100 text-green-700 rounded-lg">
+                                Admin
+                                </div>
+                            )} */}
+                           
                         </>
-                    ) : (
+                    ) }
                         <button
                             
                         onClick={membershipStatus ? LeaveCommunity : onJoin}
@@ -178,7 +185,7 @@ useEffect(() => {
                             />
                             {membershipStatus ? 'Joined' : 'Join Community'}
                         </button>
-                    )}
+                    
                 </div>
             </div>
         </div>

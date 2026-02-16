@@ -23,6 +23,8 @@ const CommunityMembers: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [errorstate, seterrorstate] = useState(false);
   const [currentUser, setCurrentUser] = useState('');
+  const [rightvalue, setrightvalue] = useState(13);
+  const [leftvalue, setleftvalue] = useState(0);
 
   const Temppfp = Profile;
 const navigate = useNavigate();
@@ -53,6 +55,8 @@ const navigate = useNavigate();
       console.error('Error fetching admin status', error);
     }
   };
+
+
 
   useEffect(() => {
     fetchMembers();
@@ -91,15 +95,43 @@ const navigate = useNavigate();
     }
   };
 
+  const leftArrowClick = async () => {
+    if(rightvalue > 13) {
+      setrightvalue(rightvalue - 13);
+    }
+    if(leftvalue > 0) {
+      setleftvalue(leftvalue - 13);
+    }
+  }
+  const rightarrowclick = async () => {
+      setrightvalue(rightvalue + 13);
+      setleftvalue(leftvalue + 13);
+  }
+
   return (
     <div className="bg-white shadow-sm md:rounded-xl w-full md:w-1/3 p-4 md:border md:rounded-xl">
-      <h1 className="text-2xl font-bold mb-5 text-center">Members</h1>
-
+      <div className="flex items-center justify-between mb-5">
+    <button
+    onClick={leftArrowClick}
+    >
+      <Icon icon="tabler:arrow-narrow-left" className="mt-1.5 hover:bg-gray-100 rounded-2xl" width="24" height="24" />
+    </button>
+  
+    
+    <h1 className="text-2xl font-bold text-center flex-1">
+      Members
+    </h1>
+      <button
+    onClick={rightarrowclick}
+    >
+    <Icon icon="tabler:arrow-narrow-right" className="mt-1.5 hover:bg-gray-100 rounded-2xl" width="24" height="24" />
+    </button>
+  </div>
       {/* Active Members */}
       <div className="space-y-3">
         {members
           .filter((m) => !m.BanStatus && m.id != ownerId)
-          .map((member) => (
+          .slice(leftvalue,rightvalue).map((member) => (
             <div key={member.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg relative">
               <div className="flex items-center space-x-3">
                 <div className="relative">

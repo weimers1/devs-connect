@@ -110,6 +110,12 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community }) => {
                 Admin
               </span>
             )}
+             {member.role === "owner" && (
+              <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">
+                 <Icon icon="mdi:crown" className="w-4 h-4 mr-1 inline" />
+                Owner
+              </span>
+            )}
           </div>
         </div>
       ))
