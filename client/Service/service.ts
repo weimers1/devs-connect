@@ -471,6 +471,14 @@ const API = {
         })
         if(!response.ok) throw new Error('Failed to unban user');
         return response.json();
+    },
+    connectToUser: async(user1Id: string, user2Id: string) => {
+        const response = await fetch(`${BASE_URL}/api/connections/connect/${user1Id}/to/${user2Id}`,{
+            method: "POST",
+            headers: getAuthHeaders(),
+        })
+        if(!response.ok) throw new Error('Failed To Connect to user');
+        return response.json();
     }
 }
 

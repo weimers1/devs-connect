@@ -42,6 +42,7 @@ function Profile() {
     const { userId } = useParams<{ userId: string }>();
     // const navigate = useNavigate();
     const isOwnProfile = !userId;
+    const navigate = useNavigate();
     // const [showCertModal, setShowCertModal] = React.useState(false); //Certification Modal
     const [showProfModal, setShowProfModal] = React.useState(false); // Profile Modal
     const [certSaving, setCertSaving] = useState(false);
@@ -49,6 +50,7 @@ function Profile() {
     const [currentProfileImage, setCurrentProfileImage] = useState('');
     const [certSaveStatus, setCertSaveStatus] = useState(''); // 'success', 'error', ''
     const [hasChanges, setHasChanges] = useState(false);
+    const [currentUser, setcurrentUser] = useState('');
     // const theme = useTheme(); //Change Theme
 
     // const [certData, setCertData] = useState({
@@ -143,6 +145,11 @@ function Profile() {
         }
     };
 
+    // const [connectionData, setConnectionData] = useState({
+    //     user2Id: userId,
+    //     currentUserId: ''
+    // });
+
     // Profile edit data
     const [profileData, setProfileData] = useState({
         firstName: '',
@@ -164,6 +171,7 @@ function Profile() {
                 const decodedPfp = response.pfp ? decodeURIComponent(response.pfp) : '';
                 setProfileData(response);
                 setCurrentProfileImage(decodedPfp);
+
             } catch (error) {
                 console.error('Failed to load profile data:', error);
                 setProfileData({
@@ -177,6 +185,19 @@ function Profile() {
                 });
             }
         };
+        const loadcurrentuser = async () => {
+            try {
+                const user = await API.getCurrentUser();
+                if(!user) {
+                    console.log("no user logged in");
+                    navigate("/login");
+                }
+                setcurrentUser(user.userId);
+            } catch(error) {
+                console.log("error obtaining use data", error);
+            }
+        }
+        loadcurrentuser();
         loadProfileData();
     }, [userId, isOwnProfile]);
     //Check Url For modal trigger so the form for certifications and profile  can pop up
@@ -301,7 +322,7 @@ function Profile() {
                     setProfileSaving(false);
                 }
             };
-            const currentYear = new Date().getFullYear();
+            // const currentYear = new Date().getFullYear();
             // setTimeout(() => {
             //     setShowCertModal(false);
             //     setCertSaving(false);
@@ -356,19 +377,20 @@ function Profile() {
             setProfileSaving(false);
         }
     };
-    const currentYear = new Date().getFullYear();
-    const startYear = currentYear - 100; // Or any desired start year
-    const years = Array.from(
-        { length: currentYear - startYear + 1 },
-        (_, i) => startYear + i
-    );
-    const sortedYears = [...years].sort((a, b) => b - a); //Sort Years from most recent to oldest
+    // const currentYear = new Date().getFullYear();
+    // const startYear = currentYear - 100; // Or any desired start year
+    // const years = Array.from(
+    //     { length: currentYear - startYear + 1 },
+    //     (_, i) => startYear + i
+    // );
+    // const sortedYears = [...years].sort((a, b) => b - a); //Sort Years from most recent to oldest
     return (
         <Layout>
             {/* Main container - centered for other users, full width for own profile */}
            <div className="flex mt-3 flex-col items-center space-y-4">
                 {/* User Profile Card */}
                 <UserCard
+                    currentUserId={currentUser}
                     userId={userId}
                     isOwnProfile={isOwnProfile}
                     profileData={profileData}

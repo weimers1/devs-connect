@@ -16,6 +16,7 @@ import './Models/UserCommunity.js';
 import './Models/Post.js';
 import './Models/PostLike.js';
 import './Models/PostComment.js';
+import './Models/Connections.js';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import messageRoutes from './Routes/MessageRoutes.js';
@@ -29,6 +30,7 @@ import sessionRouter from './routes/sessionRoutes.js';
 import settingsRouter from './Routes/settingsRoutes.js';
 import uploadRoutes from './Routes/uploadRoutes.js';
 import githubRoutes from './Routes/github.js';
+import connectionsRoutes from "./Routes/connectionsRoutes.js";
 import communityRoutes from './Routes/communityRoutes.js';
 import passport from 'passport';
 import session from 'express-session';
@@ -201,6 +203,9 @@ app.use('/api/users', userRouter);
 
 // Error handling middleware
 app.use(errorHandler);
+
+//Connections API
+app.use('/api/connections', connectionsRoutes);
 
 // Clean up duplicate email indexes
 async function cleanUpEmailIndexes() {

@@ -8,10 +8,11 @@ interface UserCardProps {
     userId?: string;
     isOwnProfile: boolean;
     profileData: any;
+    currentUserId: string | null;
 }
 
-function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
-        const [imageUploading, setImageUploading] = useState(false);
+function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCardProps) {
+        // const [imageUploading, setImageUploading] = useState(false);
         const navigate = useNavigate();
         const [currentProfileImage, setCurrentProfileImage] = useState('');
 
@@ -30,11 +31,20 @@ function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
             return false;
         }
     };
-
+//  console.log(userId);
     function handleClick() {
        navigate("/profile?showProfModal=true");
        window.location.reload();
     }
+console.log(currentUserId);
+    // const handleConnect = async () => {
+    //     try{
+
+    //     } catch(error) {
+    //         console.log("there was an error trying to connect to user", error);
+    //     }
+    // }
+    
 
     // const handleImageUpload = async (file: File) => {
     //         setImageUploading(true);
@@ -123,7 +133,6 @@ function UserCard({ userId, isOwnProfile, profileData }: UserCardProps) {
         navigate('/profile?showProfModal=true');
         window.location.reload();
     }
-    console.log(currentProfileImage);
     return (
         <div className="w-full max-w-2xl bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2 mx-auto">
             {/* Banner - Full width on mobile */}
