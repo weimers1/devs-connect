@@ -5,45 +5,59 @@ import API from '../../Service/service';
 import React, { useState, useEffect } from 'react';
 
 interface UserCardProps {
-    userId?: string;
+    userId: string;
     isOwnProfile: boolean;
     profileData: any;
-    currentUserId: string | null;
+    currentUserId: string;
 }
 
 function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCardProps) {
         // const [imageUploading, setImageUploading] = useState(false);
         const navigate = useNavigate();
         const [currentProfileImage, setCurrentProfileImage] = useState('');
+        const [connectStatus, setconnectStatus] = useState(false);
 
     //Validate Image URL to prevent SSRF attacks
-     const validateImageUrl = (url: string) => {
-        try {
-            const parsedUrl = new URL(url);
-            const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com', 'localhost'];
-            return (
-                  (allowedHosts.some((host) =>
-                    parsedUrl.hostname.endsWith(host)
-                ) && parsedUrl.protocol === 'https:') ||
-                (parsedUrl.hostname === 'localhost' && parsedUrl.protocol === 'http:')
-            );
-        } catch {
-            return false;
-        }
-    };
+    //  const validateImageUrl = (url: string) => {
+    //     try {
+    //         const parsedUrl = new URL(url);
+    //         const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com', 'localhost'];
+    //         return (
+    //               (allowedHosts.some((host) =>
+    //                 parsedUrl.hostname.endsWith(host)
+    //             ) && parsedUrl.protocol === 'https:') ||
+    //             (parsedUrl.hostname === 'localhost' && parsedUrl.protocol === 'http:')
+    //         );
+    //     } catch {
+    //         return false;
+    //     }
+    // };
 //  console.log(userId);
     function handleClick() {
        navigate("/profile?showProfModal=true");
        window.location.reload();
     }
 console.log(currentUserId);
-    // const handleConnect = async () => {
-    //     try{
+console.log(userId);
+    const handleConnect = async () => {
 
-    //     } catch(error) {
-    //         console.log("there was an error trying to connect to user", error);
-    //     }
-    // }
+        try{
+             console.log("clicked");
+            if(!userId) {
+                navigate('/login');  
+            }
+            const connect = await API.connectToUser(userId, currentUserId);
+            console.log(connect);
+            if(connect.success == false) {
+                console.log("failed to connect to user");
+                setconnectStatus(false);
+            }
+            setconnectStatus(true);
+            console.log(connect.data);
+        } catch(error) {
+            console.log("there was an error trying to connect to user", error);
+        }
+    }
     
 
     // const handleImageUpload = async (file: File) => {
@@ -188,14 +202,27 @@ console.log(currentUserId);
                         {/* Action Buttons - Only show for other users */}
                         {!isOwnProfile && (
                             <div className="flex flex-col sm:flex-row mt-3 sm:mt-4 sm:space-x-2 space-y-2 sm:space-y-0">
-                                <button className="w-full sm:w-auto rounded-full bg-blue-600 text-white px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-blue-700">
-                                    <Icon
+                                <button className="w-full sm:w-auto rounded-full bg-blue-600 text-white px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-blue-700 "
+                                onClick={handleConnect}
+                                
+                                >
+                                    
+                                    {connectStatus ? (
+                                         <span className="font-medium text-sm">
+                                        Connected
+                                    </span>
+                                    ) : (<>
+                                      <Icon
                                         icon="mdi:account-plus"
                                         className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5"
                                     />
                                     <span className="font-medium text-sm">
                                         Connect
                                     </span>
+                                  
+                                    </>
+                                    )}
+                                    
                                 </button>
                                 <button 
                                     onClick={() => navigate(`/messages?user=${userId}`)}

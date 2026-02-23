@@ -27,29 +27,29 @@ export const getUserConnections = async(req, res) => {
 //Connect to User
 
 export const connectToUser = async(req,res) => {
-    const currentUser = req.user.userId;
-    const {user2Id} = req.params; //Obtain the 2nd user Id;
+    const {userId, currentUserId} = req.params; //Obtain the 2nd user Id;
     try {
-        if(!currentUser || !user2Id) {
+        if(!currentUserId || !userId) {
             console.log("missing requiremnts in order to connect");
-            return;
+      
         }
-    const connection_id = [currentUser, user2Id]
+    const connection_id = [currentUserId, userId]
         .sort((a,b) => a - b)
         .join('-');
 
     const connectToUser = await Connections.create({
-        user1_id: currentUser, 
-        user2_id: user2Id, 
-        connection_id: connection_id
+        user1_id: currentUserId, 
+        user2_id: userId, 
+        connection_id: connection_id.toString()
     })
-    if(connectToUser) {
-        return res.json({success: true, data: connectToUser});
-    }
-    return res.json("unable to connect to user");
+
+    res.status(201).json({message: "connected", success: true, connectToUser })
+
+    return res.json({success:false, message: "unable to connect"});
         
     } catch(error) {
         console.log("Error Connecting to User", error);
+        res.status(500).json({ error: 'Failed to connect to user' });
     }
 }
 

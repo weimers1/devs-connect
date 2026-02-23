@@ -1,14 +1,14 @@
 import express from 'express';
 import authMiddleware from '../middleware/authMiddleware.js';
-const router = express.Router();
+
 import {
     connectToUser
 } from "../controllers/connectionsController.js";
-
+const router = express.Router();
 
 
 //Connect to User 
-router.post('/connect/:user1Id/to/:user2Id', authMiddleware, connectToUser);
+router.post('/connect/:userId/to/:currentUserId', authMiddleware, connectToUser);
 
 
 

@@ -4,9 +4,10 @@ import { DataTypes } from 'sequelize';
 //User connections
 const Connections = sequelize.define('Connections', {
   connection_id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
+    allowNull: false,
     primaryKey: true,
-    autoIncrement: true,
+
   },
   user1_id: {
     type: DataTypes.INTEGER,
