@@ -37,8 +37,7 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
        navigate("/profile?showProfModal=true");
        window.location.reload();
     }
-console.log(currentUserId);
-console.log(userId);
+
     const handleConnect = async () => {
 
         try{
@@ -47,13 +46,11 @@ console.log(userId);
                 navigate('/login');  
             }
             const connect = await API.connectToUser(userId, currentUserId);
-            console.log(connect);
             if(connect.success == false) {
                 console.log("failed to connect to user");
                 setconnectStatus(false);
             }
             setconnectStatus(true);
-            console.log(connect.data);
         } catch(error) {
             console.log("there was an error trying to connect to user", error);
         }
@@ -137,12 +134,26 @@ console.log(userId);
     //             setImageUploading(false);
     //         }
     //     };
- 
+//  console.log("logged in userID", currentUserId);
+//  console.log("other userS ID:", userId);
     useEffect(() => {
+            if (!userId || !currentUserId) return;
         const decodedUrl = profileData.pfp ? decodeURIComponent(profileData.pfp) : '';
         setCurrentProfileImage(decodedUrl);
+        const getConnection = async () => {
+            try {
+                const getconnection = await API.getrelevantconnection(userId.toString(), currentUserId.toString());
+                if(getconnection.success === true) {
+                    setconnectStatus(true); //if there a connection set this to true
+                } else {
+                    setconnectStatus(false);   //else set this to false
+                }
+            } catch(error){
+                console.log("there was an error in trying to obtain the connection", error);
+            }
+        }
+        getConnection();
     }, [profileData]);
-
     function handleImageClick() {
         navigate('/profile?showProfModal=true');
         window.location.reload();

@@ -479,6 +479,14 @@ const API = {
         })
         if(!response.ok) throw new Error('Failed To Connect to user');
         return response.json();
+    },
+    getrelevantconnection: async(userId: string, currentUserId: string) => {
+         const response = await fetch(`${BASE_URL}/api/connections/obtain/connection/between/${currentUserId}/to/${userId}`,{
+            method: "GET",
+            headers: getAuthHeaders(),
+        })
+        if(!response.ok) throw new Error('Failed To Connect to user');
+        return response.json();
     }
 }
 
