@@ -85,6 +85,7 @@ useEffect(() => {
     };
     //Function to find if a user is an owner of a community 
     const fetchIsOwner = async () => {
+        if(!communityId || !isOwner) return;
              try{  
             const user  = await API.getCurrentUser();
             const userId = user.userId;  
@@ -94,14 +95,18 @@ useEffect(() => {
             }
         if (userId && communityId) {
             const OwnerStatus = await API.isCommunityOwner(userId, communityId);
-                if(OwnerStatus.owner == false) return; //not owner
+            console.log(OwnerStatus);
+                if(OwnerStatus.owner == true)  //not owner
                 setOwnerStatus(OwnerStatus.owner);     
+            } else {
+                setOwnerStatus(false);
             }
             
         } catch (error) {
             console.error("Error Fetching membership status:", error);
         }
     }
+    
      const fetchIsAdmin = async () => {
              try{  
             const user  = await API.getCurrentUser();
