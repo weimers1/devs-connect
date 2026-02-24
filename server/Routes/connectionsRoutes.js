@@ -3,7 +3,8 @@ import authMiddleware from '../middleware/authMiddleware.js';
 
 import {
     connectToUser,
-    getrelevantconnection
+    getrelevantconnection,
+    disconnecttotUser,
 } from "../controllers/connectionsController.js";
 const router = express.Router();
 
@@ -12,7 +13,8 @@ const router = express.Router();
 router.post('/connect/:userId/to/:currentUserId', authMiddleware, connectToUser);
 //Get connection between users
 router.get('/obtain/connection/between/:currentUserId/to/:userId', authMiddleware, getrelevantconnection);
-
+//disconnect tou ser
+router.delete('/remove/connection/between/:currentUserId/to/:userId', authMiddleware, disconnecttotUser);
 
 
 

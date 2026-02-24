@@ -487,6 +487,14 @@ const API = {
         })
         if(!response.ok) throw new Error('Failed To Connect to user');
         return response.json();
+    },
+    disconnecttoUser: async(userId: string, currentUserId: string) => {
+        const response = await fetch(`${BASE_URL}/api/connections/remove/connection/between/${currentUserId}/to/${userId}`,{
+            method: "DELETE",
+            headers: getAuthHeaders(),
+        })
+        if(!response.ok) throw new Error('Failed To Disconnect from user');
+        return response.json();
     }
 }
 

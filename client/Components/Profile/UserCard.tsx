@@ -39,7 +39,6 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
     }
 
     const handleConnect = async () => {
-
         try{
             if(!userId) {
                 navigate('/login');  
@@ -52,6 +51,23 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
             setconnectStatus(true);
         } catch(error) {
             console.log("there was an error trying to connect to user", error);
+        }
+    }
+    const handleDisconnect = async () => {
+        try {
+            if(!userId) {
+                navigate("/login");
+            }
+            if(connectStatus == true) {
+                const disconnect = await API.disconnecttoUser(userId, currentUserId);
+                if(disconnect.success == false) {
+                    console.log("failed to disconnect");
+                    setconnectStatus(true);
+                }
+                setconnectStatus(false);
+            }
+        }catch(error) {
+            console.log("there was an error trying to disconnect to user", error);
         }
     }
     
@@ -216,7 +232,7 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
                         {!isOwnProfile && (
                             <div className="flex flex-col sm:flex-row mt-3 sm:mt-4 sm:space-x-2 space-y-2 sm:space-y-0">
                                 <button className="w-full sm:w-auto rounded-full bg-blue-600 text-white px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-blue-700 "
-                                onClick={handleConnect}
+                                onClick={ connectStatus  ? handleDisconnect : handleConnect}
                                 
                                 >
                                     

@@ -82,9 +82,35 @@ export const connectToUser = async(req,res) => {
 }
 
 
-
-
-
 //Unconnect User
+
+export const disconnecttotUser = async(req,res) => {
+    const {userId, currentUserId} = req.params; //Obtain the 2nd user Id;
+    try {
+        if(!currentUserId || !userId) {
+            console.log("missing requiremnts in order to connect");
+      
+        }
+    const connection_id = [currentUserId, userId]
+        .sort((a,b) => a - b)
+        .join('-');
+
+    const disconnectToUser = await sequelize.query(`
+        DELETE FROM dev_connect.connections WHERE (connection_id = ?);`, {
+            replacements: [connection_id.toString()],
+            type: sequelize.QueryTypes.DELETE
+        }
+ )
+    if(disconnectToUser === 0) {
+        return res.json({success: false, message: "No connection found to disconnect"});
+    }
+
+    res.status(201).json({message: "disconnected", success: true, connectToUser })
+        
+    } catch(error) {
+        console.log("Error Connecting to User", error);
+        res.status(500).json({ error: 'Failed to connect to user' });
+    }
+}
 
 
