@@ -35,16 +35,17 @@ export const getrelevantconnection = async(req, res) => {
     const connection_id = [currentUserId, userId] 
     .sort((a,b) => a-b)
     .join('-');
-        const connection = sequelize.query(`SELECT * FROM dev_connect.connections WHERE 
+        const connection = await sequelize.query(`SELECT * FROM dev_connect.connections WHERE 
             connection_id = ? `, {
                 replacements: [connection_id.toString()],
                 type: sequelize.QueryTypes.SELECT,
             })
-            if(connection.length == 0 ) {
+            if(connection.length == 0 || !connection ) {
                 return res.json({success:false});
-            }
+            } else {
             
             return res.json({success:true, connection: connection[0]});
+            }
     } catch(error) {
         console.log("error trying to obtain the connections between user");
         res.status(500).json({error: "Failed to get connection between users"});
