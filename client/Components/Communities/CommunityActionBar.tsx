@@ -66,69 +66,26 @@ const [isAdmin, setIsAdmin] = useState(false);
   }
 
 useEffect(() => {
-    //Function to find if a user has const the commmunity;
-    const fetchHasUserJoined = async () => {
-        try{  
-            const user  = await API.getCurrentUser();
-            const userId = user.userId;
-            if(!userId) {
-                console.log("No user Logged in");
-                return;
-            }
-        if (userId && communityId) {
-            const membershipStatus = await API.getCommunityMembership(communityId, userId);
-             setMembershipStatus(membershipStatus.isMember);       
-        }
-        } catch (error) {
-            console.error("Error Fetching membership status:", error);
-        }
+    if (!communityId) return;
+
+    const fetchUserCommunityStatus = async () => {
+        const user = await API.getCurrentUser();
+        if (!user?.userId) return;
+
+        const [membership, owner, admin] = await Promise.all([
+            API.getCommunityMembership(communityId, user.userId),
+            API.isCommunityOwner(user.userId, communityId),
+            API.getCommunityAdmins(communityId, user.userId),
+        ]);
+
+        setMembershipStatus(membership?.isMember ?? false);
+        setOwnerStatus(owner?.owner ?? false);
+        setIsAdmin(admin?.admin ?? false);
+
     };
-    //Function to find if a user is an owner of a community 
-    const fetchIsOwner = async () => {
-        if(!communityId || !isOwner) return;
-             try{  
-            const user  = await API.getCurrentUser();
-            const userId = user.userId;  
-            if(!userId) {
-                console.log("No user Logged in");
-                return;
-            }
-        if (userId && communityId) {
-            const OwnerStatus = await API.isCommunityOwner(userId, communityId);
-            console.log(OwnerStatus);
-                if(OwnerStatus.owner == true)  //not owner
-                setOwnerStatus(OwnerStatus.owner);     
-            } else {
-                setOwnerStatus(false);
-            }
-            
-        } catch (error) {
-            console.error("Error Fetching membership status:", error);
-        }
-    }
-    
-     const fetchIsAdmin = async () => {
-             try{  
-            const user  = await API.getCurrentUser();
-            const userId = user.userId;  
-            if(!userId) {
-                console.log("No user Logged in");
-                return;
-            }
-        if (userId && communityId) {
-            const AdminStatus = await API.getCommunityAdmins(communityId, userId);
-                if(AdminStatus.admin == false) return; //not owner
-                setIsAdmin(AdminStatus.admin);   
-            }
-            
-        } catch (error) {
-            console.error("Error Fetching membership status:", error);
-        }
-    }
-    fetchIsAdmin();
-    fetchHasUserJoined();
-    fetchIsOwner();
-} ,[]);
+
+    fetchUserCommunityStatus();
+}, [communityId]);
 
     const navigate = useNavigate();
     const handleEditCommunity = () => {
@@ -138,7 +95,6 @@ useEffect(() => {
             return;
         }
     };
-   
     return (
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -153,7 +109,7 @@ useEffect(() => {
                     </p>
                 </div>
                 <div className="flex space-x-3">
-                    {isOwner || isAdmin  && (
+                    {(isOwner || isAdmin)  && (
                         <>
                             <button 
                                 onClick={handleEditCommunity}
