@@ -1,8 +1,9 @@
-import React from 'react';
-import { useNavigate} from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, useParams} from 'react-router-dom';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
 import API from '../../Service/service';
 import { Icon } from '@iconify/react/dist/iconify.js';
+import Profile from '/assets/images/Nav-Profile.png';
 
 interface CommunitySidebarProps {
     community: {
@@ -12,12 +13,46 @@ interface CommunitySidebarProps {
         rules: string;
         members?: any[];
     };
+    showMembersCenter: boolean;
+    setShowMembersCenter?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community }) => {
-    
+
+const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community, setShowMembersCenter, showMembersCenter }) => {
     const navigate = useNavigate();
     const { requireAuth } = useAuthRedirect();
+    const [rightvalue, setrightvalue] = useState(13);
+    const [leftvalue, setleftvalue] = useState(0);
+    const Temppfp = Profile;
+   
+    const leftArrowClick = async () => {
+    if(rightvalue > 13) {
+      setrightvalue(rightvalue - 13);
+    }
+    if(leftvalue > 0) {
+      setleftvalue(leftvalue - 13);
+    }
+  }
+  const rightarrowclick = async () => {
+      setrightvalue(rightvalue + 13);
+      setleftvalue(leftvalue + 13);
+  }
+
+  //   const fetchMembers = async () => {
+  //   if (!communityId) return;
+  //   try {
+  //     const fetchedMembers = await API.getCommunityMembers(communityId);
+  //     setMembers(fetchedMembers);
+  //   } catch (error) {
+  //     console.error('Error fetching members', error);
+  //   }
+  // };
+
+  const handleShowMembersClick = () => {
+    if (setShowMembersCenter) {
+        setShowMembersCenter(true);
+    }
+};
 
     const handleProfileClick = async (userId: string) => {
         requireAuth(async () => {
@@ -36,6 +71,7 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community }) => {
         });
     };
     return (
+      
         <div className="space-y-6">
             {/* Community Stats */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
@@ -124,13 +160,71 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community }) => {
     )}
 
     {community.members && community.members.length > 5 && (
-      <p className="text-sm text-blue-500 cursor-pointer">
+      <button className="text-sm text-blue-500 cursor-pointer"
+      onClick={handleShowMembersClick}
+      >
         View all members
-      </p>
+      </button>
     )}
+  
   </div>
 </div>
+{showMembersCenter && (
+  <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/20">
+    <div className="bg-white w-full max-w-xl rounded-xl mt-20 shadow-xl p-6 overflow-hidden relative">
+      
+      {/* Close Button */}
+      <button
+        className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+        onClick={() => setShowMembersCenter && setShowMembersCenter(false)}
+      >
+        X
+      </button>
+
+      {/* Modal Title */}
+      <h2 className="text-2xl font-bold mb-4 text-center">Community Members</h2>
+
+      {/* Members List */}
+      <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">
+        {community.members && community.members.length > 0 ? (
+          community.members
+            .filter(member => member.role !== "banned")
+            .map(member => (
+              <div
+                key={member.id}
+                className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <img
+                    onClick={() => handleProfileClick(member.id)}
+                    src={member.profileImageUrl || Temppfp}
+                    alt={`${member.firstName} ${member.lastName}`}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-medium truncate"
+                     onClick={() => handleProfileClick(member.id)}
+                    >{member.firstName} {member.lastName}</p>
+                    <p className="text-xs text-gray-500">{member.isOnline ? "Online" : "Offline"}</p>
+                  </div>
+                  {member.role === "admin" && (
+                    <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Admin</span>
+                  )}
+                  {member.role === "owner" && (
+                    <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded">Owner</span>
+                  )}
+                </div>
+              </div>
+            ))
+        ) : (
+          <p className="text-gray-500 text-sm text-center mt-4">No members yet</p>
+        )}
+      </div>
+    </div>
+  </div>
+)}
         </div>
+        
     );
 };
 

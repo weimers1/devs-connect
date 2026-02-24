@@ -158,7 +158,6 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
         const getConnection = async () => {
             try {
                 const getconnection = await API.getrelevantconnection(userId.toString(), currentUserId.toString());
-                   console.log(getconnection.success);
                 if(getconnection.success === true) {
                  
                     setconnectStatus(true); //if there a connection set this to true
@@ -175,7 +174,6 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
         navigate('/profile?showProfModal=true');
         window.location.reload();
     }
-    console.log(connectStatus);
     return (
         <div className="w-full max-w-2xl bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2 mx-auto">
             {/* Banner - Full width on mobile */}
