@@ -14,7 +14,7 @@ interface UserCardProps {
 function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCardProps) {
         // const [imageUploading, setImageUploading] = useState(false);
         const navigate = useNavigate();
-        const [currentProfileImage, setCurrentProfileImage] = useState('');
+        // const [currentProfileImage, setCurrentProfileImage] = useState('');
         const [connectStatus, setconnectStatus] = useState(false);
 
     //Validate Image URL to prevent SSRF attacks
@@ -151,10 +151,10 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
     //     };
 //  console.log("logged in userID", currentUserId);
 //  console.log("other userS ID:", userId);
+
     useEffect(() => {
             if (!userId || !currentUserId) return;
-        const decodedUrl = profileData.pfp ? decodeURIComponent(profileData.pfp) : '';
-        setCurrentProfileImage(decodedUrl);
+        // setCurrentProfileImage(profileData.pfp);
         const getConnection = async () => {
             try {
                 const getconnection = await API.getrelevantconnection(userId.toString(), currentUserId.toString());
@@ -188,7 +188,7 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
 
                 <div className="absolute -bottom-10 sm:-bottom-12 md:-bottom-16 left-4 sm:left-6 md:left-8">
                     <img
-                        src={currentProfileImage ? currentProfileImage : assets.Profile}
+                        src={profileData.pfp || assets.Profile}
                         alt="Profile"
                         className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg object-cover"
                         onClick={handleImageClick}

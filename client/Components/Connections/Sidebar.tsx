@@ -1,59 +1,60 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDropdown } from '../DropDown/DropDownContext';
 import React from 'react';
+import API from '../../Service/service';
 // import { useTheme } from '../../src/ThemeContext';
 
-const CONNECTIONS_DATA = [
-    {
-        name: 'Sarah Johnson',
-        currentRole: 'Software Engineer at Google',
-        lastOnline: '',
-        profileImage: 'SJ',
-        isOnline: true,
-        connectionType: '2nd',
-    },
-    {
-        name: 'Mike Chen',
-        currentRole: 'Software Engineer',
-        lastOnline: '2 days ago',
-        profileImage: 'MC',
-        isOnline: false,
-        connectionType: '3rd',
-    },
-    {
-        name: 'Emily Davis',
-        currentRole: 'Web Development',
-        lastOnline: '14 hours ago',
-        profileImage: 'ED',
-        isOnline: false,
-        connectionType: '2nd',
-    },
-    {
-        name: 'Sarah Johnson',
-        currentRole: 'Software Engineer at Google',
-        lastOnline: '',
-        profileImage: 'SJ',
-        isOnline: true,
-        connectionType: '2nd',
-    },
-    {
-        name: 'Mike Chen',
-        currentRole: 'Software Engineer',
-        lastOnline: '10 minutes ago',
-        profileImage: 'MC',
-        isOnline: false,
-        connectionType: '3rd',
-    },
-    {
-        name: 'Emily Davis',
-        currentRole: 'Web Development',
-        lastOnline: '',
-        profileImage: 'ED',
-        isOnline: true,
-        connectionType: '2nd',
-    },
-];
+// const CONNECTIONS_DATA = [
+//     {
+//         name: 'Sarah Johnson',
+//         currentRole: 'Software Engineer at Google',
+//         lastOnline: '',
+//         profileImage: 'SJ',
+//         isOnline: true,
+//         connectionType: '2nd',
+//     },
+//     {
+//         name: 'Mike Chen',
+//         currentRole: 'Software Engineer',
+//         lastOnline: '2 days ago',
+//         profileImage: 'MC',
+//         isOnline: false,
+//         connectionType: '3rd',
+//     },
+//     {
+//         name: 'Emily Davis',
+//         currentRole: 'Web Development',
+//         lastOnline: '14 hours ago',
+//         profileImage: 'ED',
+//         isOnline: false,
+//         connectionType: '2nd',
+//     },
+//     {
+//         name: 'Sarah Johnson',
+//         currentRole: 'Software Engineer at Google',
+//         lastOnline: '',
+//         profileImage: 'SJ',
+//         isOnline: true,
+//         connectionType: '2nd',
+//     },
+//     {
+//         name: 'Mike Chen',
+//         currentRole: 'Software Engineer',
+//         lastOnline: '10 minutes ago',
+//         profileImage: 'MC',
+//         isOnline: false,
+//         connectionType: '3rd',
+//     },
+//     {
+//         name: 'Emily Davis',
+//         currentRole: 'Web Development',
+//         lastOnline: '',
+//         profileImage: 'ED',
+//         isOnline: true,
+//         connectionType: '2nd',
+//     },
+// ];
 
 const SUGGESTIONS_DATA = [
     {
@@ -96,11 +97,37 @@ const SUGGESTIONS_DATA = [
         reason: 'Mutual connections',
     },
 ];
+ interface connectionData  {
+    career: string;
+    firstName: string;
+    lastName: string;
+    profileImageUrl: string;
+}
 
 function Sidebar() {
     const { isSidebarOpen, toggleSidebar } = useDropdown();
-    // const { theme } = useTheme();
+    const [connections, setConnections] = useState<connectionData[] | null>(null);
 
+    // const { theme } = useTheme();
+    useEffect(() =>  {
+        const getUserConnections = async() => {
+      try {
+            const user = await API.getCurrentUser();
+            if(!user.userId) return;
+            const userConnections = await API.getUserConnections(user.userId);
+            console.log("user connections are:", userConnections);
+           if (!userConnections) {
+            console.log("error getting userconnects");
+            return;
+}
+setConnections(userConnections);
+      } catch(error)  {
+        console.log("error obtaing all userConnections" ,error);
+      }
+    }
+    getUserConnections();
+    }, [])
+   
     return (
         <section className="overflow-hidden">
             {/* buttons for collapsing/opening sidebar */}
@@ -125,11 +152,11 @@ function Sidebar() {
                 </button>
             </div>
             {isSidebarOpen && (
-                <div className="fixed left-0  w-screen h-screen bg-slate-900 opacity-50 z-1 "></div>
+                <div className="fixed left-0  w-screen h-screen bg-white  md:opacity-0 z-1  "></div>
             )}
 
             <div
-                className={`fixed right-0 bottom-0 lg:top-18.5 top-29  md:rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[92vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
+                className={`fixed right-0 bottom-0 lg:top-20.5 top-29  md:rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[92vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
                     isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
@@ -160,38 +187,43 @@ function Sidebar() {
 
                 <div className="p-4 border-b border-gray-100 h-[27vh] lg:h-[35vh]  overflow-y-scroll">
                     <div className="space-y-4">
-                        {CONNECTIONS_DATA.map((connection, index) => (
+                        {connections?.slice(0,4).map((connection, index) => (
                             <div
                                 key={index}
                                 className="flex items-start space-x-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
                             >
                                 <div className="relative">
                                     <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                        {connection.profileImage}
+                               {`${connection.firstName.charAt(0)}${connection.lastName.charAt(0)}`}
                                     </div>
-                                    {connection.isOnline && (
+                                    {/* {connection.isOnline && (
                                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-                                    )}
+                                    )} */}
                                 </div>
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center space-x-2">
                                         <h4 className="font-medium text-gray-900 text-sm truncate">
-                                            {connection.name}
+                                            {connection.firstName + ' ' + connection.lastName}
                                         </h4>
-                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                        {/* <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                             {connection.connectionType}
-                                        </span>
+                                        </span> */}
                                     </div>
-                                    <p className="text-xs text-gray-600 mt-1">
-                                        {connection.currentRole}
+                                    <div className="flex">
+                                    <p className="text-xs text-green-600 mt-1 mr-1">
+                                        Career Goal:
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-xs text-grey-600 mt-1">
+                                         {connection.career}
+                                    </p>
+                                    </div>
+                                    {/* <p className="text-xs text-gray-500 mt-1">
                                         {connection.isOnline
                                             ? ''
                                             : 'Last seen: ' +
                                               connection.lastOnline}
-                                    </p>
+                                    </p> */}
                                 </div>
 
                                 <button className="text-blue-600 hover:bg-blue-50 p-1 rounded text-xs">

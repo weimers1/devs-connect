@@ -9,15 +9,25 @@ export const getUserConnections = async(req, res) => {
             console.log("Couldn't detect current User");
         }
         const getConnections = await sequelize.query(`
-            SELECT * from dev_connect.connections WHERE user1_id = ?;
+           SELECT 
+    u.id AS userId,
+    up.career,
+    u.firstName,
+    u.lastName,
+    up.profileImageUrl
+FROM Connections c
+JOIN Users u 
+    ON (c.user1_id = ? AND u.id = c.user2_id)
+    OR (c.user2_id = ? AND u.id = c.user1_id)
+LEFT JOIN UserProfiles up ON u.id = up.userId;;
             `, {
-                replacements: [currentUser],
+                replacements: [currentUser, currentUser],
                 type: sequelize.QueryTypes.SELECT
             })
         if(!getConnections || getConnections.length === 0) { //If length is 0 
             return;
         }
-        return res.json({getConnections: getConnections}); //Return Connections
+        return res.json(getConnections); //Return Connections
     } catch(error) {
         console.log(error, "Error Trying to obtain userConnection Data");
     }
