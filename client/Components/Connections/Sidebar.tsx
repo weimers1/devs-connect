@@ -1,6 +1,7 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useEffect, useState } from 'react';
 import { useDropdown } from '../DropDown/DropDownContext';
+import { useNavigate } from 'react-router-dom';
 import React from 'react';
 import API from '../../Service/service';
 // import { useTheme } from '../../src/ThemeContext';
@@ -102,12 +103,13 @@ const SUGGESTIONS_DATA = [
     firstName: string;
     lastName: string;
     profileImageUrl: string;
+    userId: string;
 }
 
 function Sidebar() {
     const { isSidebarOpen, toggleSidebar } = useDropdown();
     const [connections, setConnections] = useState<connectionData[] | null>(null);
-
+       const navigate = useNavigate();
     // const { theme } = useTheme();
     useEffect(() =>  {
         const getUserConnections = async() => {
@@ -152,7 +154,7 @@ setConnections(userConnections);
                 </button>
             </div>
             {isSidebarOpen && (
-                <div className="fixed left-0  w-screen h-screen bg-white  md:opacity-0 z-1  "></div>
+                <div className="fixed left-0  w-screen h-screen bg-white  md:opacity-0  z-1  "></div>
             )}
 
             <div
@@ -187,14 +189,18 @@ setConnections(userConnections);
 
                 <div className="p-4 border-b border-gray-100 h-[27vh] lg:h-[35vh]  overflow-y-scroll">
                     <div className="space-y-4">
-                        {connections?.slice(0,4).map((connection, index) => (
+                        {connections?.slice(0,5).map((connection, index) => (
                             <div
                                 key={index}
                                 className="flex items-start space-x-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
                             >
                                 <div className="relative">
                                     <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
+                               <button
+                               onClick={() => navigate(`/profile/${connection.userId}`)}
+                               >
                                {`${connection.firstName.charAt(0)}${connection.lastName.charAt(0)}`}
+                               </button>
                                     </div>
                                     {/* {connection.isOnline && (
                                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
@@ -202,9 +208,12 @@ setConnections(userConnections);
                                 </div>
 
                                 <div className="flex-1 min-w-0">
+                                    <button
+                                     onClick={() => navigate(`/profile/${connection.userId}`)}
+                                    >
                                     <div className="flex items-center space-x-2">
                                         <h4 className="font-medium text-gray-900 text-sm truncate">
-                                            {connection.firstName + ' ' + connection.lastName}
+                                            {connection.firstName + ' ' + connection.lastName.slice(0,15)}
                                         </h4>
                                         {/* <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                             {connection.connectionType}
@@ -218,6 +227,7 @@ setConnections(userConnections);
                                          {connection.career}
                                     </p>
                                     </div>
+                                    </button>
                                     {/* <p className="text-xs text-gray-500 mt-1">
                                         {connection.isOnline
                                             ? ''
@@ -226,7 +236,9 @@ setConnections(userConnections);
                                     </p> */}
                                 </div>
 
-                                <button className="text-blue-600 hover:bg-blue-50 p-1 rounded text-xs">
+                                <button className="text-blue-600 hover:bg-blue-50 p-1 rounded text-xs"
+                                  onClick={() => navigate(`/messages?user=${connection.userId}`)}
+                                >
                                     Message
                                 </button>
                             </div>

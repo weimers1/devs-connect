@@ -126,14 +126,14 @@ const CommunityExplore = () => {
                             Join the most active developer communities
                         </p>
                     </div>
-                    <div className="hidden lg:flex items-center space-x-4">
+                    {/* <div className="hidden lg:flex items-center space-x-4">
                         <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                             Filter
                         </button>
                         <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                             Sort by
                         </button>
-                    </div>
+                    </div> */}
                 </div>
             </div>
 
