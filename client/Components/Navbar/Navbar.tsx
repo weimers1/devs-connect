@@ -22,7 +22,7 @@ export interface Community {
 }
 
 const Navbar: React.FC = () => {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
     // const { theme } = useTheme();
@@ -53,7 +53,7 @@ const Navbar: React.FC = () => {
             const currentUser = await API.getCurrentUser();
             if (!currentUser) return;
 
-            const data = await API.getCommunities(currentUser.userId);
+            const data = await API.getCommunities();
             setCommunities(data);
         } catch (error) {
             console.error('Failed to fetch communities:', error);

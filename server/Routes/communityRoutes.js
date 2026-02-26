@@ -33,7 +33,7 @@ import authMiddleware from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/user/:userId', getCommunities);
+router.get('/user', getCommunities);
 router.delete("/member/:userId/community/:communityId/from/:currentUserId", authMiddleware, kickCommunityMember); //Kick a member from a community
 router.delete('/leave/communityMember/:userId/community/:communityId',authMiddleware, LeaveCommunity);
 router.put('/demote/:communityId/member/:userId/with/:currentUserId', authMiddleware, demoteCommunityMember);

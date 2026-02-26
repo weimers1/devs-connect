@@ -1,9 +1,11 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { useEffect, useState } from 'react';
+// import { useEffect, useState } from 'react';
 import { useDropdown } from '../DropDown/DropDownContext';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
-import API from '../../Service/service';
+// import API from '../../Service/service';
+import {useUserConnections} from "./UserConnectionContext.tsx";
+
 // import { useTheme } from '../../src/ThemeContext';
 
 // const CONNECTIONS_DATA = [
@@ -98,7 +100,7 @@ const SUGGESTIONS_DATA = [
         reason: 'Mutual connections',
     },
 ];
- interface connectionData  {
+ export interface connectionData  {
     career: string;
     firstName: string;
     lastName: string;
@@ -107,28 +109,12 @@ const SUGGESTIONS_DATA = [
 }
 
 function Sidebar() {
+    const {connections} = useUserConnections();
     const { isSidebarOpen, toggleSidebar } = useDropdown();
-    const [connections, setConnections] = useState<connectionData[] | null>(null);
+   
        const navigate = useNavigate();
     // const { theme } = useTheme();
-    useEffect(() =>  {
-        const getUserConnections = async() => {
-      try {
-            const user = await API.getCurrentUser();
-            if(!user.userId) return;
-            const userConnections = await API.getUserConnections(user.userId);
-            console.log("user connections are:", userConnections);
-           if (!userConnections) {
-            console.log("error getting userconnects");
-            return;
-}
-setConnections(userConnections);
-      } catch(error)  {
-        console.log("error obtaing all userConnections" ,error);
-      }
-    }
-    getUserConnections();
-    }, [])
+   
    
     return (
         <section className="overflow-hidden">
@@ -193,20 +179,28 @@ setConnections(userConnections);
                             <div
                                 key={index}
                                 className="flex items-start space-x-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                                  onClick={() => navigate(`/profile/${connection.userId}`)}
                             >
                                 <div className="relative">
                                     <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
                                <button
                                onClick={() => navigate(`/profile/${connection.userId}`)}
                                >
-                               {`${connection.firstName.charAt(0)}${connection.lastName.charAt(0)}`}
+                                    {connection.profileImageUrl ? (
+                                        <img
+                                className="w-12 h-12 rounded-full object-cover"
+                                src={connection.profileImageUrl}
+                                ></img>
+                                    ) : (
+                                        <span>{connection.firstName.charAt(0) + connection.lastName.charAt(0)}</span>
+                                    )}
                                </button>
                                     </div>
                                     {/* {connection.isOnline && (
                                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                                     )} */}
                                 </div>
-
+                                        
                                 <div className="flex-1 min-w-0">
                                     <button
                                      onClick={() => navigate(`/profile/${connection.userId}`)}
@@ -235,7 +229,7 @@ setConnections(userConnections);
                                               connection.lastOnline}
                                     </p> */}
                                 </div>
-
+                             
                                 <button className="text-blue-600 hover:bg-blue-50 p-1 rounded text-xs"
                                   onClick={() => navigate(`/messages?user=${connection.userId}`)}
                                 >
@@ -243,7 +237,18 @@ setConnections(userConnections);
                                 </button>
                             </div>
                         ))}
-                    </div>
+                        {(connections?.length != null && connections?.length > 5) ? (
+                            <button 
+                             onClick={() => navigate('/connections')}
+                            className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium md:block"
+                            >
+                                View All Connections
+                            </button>
+                        ) : (
+                            <div></div>
+                        )}
+                        </div>
+                
                 </div>
 
                 {/* People You May Know Section */}

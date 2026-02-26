@@ -52,37 +52,58 @@ export const createCommunity = async (req, res) => {
 };
 
 export const getCommunities = async (req, res) => {
-
     try {
-         const { userId } = req.params;
-        const communities = await sequelize.query(`
-                      SELECT 
-  uc.id,
-  uc.name,
-   uc.icon,
-  uc.memberCount,
-  uc.description,
-  uc.color
-FROM communities uc
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM usercommunities u
-    WHERE u.communityId = uc.id
-      AND u.userId = ?
-      AND u.role = 'banned'
-);`,{
-            replacements: [userId],
-            type: sequelize.QueryTypes.SELECT,
-     
-})
-      
+        const userId = req.user?.userId || null;
+
+        let communities;
+
+        if (userId) {
+            // Logged-in user → exclude banned communities
+            communities = await sequelize.query(`
+                SELECT 
+                    c.id,
+                    c.name,
+                    c.icon,
+                    c.memberCount,
+                    c.description,
+                    c.color,
+                    c.isPrivate
+                FROM communities c
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM usercommunities uc
+                    WHERE uc.communityId = c.id
+                    AND uc.userId = ?
+                    AND uc.role = 'banned'
+                )
+            `, {
+                replacements: [userId],
+                type: sequelize.QueryTypes.SELECT,
+            });
+
+        } else {
+            // Not logged in → only show public communities
+            communities = await sequelize.query(`
+                SELECT 
+                    id,
+                    name,
+                    icon,
+                    memberCount,
+                    description,
+                    color,
+                    isPrivate
+                FROM communities
+                WHERE isPrivate = false
+            `, {
+                type: sequelize.QueryTypes.SELECT,
+            });
+        }
+
         res.json(communities);
+
     } catch (error) {
-      
         console.error('Error fetching communities:', error);
-        res.status(500).json({
-            error: 'Failed to fetch communities' + JSON.stringify(error),
-        });
+        res.status(500).json({ error: 'Failed to fetch communities' });
     }
 };
 

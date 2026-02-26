@@ -21,12 +21,22 @@ const CommunityExplore = () => {
     const [communities, setCommunities] = useState<Community[]>([]);
     const [loading, setLoading] = useState(true);
     const [CommunityName, setName] = useState('');
+    const [currentUser, setcurrentUser] = useState('');
 
       useEffect(() => {
+         const getUser = async () => {
+            try{
+                  const currentUserid = await API.getCurrentUser();
+                if(currentUser) {
+                    setcurrentUser(currentUserid.userId);
+                }
+            } catch(error) {
+                console.log("failed to get user", error);
+            }
+         }
         const fetchCommunities = async () => { 
-            try {
-                const currentUser = await API.getCurrentUser();
-                 const data = await API.getCommunities(currentUser.userId);
+            try { 
+                 const data = await API.getCommunities();
                 setCommunities(data);
               
             } catch (error) {
@@ -36,7 +46,7 @@ const CommunityExplore = () => {
             }
         };
   
-        
+        getUser();
         fetchCommunities();
         
     }, []);

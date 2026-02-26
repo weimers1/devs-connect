@@ -5,6 +5,7 @@ import Messages from '../Components/Messages/Messages';
 import Communities from '../Components/Communities/Communities';
 import Settings from '../Components/Settings/Settings';
 import Create from '../Components/Create';
+import Connections from '../Components/Connections/Connections';
 
 export interface RouteConfig {
     path: string;
@@ -32,14 +33,14 @@ export const defaultRoutes: RouteConfig[] = [
         alt: 'Communities',
         showInNav: true,
     },
-    {
-        path: '/courses',
-        component: Home, // Placeholder until Courses component is created
-        title: 'Courses',
-        icon: 'streamline-freehand:learning-programming-book',
-        alt: 'Courses',
-        showInNav: false, // REMOVED: Hide courses from navbar as requested
-    },
+    // {
+    //     path: '/courses',
+    //     component: Home, // Placeholder until Courses component is created
+    //     title: 'Courses',
+    //     icon: 'streamline-freehand:learning-programming-book',
+    //     alt: 'Courses',
+    //     showInNav: false, // REMOVED: Hide courses from navbar as requested
+    // },
 
 ];
 
@@ -92,6 +93,14 @@ export const protectedRoutes: RouteConfig[] = [
         alt: 'Settings',
         showInNav: false,
     },
+    {
+        path: '/connections',
+        component: Connections,
+        title: 'Connections',
+        icon: 'mdi:account-arrow-right-outline',
+        alt: 'Connections',
+        showInNav: false,
+    }
 ];
 
 export const publicRoutes: RouteConfig[] = [
