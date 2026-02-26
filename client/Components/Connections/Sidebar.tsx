@@ -110,6 +110,7 @@ const SUGGESTIONS_DATA = [
 
 function Sidebar() {
     const {connections} = useUserConnections();
+    const {currentUser} = useUserConnections();
     const { isSidebarOpen, toggleSidebar } = useDropdown();
    
        const navigate = useNavigate();
@@ -239,7 +240,7 @@ function Sidebar() {
                         ))}
                         {(connections?.length != null && connections?.length > 5) ? (
                             <button 
-                             onClick={() => navigate('/connections')}
+                             onClick={() => navigate(`/connections/${currentUser}`)}
                             className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium md:block"
                             >
                                 View All Connections

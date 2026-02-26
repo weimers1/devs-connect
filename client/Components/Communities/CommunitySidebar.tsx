@@ -21,33 +21,8 @@ interface CommunitySidebarProps {
 const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community, setShowMembersCenter, showMembersCenter }) => {
     const navigate = useNavigate();
     const { requireAuth } = useAuthRedirect();
-    const [rightvalue, setrightvalue] = useState(13);
-    const [leftvalue, setleftvalue] = useState(0);
-    const Temppfp = Profile;
-   
-    const leftArrowClick = async () => {
-    if(rightvalue > 13) {
-      setrightvalue(rightvalue - 13);
-    }
-    if(leftvalue > 0) {
-      setleftvalue(leftvalue - 13);
-    }
-  }
-  const rightarrowclick = async () => {
-      setrightvalue(rightvalue + 13);
-      setleftvalue(leftvalue + 13);
-  }
 
-  //   const fetchMembers = async () => {
-  //   if (!communityId) return;
-  //   try {
-  //     const fetchedMembers = await API.getCommunityMembers(communityId);
-  //     setMembers(fetchedMembers);
-  //   } catch (error) {
-  //     console.error('Error fetching members', error);
-  //   }
-  // };
-
+    const Temppfp = Profile;   
   const handleShowMembersClick = () => {
     if (setShowMembersCenter) {
         setShowMembersCenter(true);

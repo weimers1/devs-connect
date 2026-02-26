@@ -10,6 +10,8 @@ import CreateCommunity from '../Components/Communities/CreateCommunity';
 import EditCommunity from '../Components/Communities/EditCommunity';
 import React from 'react';
 import PostTypes from '../Components/Communities/PostTypes';
+import {UserConnectionContextProvider} from "../Components/Connections/UserConnectionContext";
+import Connections from "../Components/Connections/Connections";
 
 const AppRoutes = () => {
     return (
@@ -62,6 +64,10 @@ const AppRoutes = () => {
                     path="/profile/:userId"
                     element={<PostTypes/>}
                     />
+                    <Route
+                    path="/connections/:userId"
+                    element={<Connections/>}
+                    />
                 </Routes>
             </BrowserRouter>
         // </ThemeProvider>
@@ -71,7 +77,9 @@ const AppRoutes = () => {
 const App = () => {
     return (
         <AuthProvider>
-            <AppRoutes />
+            <UserConnectionContextProvider>
+                    <AppRoutes />
+                 </UserConnectionContextProvider>
         </AuthProvider>
     );
 };

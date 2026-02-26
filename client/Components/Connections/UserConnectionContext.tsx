@@ -16,6 +16,7 @@ interface UserConnectionsContextType {
     setConnections: React.Dispatch<
     React.SetStateAction<connectionData[] | null>
   >;
+    currentUser: string | null;
 }
 //creating userconnection context
 export const UserConnectionContext = createContext<UserConnectionsContextType | undefined>(
@@ -26,11 +27,13 @@ export const UserConnectionContextProvider: React.FC<{children: ReactNode}> = ({
     children,
 }) => {
     const [connections, setConnections] = useState<connectionData[] | null>(null);
+    const [currentUser, setCurrentUser] = useState<any>(null);
         useEffect(() =>  {
         const getUserConnections = async() => {
       try {
             const user = await API.getCurrentUser();
             if(!user.userId) return;
+            setCurrentUser(user.userId);
             const userConnections = await API.getUserConnections(user.userId);
             // console.log("user connections are:", userConnections);
            if (!userConnections) {
@@ -45,7 +48,7 @@ export const UserConnectionContextProvider: React.FC<{children: ReactNode}> = ({
     getUserConnections();
     }, [])
     return(
-        <UserConnectionContext.Provider value={{connections, setConnections}}>
+        <UserConnectionContext.Provider value={{connections, setConnections, currentUser}}>
             {children}
         </UserConnectionContext.Provider>
     )
