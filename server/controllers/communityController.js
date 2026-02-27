@@ -388,8 +388,10 @@ export const kickCommunityMember = async (req, res) => {
             return res.status(400).json({error: "need user and communityId to kick member"});
         }
           const isadmin = await sequelize.query(`    
-            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {
-                replacements: [currentUserId, communityId],
+            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'
+             OR  userId = ? AND communityId = ? AND role='owner';
+            `, {
+                replacements: [currentUserId, communityId, currentUserId, communityId],
                   type: sequelize.QueryTypes.SELECT,
                   transaction   
             })
@@ -801,7 +803,7 @@ export const BanCommunityMember = async (req,res) => {
         const {userId, communityId, currentUserId} = req.params;  
         
         if(!userId || !communityId) {
-            return res.status(400).json({error: "need user and communityId to kick member"});
+            return res.status(400).json({error: "need user and communityId to ban member"});
         }
         const isadmin = await sequelize.query(`    
             SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {

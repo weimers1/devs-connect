@@ -27,7 +27,7 @@ export const UserConnectionContextProvider: React.FC<{children: ReactNode}> = ({
     children,
 }) => {
     const [connections, setConnections] = useState<connectionData[] | null>(null);
-    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [currentUser, setCurrentUser] = useState<string>();
         useEffect(() =>  {
         const getUserConnections = async() => {
       try {

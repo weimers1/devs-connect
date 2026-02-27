@@ -129,6 +129,7 @@ function Profile() {
                 saveResult = await saveResponse.json();
             } catch (jsonError) {
                 throw new Error('Invalid response from server');
+                console.log(jsonError, 'Error parsing JSON response');
             }
 
             if (!saveResult || saveResult.error) {
