@@ -163,44 +163,43 @@ function Profile() {
     });
     const [profileSaving, setProfileSaving] = useState(false);  
     const [profileSaveStatus, setProfileSaveStatus] = useState('');
-    useEffect(() => {
-        const loadProfileData = async () => {
-            try {
-                const response = isOwnProfile
-                    ? await API.getProfileInformation()
-                    : await API.getUserProfile(userId!);
-                const decodedPfp = response.pfp ? decodeURIComponent(response.pfp) : '';
-                setProfileData(response);
-                setCurrentProfileImage(decodedPfp);
+    console.log(userId);
+   useEffect(() => {
+    const initializeProfile = async () => {
+        try {
+            //  Get the logged-in user first
+            const user = await API.getCurrentUser();
+            if (!user) {
+                navigate("/login");
+                return;
+            }
+            setcurrentUser(user.userId);
 
-            } catch (error) {
-                console.error('Failed to load profile data:', error);
-                setProfileData({
-                    firstName: '',
-                    lastName: '',
-                    bio: '',
-                    location: '',
-                    career: '',
-                    school: '',
-                    github: '',
-                });
+            //  CHECK REDIRECT: If URL ID matches Logged-in ID
+            if (userId && userId.toString() === user.userId.toString()) {
+                navigate('/profile', { replace: true });
+                return; // Stop execution here; the navigate will trigger a re-render
             }
-        };
-        const loadcurrentuser = async () => {
-            try {
-                const user = await API.getCurrentUser();
-                if(!user) {
-                    console.log("no user logged in");
-                    navigate("/login");
-                }
-                setcurrentUser(user.userId);
-            } catch(error) {
-                console.log("error obtaining use data", error);
-            }
+
+            //  FETCH DATA: Now that we know who is who
+            const response = isOwnProfile
+                ? await API.getProfileInformation()
+                : await API.getUserProfile(userId!);
+
+            const decodedPfp = response.pfp ? decodeURIComponent(response.pfp) : '';
+            setProfileData(response);
+            setCurrentProfileImage(decodedPfp);
+
+        } catch (error) {
+            console.error('Failed to load profile data:', error);
+            // Reset profile state on error...
         }
-        loadcurrentuser();
-        loadProfileData();
-    }, [userId, isOwnProfile]);
+    };
+
+    initializeProfile();
+}, [userId, isOwnProfile, navigate]); 
+// Removed currentUser from deps to avoid infinite loops since we set it inside
+
     //Check Url For modal trigger so the form for certifications and profile  can pop up
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -212,7 +211,7 @@ function Profile() {
             setShowProfModal(true);
         }
     }, []);
-
+  
     // TYPE FIX: Added explicit string types for date combination parameters
     // Combine month and year into date string
     // const combineDateFields = (month: string, year: string) => {

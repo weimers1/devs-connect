@@ -153,6 +153,7 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
 //  console.log("other userS ID:", userId);
 
     useEffect(() => {
+        //No need to check connection status if user is viewing their own profile
             if (!userId || !currentUserId) return;
         // setCurrentProfileImage(profileData.pfp);
         const getConnection = async () => {
@@ -174,6 +175,7 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
         navigate('/profile?showProfModal=true');
         window.location.reload();
     }
+    
     return (
         <div className="w-full max-w-2xl bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2 mx-auto">
             {/* Banner - Full width on mobile */}
