@@ -3,6 +3,8 @@ import { Icon } from '@iconify/react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../Service/service';
 import React, { useState, useEffect } from 'react';
+import {useUserConnections} from "/Components/Connections/UserConnectionContext";
+
 
 interface UserCardProps {
     userId: string;
@@ -10,12 +12,23 @@ interface UserCardProps {
     profileData: any;
     currentUserId: string;
 }
+//Connection Data
+ interface connectionData  {
+    career: string;
+    firstName: string;
+    lastName: string;
+    profileImageUrl: string;
+    userId: string;
+}
 
 function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCardProps) {
         // const [imageUploading, setImageUploading] = useState(false);
         const navigate = useNavigate();
         // const [currentProfileImage, setCurrentProfileImage] = useState('');
         const [connectStatus, setconnectStatus] = useState(false);
+        const {connections} = useUserConnections();
+        const [otherConnections, setOtherConnections] = useState<connectionData[] | null>(null);
+
 
     //Validate Image URL to prevent SSRF attacks
     //  const validateImageUrl = (url: string) => {
@@ -151,9 +164,19 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
     //     };
 //  console.log("logged in userID", currentUserId);
 //  console.log("other userS ID:", userId);
-
     useEffect(() => {
         //No need to check connection status if user is viewing their own profile
+        const getOtherUserConnections = async(userId: string) => {
+            try  {
+               const getOtheruserConnections = await API.getOtherUserConnections(userId);
+               if(!getOtheruserConnections) {
+                console.log("error getting other user connections");
+            }   
+            setOtherConnections(getOtheruserConnections);
+            } catch(error) {
+                console.log("error fetching other user connections", error);
+            }
+        }
             if (!userId || !currentUserId) return;
         // setCurrentProfileImage(profileData.pfp);
         const getConnection = async () => {
@@ -169,13 +192,15 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
                 console.log("there was an error in trying to obtain the connection", error);
             }
         }
+        getOtherUserConnections(userId);
         getConnection();
-    }, [profileData]);
+    }, [profileData, connections]);
     function handleImageClick() {
         navigate('/profile?showProfModal=true');
         window.location.reload();
     }
-    
+    console.log(isOwnProfile);
+    console.log(otherConnections);
     return (
         <div className="w-full max-w-2xl bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2 mx-auto">
             {/* Banner - Full width on mobile */}
@@ -219,9 +244,12 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
 
                         {/* Connections */}
                         <div className="mt-2 flex items-center">
-                            <span className="text-blue-600 text-xs sm:text-sm font-medium">
-                                500+ Mutuals
-                            </span>
+                            <button className="text-blue-600 text-xs sm:text-sm font-medium"
+                            onClick={() => isOwnProfile ? navigate('/connections') : navigate(`/connections/${userId}`)}  
+                            >
+                              {isOwnProfile ? `${connections?.length ?? 0} Connections` : `${otherConnections?.length ?? 0} Connections`}
+
+                            </button>
                             <span className="mx-2 text-gray-400">•</span>
                             <span className="text-blue-600 text-xs sm:text-sm font-medium">
                                 Contact info

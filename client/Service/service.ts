@@ -503,6 +503,14 @@ const API = {
         })
         if(!response.ok) throw new Error('Failed To Disconnect from user');
         return response.json();
+    },
+     getOtherUserConnections: async(userId: string) => {
+        const response = await fetch(`${BASE_URL}/api/connections/get/all/connections/from/other/user/${userId}`,{
+            method: "GET",
+            headers: getAuthHeaders(),
+        })
+        if(!response.ok) throw new Error('Failed To Disconnect from user');
+        return response.json();
     }
 }
 

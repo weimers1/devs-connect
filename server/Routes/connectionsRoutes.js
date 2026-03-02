@@ -5,7 +5,8 @@ import {
     connectToUser,
     getrelevantconnection,
     disconnecttotUser,
-    getUserConnections
+    getUserConnections,
+    getOtherUserConnections
 } from "../controllers/connectionsController.js";
 const router = express.Router();
 
@@ -18,6 +19,8 @@ router.get('/obtain/connection/between/:currentUserId/to/:userId', authMiddlewar
 router.delete('/remove/connection/between/:currentUserId/to/:userId', authMiddleware, disconnecttotUser);
 //get all connections from a user
 router.get('/get/all/connections/from/user/:currentUserId',authMiddleware, getUserConnections);
+//Get all other connections from a user
+router.get('/get/all/connections/from/other/user/:userId',authMiddleware, getOtherUserConnections);
 
 
 

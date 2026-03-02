@@ -17,6 +17,7 @@ interface UserConnectionsContextType {
     React.SetStateAction<connectionData[] | null>
   >;
     currentUser: string | null;
+    OthersConnections: connectionData[] | null;
 }
 //creating userconnection context
 export const UserConnectionContext = createContext<UserConnectionsContextType | undefined>(

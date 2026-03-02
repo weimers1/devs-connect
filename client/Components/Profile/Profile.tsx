@@ -163,7 +163,6 @@ function Profile() {
     });
     const [profileSaving, setProfileSaving] = useState(false);  
     const [profileSaveStatus, setProfileSaveStatus] = useState('');
-    console.log(userId);
    useEffect(() => {
     const initializeProfile = async () => {
         try {

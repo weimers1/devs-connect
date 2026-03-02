@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import Layout from "../Layout";
 import {useUserConnections} from "./UserConnectionContext.tsx";
 import { useNavigate} from 'react-router-dom';
@@ -19,7 +19,7 @@ function Connections() {
     const [areyousure, setareyousure] = React.useState(false);
     const [name, setName] = React.useState("");
     const [selectedUserId, setSelectedUserId] = React.useState<string | null>(null);
-  
+    const [otherConnections, setOtherConnections] = useState<connectionData[] | null>(null);
     const handleProfileClick = async (userId: string) => {
         requireAuth(async () => {
           if(currentUser != undefined && currentUser != null) {
@@ -79,6 +79,22 @@ function Connections() {
           setIsLoading(false);
         }
   }
+
+  useEffect(() => {
+      const getOtherUserConnections = async() => {
+            try  {
+                if(!selectedUserId) return;
+               const getOtheruserConnections = await API.getOtherUserConnections(selectedUserId);
+               if(!getOtheruserConnections) {
+                console.log("error getting other user connections");
+            }   
+            setOtherConnections(getOtheruserConnections);
+            } catch(error) {
+                console.log("error fetching other user connections", error);
+            }
+        }
+        getOtherUserConnections();
+  }, [selectedUserId])
 
     return (
         

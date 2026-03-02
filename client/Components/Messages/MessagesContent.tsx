@@ -22,7 +22,6 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
     // Only scroll when new messages are added, not when loading existing messages
     const prevMessagesLength = useRef(0);
     const isInitialLoad = useRef(true);
-    console.log(messages);
     useEffect(() => {
         if (isInitialLoad.current) {
             isInitialLoad.current = false;

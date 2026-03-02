@@ -19,14 +19,40 @@ FROM Connections c
 JOIN Users u 
     ON (c.user1_id = ? AND u.id = c.user2_id)
     OR (c.user2_id = ? AND u.id = c.user1_id)
-LEFT JOIN UserProfiles up ON u.id = up.userId;;
+LEFT JOIN UserProfiles up ON u.id = up.userId;
             `, {
                 replacements: [currentUser, currentUser],
                 type: sequelize.QueryTypes.SELECT
             })
-        if(!getConnections || getConnections.length === 0) { //If length is 0 
-            return;
+      
+        return res.json(getConnections); //Return Connections
+    } catch(error) {
+        console.log(error, "Error Trying to obtain userConnection Data");
+    }
+}
+
+export const getOtherUserConnections = async(req, res) => {
+    const {userId} = req.params; // Need to obtain all the connections from this user
+    try{
+        if(!userId) {
+            console.log("Couldn't detect current User");
         }
+        const getConnections = await sequelize.query(`
+         SELECT 
+    u.id AS userId,
+    up.career,
+    u.firstName,
+    u.lastName,
+    up.profileImageUrl
+FROM Connections c
+JOIN Users u 
+    ON (c.user1_id = ? AND u.id = c.user2_id)
+LEFT JOIN UserProfiles up ON u.id = up.userId;
+            `, {
+                replacements: [userId, userId],
+                type: sequelize.QueryTypes.SELECT
+            })
+      
         return res.json(getConnections); //Return Connections
     } catch(error) {
         console.log(error, "Error Trying to obtain userConnection Data");
