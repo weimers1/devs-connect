@@ -29,7 +29,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setIsAuthenticated(true);
     };
 
-    const logout = () => {
+    const logout = async () => {
+        try {
+            const sessionToken = localStorage.getItem('session_token');
+            
+            if (sessionToken) {
+                const csrfResponse = await fetch('http://localhost:6969/csrf-token', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                const { csrfToken } = await csrfResponse.json();
+
+                await fetch('http://localhost:6969/session/destroy', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        Authorization: `Bearer ${sessionToken}`,
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken,
+                    },
+                });
+            }
+        } catch (error) {
+            console.error('Failed to destroy session on server:', error);
+        }
+        
         localStorage.removeItem('session_token');
         setIsAuthenticated(false);
     };

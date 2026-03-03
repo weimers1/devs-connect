@@ -6,22 +6,28 @@ export const extendSession = async (req, res) => {
         const token = req.headers.authorization?.split(' ')[1];
         if (!token) return res.status(401).json({ error: 'No token' });
 
-        const session = await stytchClient.sessions.authenticate({
-            session_token: token,
-            session_duration_minutes: 60, // extend for another 60 min
+        // Find session in DB
+        const dbSession = await Session.findOne({
+            where: { token, isActive: true },
+        });
+        if (!dbSession) return res.status(404).json({ error: 'Session not found' });
+
+        // Authenticate and extend using JWT
+        const stytchResp = await stytchClient.sessions.authenticate({
+            session_jwt: dbSession.sessionJwt,
+            session_duration_minutes: 60,
         });
 
-        await Session.update(
-            {
-                token: session.session_token,
-                updatedAt: new Date(),
-                isExtended: true,
-            },
-            { where: { token, isActive: true } }
-        );
+        // Update session in DB with new JWT and expiry
+        await dbSession.update({
+            sessionJwt: stytchResp.session_jwt,
+            expiresAt: new Date(stytchResp.session.expires_at),
+            lastRenewedAt: new Date(),
+        });
 
         res.status(200).json({ message: 'Session extended' });
     } catch (error) {
+        console.error('Extend session error:', error);
         res.status(401).json({ error: 'Session extension failed' });
     }
 };
@@ -40,8 +46,8 @@ export const destroySession = async (req, res) => {
                 .status(404)
                 .json({ error: 'Session not found or already inactive' });
 
-        // remove session in stytch
-        await stytchClient.sessions.revoke({ session_token: token });
+        // revoke session in stytch using JWT
+        await stytchClient.sessions.revoke({ session_jwt: session.sessionJwt });
 
         // mark session as inactive in database
         await session.update({ isActive: false, updatedAt: new Date() });
@@ -54,7 +60,6 @@ export const destroySession = async (req, res) => {
 };
 
 export const getStytchSessionStatus = async (req, res) => {
-    // if the session is still valid in stytch, I guess we'll call it valid here too
     try {
         const token = req.headers.authorization?.split(' ')[1];
         if (!token) {
@@ -63,10 +68,19 @@ export const getStytchSessionStatus = async (req, res) => {
                 .json({ success: false, message: 'No token provided' });
         }
 
-        // Verify session with Stytch (example, adjust as needed)
-        const session = await stytchClient.sessions.authenticate({
-            session_token: token,
+        // Find session in DB
+        const dbSession = await Session.findOne({
+            where: { token, isActive: true },
         });
+        if (!dbSession) {
+            return res.status(404).json({ success: false, message: 'Session not found' });
+        }
+
+        // Verify session with Stytch using JWT
+        const stytchResp = await stytchClient.sessions.authenticate({
+            session_jwt: dbSession.sessionJwt,
+        });
+        
         res.status(200).json({
             success: true,
             message: 'Session active',
