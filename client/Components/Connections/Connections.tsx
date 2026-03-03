@@ -7,7 +7,7 @@ import { useAuthRedirect } from "../Auth/useAuthRedirect";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
 function Connections() {
-  const { connections, currentUser } = useUserConnections();
+  const { connections, currentUser,  setConnections } = useUserConnections();
   const { requireAuth } = useAuthRedirect();
   const navigate = useNavigate();
   const { userId } = useParams();
@@ -65,14 +65,24 @@ function Connections() {
         navigate("/login");
         return;
       }
+    const removedConnection = connections?.find(c => c.userId === userId);
+
+      setConnections(prev => 
+      prev?.filter(conn => conn.userId !== userId) || null
+    );
+    setareyousure(false);
 
       const disconnect = await API.disconnecttoUser(userId, currentUser);
 
-      if (!disconnect.success) {
-        console.log("failed to disconnect");
+       if (!disconnect.success) {
+      // Restore the removed connection
+      if (removedConnection) {
+        setConnections(prev => [...(prev || []), removedConnection]);
       }
+      alert("Failed to remove connection");
+    }
 
-      setareyousure(false);
+    
     } catch (error) {
       console.log("error removing connection", error);
     } finally {

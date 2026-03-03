@@ -34,12 +34,31 @@ import connectionsRoutes from "./Routes/connectionsRoutes.js";
 import communityRoutes from './Routes/communityRoutes.js';
 import passport from 'passport';
 import session from 'express-session';
-
+import { rateLimit } from 'express-rate-limit';
 const PORT = process.env.PORT || '6969';
 const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:5173';
 
 const app = express();
 const httpServer = createServer(app);
+
+//Rate Limiter for API routes
+export const apiLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, //5 minutes
+    limit: 100,
+    message: "Too many requests from this IP, please try again after 5 minutes",
+    standardHeaders: true,
+    legacyHeaders: false,
+})
+
+//Moderate Limiter for posting/creating content
+export const createLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    message: 'SLOW DOWN! You are creating content too quickly. Please wait a moment before trying again.',
+})
+
+//Rate Limiting to ALL routes
+app.use('/api/', apiLimiter);
 
 // Socket.io setup for real-time messaging
 const io = new Server(httpServer, {
@@ -197,7 +216,7 @@ app.use('/api/settings', settingsRouter); //Settings Routes
 //Upload Profile Photos
 app.use('/api/upload', uploadRoutes);
 //Community Routes
-app.use('/api/communities', communityRoutes);
+app.use('/api/communities', communityRoutes, createLimiter);
 //User Routes
 app.use('/api/users', userRouter);
 
