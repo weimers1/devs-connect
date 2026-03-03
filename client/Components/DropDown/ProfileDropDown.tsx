@@ -1,42 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useTheme } from '../../src/ThemeContext';
+import { useAuth } from '../Auth/AuthContext';
 
 function ProfileDropdown() {
     const navigate = useNavigate();
     const { resetTheme, theme } = useTheme();
+    const { logout } = useAuth();
 
     const handleLogout = async () => {
-        try {
-            const sessionToken = localStorage.getItem('session_token');
-
-            if (sessionToken) {
-                const csrfResponse = await fetch(
-                    'http://localhost:6969/csrf-token',
-                    {
-                        method: 'GET',
-                        credentials: 'include',
-                    },
-                );
-                const { csrfToken } = await csrfResponse.json();
-
-                await fetch('http://localhost:6969/session/destroy', {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        Authorization: `Bearer ${sessionToken}`,
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': csrfToken,
-                    },
-                });
-            }
-
-            localStorage.removeItem('session_token');
-            resetTheme();
-            navigate('/login');
-        } catch (error) {
-            console.error('Failed to destroy session on server:', error);
-        }
+        await logout();
+        resetTheme();
+        navigate('/login');
     };
 
     const menuItems = [

@@ -52,10 +52,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             }
         } catch (error) {
             console.error('Failed to destroy session on server:', error);
+        } finally {
+            // Always clear local state regardless of server response
+            localStorage.removeItem('session_token');
+            setIsAuthenticated(false);
         }
-        
-        localStorage.removeItem('session_token');
-        setIsAuthenticated(false);
     };
 
     useEffect(() => {
