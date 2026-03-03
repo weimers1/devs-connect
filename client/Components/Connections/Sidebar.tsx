@@ -1,108 +1,124 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { useState } from 'react';
+// import { useEffect, useState } from 'react';
 import { useDropdown } from '../DropDown/DropDownContext';
-import {useTheme} from '../../src/ThemeContext';
+import { useNavigate } from 'react-router-dom';
+import React from 'react';
+// import API from '../../Service/service';
+import {useUserConnections} from "./UserConnectionContext.tsx";
 
+// import { useTheme } from '../../src/ThemeContext';
+
+// const CONNECTIONS_DATA = [
+//     {
+//         name: 'Sarah Johnson',
+//         currentRole: 'Software Engineer at Google',
+//         lastOnline: '',
+//         profileImage: 'SJ',
+//         isOnline: true,
+//         connectionType: '2nd',
+//     },
+//     {
+//         name: 'Mike Chen',
+//         currentRole: 'Software Engineer',
+//         lastOnline: '2 days ago',
+//         profileImage: 'MC',
+//         isOnline: false,
+//         connectionType: '3rd',
+//     },
+//     {
+//         name: 'Emily Davis',
+//         currentRole: 'Web Development',
+//         lastOnline: '14 hours ago',
+//         profileImage: 'ED',
+//         isOnline: false,
+//         connectionType: '2nd',
+//     },
+//     {
+//         name: 'Sarah Johnson',
+//         currentRole: 'Software Engineer at Google',
+//         lastOnline: '',
+//         profileImage: 'SJ',
+//         isOnline: true,
+//         connectionType: '2nd',
+//     },
+//     {
+//         name: 'Mike Chen',
+//         currentRole: 'Software Engineer',
+//         lastOnline: '10 minutes ago',
+//         profileImage: 'MC',
+//         isOnline: false,
+//         connectionType: '3rd',
+//     },
+//     {
+//         name: 'Emily Davis',
+//         currentRole: 'Web Development',
+//         lastOnline: '',
+//         profileImage: 'ED',
+//         isOnline: true,
+//         connectionType: '2nd',
+//     },
+// ];
+
+const SUGGESTIONS_DATA = [
+    {
+        name: 'Alex Rodriguez',
+        currentRole: 'Data Scientist at Netflix',
+        mutualConnections: 5,
+        profileImage: 'AR',
+    },
+    {
+        name: 'Lisa Wang',
+        currentRole: 'Marketing Director at Spotify',
+        mutualConnections: 3,
+        profileImage: 'LW',
+        reason: 'Mutual connections',
+    },
+    {
+        name: 'Alex Rodriguez',
+        currentRole: 'Data Scientist at Netflix',
+        mutualConnections: 5,
+        profileImage: 'AR',
+    },
+    {
+        name: 'Lisa Wang',
+        currentRole: 'Marketing Director at Spotify',
+        mutualConnections: 3,
+        profileImage: 'LW',
+        reason: 'Mutual connections',
+    },
+    {
+        name: 'Alex Rodriguez',
+        currentRole: 'Data Scientist at Netflix',
+        mutualConnections: 5,
+        profileImage: 'AR',
+    },
+    {
+        name: 'Lisa Wang',
+        currentRole: 'Marketing Director at Spotify',
+        mutualConnections: 3,
+        profileImage: 'LW',
+        reason: 'Mutual connections',
+    },
+];
+ export interface connectionData  {
+    career: string;
+    firstName: string;
+    lastName: string;
+    profileImageUrl: string;
+    userId: string;
+}
 
 function Sidebar() {
-    const {isSidebarOpen, toggleSidebar} = useDropdown();
-    const {theme} = useTheme();
-
-    const connections = [
-        {
-            name: 'Sarah Johnson',
-            currentRole: 'Software Engineer at Google',
-            lastOnline: '',
-            profileImage: 'SJ',
-            isOnline: true,
-            connectionType: '2nd',
-        },
-        {
-            name: 'Mike Chen',
-            currentRole: 'Software Engineer',
-            lastOnline: '2 days ago',
-            profileImage: 'MC',
-            isOnline: false,
-            connectionType: '3rd',
-        },
-        {
-            name: 'Emily Davis',
-            currentRole: 'Web Development',
-            lastOnline: '14 hours ago',
-            profileImage: 'ED',
-            isOnline: false,
-            connectionType: '2nd',
-        },
-        {
-            name: 'Sarah Johnson',
-            currentRole: 'Software Engineer at Google',
-            lastOnline: '',
-            profileImage: 'SJ',
-            isOnline: true,
-            connectionType: '2nd',
-        },
-        {
-            name: 'Mike Chen',
-            currentRole: 'Software Engineer',
-            lastOnline: '10 minutes ago',
-            profileImage: 'MC',
-            isOnline: false,
-            connectionType: '3rd',
-        },
-        {
-            name: 'Emily Davis',
-            currentRole: 'Web Development',
-            lastOnline: '',
-            profileImage: 'ED',
-            isOnline: true,
-            connectionType: '2nd',
-        },
-    ];
-
-    const suggestions = [
-        {
-            name: 'Alex Rodriguez',
-            currentRole: 'Data Scientist at Netflix',
-            mutualConnections: 5,
-            profileImage: 'AR',
-        },
-        {
-            name: 'Lisa Wang',
-            currentRole: 'Marketing Director at Spotify',
-            mutualConnections: 3,
-            profileImage: 'LW',
-            reason: 'Mutual connections',
-        },
-        {
-            name: 'Alex Rodriguez',
-            currentRole: 'Data Scientist at Netflix',
-            mutualConnections: 5,
-            profileImage: 'AR',
-        },
-        {
-            name: 'Lisa Wang',
-            currentRole: 'Marketing Director at Spotify',
-            mutualConnections: 3,
-            profileImage: 'LW',
-            reason: 'Mutual connections',
-        },
-        {
-            name: 'Alex Rodriguez',
-            currentRole: 'Data Scientist at Netflix',
-            mutualConnections: 5,
-            profileImage: 'AR',
-        },
-        {
-            name: 'Lisa Wang',
-            currentRole: 'Marketing Director at Spotify',
-            mutualConnections: 3,
-            profileImage: 'LW',
-            reason: 'Mutual connections',
-        },
-    ];
-
+    const {connections} = useUserConnections();
+    const {currentUser} = useUserConnections();
+    const { isSidebarOpen, toggleSidebar } = useDropdown();
+   
+       const navigate = useNavigate();
+    // const { theme } = useTheme();
+   
+   
     return (
-        <section className='overflow-hidden'>
+        <section className="overflow-hidden">
             {/* buttons for collapsing/opening sidebar */}
             <div
                 className={`fixed right-0 duration-400 ease-in ${
@@ -111,9 +127,8 @@ function Sidebar() {
             >
                 <button
                     type="button"
-                    className={`border border-gray-200 md:mt-3 mt-15 rounded-s-lg bg-white opacity-75 hover:opacity-100 ps-2 pe-1 py-2 lg:ps-3 lg:pe-2 lg:py-4 transition-all cursor-pointer flex `}
-                    onClick={
-                        toggleSidebar}
+                    className={`border border-gray-200 md:mt-63 mt-15 rounded-s-lg bg-white opacity-75 hover:opacity-100 ps-2 pe-1 py-2 lg:ps-3 lg:pe-2 lg:py-4 transition-all cursor-pointer flex `}
+                    onClick={toggleSidebar}
                 >
                     <Icon
                         icon="mdi:arrow-left"
@@ -126,21 +141,16 @@ function Sidebar() {
                 </button>
             </div>
             {isSidebarOpen && (
-                <div className="fixed left-0  w-screen h-screen bg-slate-900 opacity-50 z-1 "></div>
+                <div className="fixed left-0  w-screen h-screen bg-white  md:opacity-0  z-1  "></div>
             )}
 
-            
             <div
-                className={`fixed right-0 bottom-0 lg:top-18.5 top-29  md:rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[92vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
+                className={`fixed right-0 bottom-0 lg:top-20.5 top-29  md:rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[92vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
                     isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
-                       } ${
-                        theme === "dark" ? "bg-gray-800" : "bg-white"
-                       }`
-                       
-                    }
+                }`}
             >
                 <button
-                    type="button"   
+                    type="button"
                     className="cursor-pointer text-blue-700 p-3"
                     onClick={toggleSidebar}
                 >
@@ -166,46 +176,80 @@ function Sidebar() {
 
                 <div className="p-4 border-b border-gray-100 h-[27vh] lg:h-[35vh]  overflow-y-scroll">
                     <div className="space-y-4">
-                        {connections.map((connection, index) => (
+                        {connections?.slice(0,5).map((connection, index) => (
                             <div
                                 key={index}
                                 className="flex items-start space-x-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                                  onClick={() => navigate(`/profile/${connection.userId}`)}
                             >
                                 <div className="relative">
                                     <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                        {connection.profileImage}
-                                    </div>
-                                    {connection.isOnline && (
-                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                               <button
+                               onClick={() => navigate(`/profile/${connection.userId}`)}
+                               >
+                                    {connection.profileImageUrl ? (
+                                        <img
+                                className="w-12 h-12 rounded-full object-cover"
+                                src={connection.profileImageUrl}
+                                ></img>
+                                    ) : (
+                                        <span>{connection.firstName.charAt(0) + connection.lastName.charAt(0)}</span>
                                     )}
+                               </button>
+                                    </div>
+                                    {/* {connection.isOnline && (
+                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                                    )} */}
                                 </div>
-
+                                        
                                 <div className="flex-1 min-w-0">
+                                    <button
+                                     onClick={() => navigate(`/profile/${connection.userId}`)}
+                                    >
                                     <div className="flex items-center space-x-2">
                                         <h4 className="font-medium text-gray-900 text-sm truncate">
-                                            {connection.name}
+                                            {connection.firstName + ' ' + connection.lastName.slice(0,15)}
                                         </h4>
-                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                        {/* <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                             {connection.connectionType}
-                                        </span>
+                                        </span> */}
                                     </div>
-                                    <p className="text-xs text-gray-600 mt-1">
-                                        {connection.currentRole}
+                                    <div className="flex">
+                                    <p className="text-xs text-green-600 mt-1 mr-1">
+                                        Career Goal:
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-xs text-grey-600 mt-1">
+                                         {connection.career}
+                                    </p>
+                                    </div>
+                                    </button>
+                                    {/* <p className="text-xs text-gray-500 mt-1">
                                         {connection.isOnline
                                             ? ''
                                             : 'Last seen: ' +
                                               connection.lastOnline}
-                                    </p>
+                                    </p> */}
                                 </div>
-
-                                <button className="text-blue-600 hover:bg-blue-50 p-1 rounded text-xs">
+                             
+                                <button className="text-blue-600 hover:bg-blue-50 p-1 rounded text-xs"
+                                  onClick={() => navigate(`/messages?user=${connection.userId}`)}
+                                >
                                     Message
                                 </button>
                             </div>
                         ))}
-                    </div>
+                        {(connections?.length != null && connections?.length > 5) ? (
+                            <button 
+                             onClick={() => navigate(`/connections/${currentUser}`)}
+                            className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium md:block"
+                            >
+                                View All Connections
+                            </button>
+                        ) : (
+                            <div></div>
+                        )}
+                        </div>
+                
                 </div>
 
                 {/* People You May Know Section */}
@@ -217,7 +261,7 @@ function Sidebar() {
                     </h3>
 
                     <div className="space-y-4 h-[30vh] lg:h-[35vh] overflow-y-scroll">
-                        {suggestions.map((person, index) => (
+                        {SUGGESTIONS_DATA.map((person, index) => (
                             <div
                                 key={index}
                                 className="border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-shadow"

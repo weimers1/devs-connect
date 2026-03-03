@@ -1,62 +1,64 @@
 /* Messages Component Utilities */
 @layer utilities {
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .message-enter {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  
-  .message-enter-active {
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 200ms ease-out, transform 200ms ease-out;
-  }
-  
-  .typing-indicator {
-    animation: typing 1.4s infinite ease-in-out;
-  }
-  
-  @keyframes typing {
-    0%, 60%, 100% {
-      transform: translateY(0);
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
-    30% {
-      transform: translateY(-10px);
+
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
-  }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    .message-enter {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    .message-enter-active {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 200ms ease-out, transform 200ms ease-out;
+    }
+
+    .typing-indicator {
+        animation: typing 1.4s infinite ease-in-out;
+    }
+
+    @keyframes typing {
+        0%,
+        60%,
+        100% {
+            transform: translateY(0);
+        }
+        30% {
+            transform: translateY(-10px);
+        }
+    }
 }
 
 /* Responsive breakpoints optimization */
 @media (max-width: 768px) {
-  .messages-container {
-    height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    
-
-  }
+    .messages-container {
+        height: calc(
+            100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+        );
+    }
 }
 
 /* Dark mode support (future-ready) */
 @media (prefers-color-scheme: dark) {
-  .messages-dark {
-    --bg-primary: #1f2937;
-    --bg-secondary: #374151;
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
-    --border-color: #4b5563;
-  }
+    .messages-dark {
+        --bg-primary: #1f2937;
+        --bg-secondary: #374151;
+        --text-primary: #f9fafb;
+        --text-secondary: #d1d5db;
+        --border-color: #4b5563;
+    }
 }

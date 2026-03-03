@@ -1,11 +1,19 @@
 import React from 'react';
 import { assets } from '../../assets/assets';
 import { Icon } from '@iconify/react/dist/iconify.js';
-import SettingSidebarProps from './SettingProps';
-import { useTheme } from '../../src/ThemeContext';
+// import SettingSidebarProps from './SettingProps';
+// import { useTheme } from '../../src/ThemeContext';
 
-function SettingSidebar({ activeSection, onSelectionClick }) {
-    const { theme } = useTheme();
+interface SettingSidebarProps {
+    activeSection: string;
+    onSelectionClick: (id: string) => void;
+}
+
+function SettingSidebar({
+    activeSection,
+    onSelectionClick,
+}: SettingSidebarProps) {
+    // const { theme } = useTheme();
 
     const SettingsOptions = [
         {
@@ -44,9 +52,9 @@ function SettingSidebar({ activeSection, onSelectionClick }) {
                     icon="flat-color-icons:settings"
                 ></Icon>
                 <span
-                    className={`font-semi-bold text-4xl mt-2 ml-3 ${
-                        theme === 'dark' ? 'text-white' : 'text-gray-600'
-                    }`}
+                    className={`font-semi-bold text-4xl mt-2 ml-3 
+                        // theme === 'dark' ? 'text-white' : 'text-gray-600'
+                    `}
                 >
                     Settings
                 </span>
@@ -57,11 +65,11 @@ function SettingSidebar({ activeSection, onSelectionClick }) {
                     onClick={() => onSelectionClick(option.id)}
                 >
                     <div
-                        className={`flex pt-8 justify-start ml-6 ${
+                        className={`flex pt-8 justify-start ml-6 
                             activeSection === option.id
-                                ? 'text-blue-700'
-                                : 'text-gray-600 '
-                        }${theme === 'dark' ? 'text-white' : 'text-gray-600'}`}
+                                // ? 'text-blue-700'
+                                // : theme === 'dark' ? 'text-white' : 'text-gray-600'
+                        `}
                     >
                         <Icon
                             icon={option.icon}

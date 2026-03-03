@@ -1,7 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import type { MessageSidebarProps, Message } from './types';
+
 import { useMessages } from './hooks';
+import { useNavigate } from 'react-router-dom';
+
 
 const MessageSidebar: React.FC<MessageSidebarProps> = ({
     onMessageSelect,
@@ -10,7 +13,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     className = '',
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
-
+    const navigate = useNavigate();
     // Use the proper hook that returns Message types
     const { messages, isLoading, error, searchMessages } = useMessages();
     //When a user types this function runs, showed typed text in input, calls hooks search function
@@ -27,31 +30,24 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     const handleMessageClick = useCallback(
         (message: Message) => {
             onMessageSelect(message);
+            navigate(`/messages?user=${message.id[2]}`);
         },
         [onMessageSelect]
     );
-    //Converts ISO data string to readable content
-    const formatDate = useCallback((dateStr: string) => {
-        //CallBack has better performance, prevents unnecesary re-renders
-        return new Date(dateStr).toLocaleDateString();
-    }, []);
+    //Converts ISO data string to readable content || Implement Later
+    // const formatDate = useCallback((dateStr: string) => {
+    //     //CallBack has better performance, prevents unnecesary re-renders
+    //     return new Date(dateStr).toLocaleDateString();
+    // }, []);
 
     return (
-        <aside
-            className={`w-full md:w-80 lg:w-96 rounded-r-xl overflow-hidden flex flex-col ${className}`}
-        >
-            {/* Header */}
-            <div className="flex-shrink-0 px-4 py-4  border-gray-100">
-                <div className="flex items-center justify-between mb-4">
-                    <h1 className="text-xl font-semibold text-gray-900">
+        <aside className={`w-full md:w-80 flex flex-col bg-gray-50 ${className}`}>
+            {/* UI CLEANUP: Simplified header, removed unnecessary compose button */}
+            <div className="p-4 border-b border-gray-200 bg-white">
+                <div className="flex items-center justify-between mb-3">
+                    <h1 className="text-lg font-semibold text-gray-900">
                         Messages
                     </h1>
-                    <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                        <Icon
-                            icon="weui:pencil-filled"
-                            className="w-5 h-5"
-                        />
-                    </button>
                 </div>
 
                 <div className="relative">
@@ -72,7 +68,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
             </div>
 
             {/* Messages List */}
-            <div className="flex-1 overflow-y-auto ">
+            <div className="flex-1 overflow-y-auto">
                 {isLoading ? (
                     <div className="flex items-center justify-center py-8">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
@@ -92,51 +88,41 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                         </p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-100">
+                    <div>
                         {messages.map((message) => (
                             <button
                                 key={message.id}
                                 onClick={() => handleMessageClick(message)}
-                                className={`w-full p-4 text-left hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-50 ${
+                                className={`w-full p-3 text-left hover:bg-white transition-colors focus:outline-none ${
                                     selectedMessage?.id === message.id
-                                        ? 'bg-blue-50 border-r-2 border-blue-500'
-                                        : ''
+                                        ? 'bg-blue-50 border-r-3 border-blue-500'
+                                        : 'hover:bg-white'
                                 }`}
                             >
-                                <div className="flex items-start space-x-3">
-                                    {/* Avatar */}
+                                <div className="flex items-center space-x-3">
                                     <div className="relative flex-shrink-0">
                                         <img
                                             src={message.avatar}
                                             alt={message.name}
-                                            className="w-12 h-12 rounded-full object-cover"
+                                            className="w-10 h-10 rounded-full object-cover"
                                         />
                                         {message.isOnline && (
-                                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
+                                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
                                         )}
                                     </div>
 
-                                    {/* Content */}
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between mb-1">
+                                        <div className="flex items-center justify-between">
                                             <h3 className="text-sm font-medium text-gray-900 truncate">
                                                 {message.name}
                                             </h3>
-                                            <div className="flex items-center space-x-2">
-                                                <span className="text-xs text-gray-500">
-                                                    {formatDate(message.date)}
+                                            {message.unreadCount && message.unreadCount > 0 && (
+                                                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-blue-500 rounded-full">
+                                                    {message.unreadCount}
                                                 </span>
-                                                {message.unreadCount &&
-                                                    message.unreadCount > 0 && (
-                                                        <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-blue-500 rounded-full">
-                                                            {
-                                                                message.unreadCount
-                                                            }
-                                                        </span>
-                                                    )}
-                                            </div>
+                                            )}
                                         </div>
-                                        <p className="text-sm text-gray-600 line-clamp-2">
+                                        <p className="text-xs text-gray-500 truncate mt-1">
                                             {message.lastMessage}
                                         </p>
                                     </div>

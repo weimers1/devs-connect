@@ -1,6 +1,6 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import React, { useState } from 'react';
-import { useTheme } from '../../../src/ThemeContext';
+// import { useTheme } from '../../../src/ThemeContext';
 
 const Management = [
     {
@@ -16,7 +16,7 @@ const Management = [
 ];
 
 function AccountManagement() {
-    const { theme } = useTheme();
+    // const { theme } = useTheme();
     const [openSetting, setOpenSetting] = useState<string | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
@@ -32,14 +32,14 @@ function AccountManagement() {
     return (
         <div
             id="Management"
-            className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border border-gray-100"  ${
-                theme === 'dark' ? 'bg-gray-900' : 'bg-white'
-            }`}
+            className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border border-gray-100"  
+                // theme === 'dark' ? 'bg-gray-900' : 'bg-white'
+            `}
         >
             <div
-                className={`p-6 border-b border-gray-100 ${
-                    theme === 'dark' ? 'text-white' : 'text-gray-900'
-                }`}
+                className={`p-6 border-b border-gray-100 
+                    // theme === 'dark' ? 'text-white' : 'text-gray-900'
+                `}
             >
                 <h2 className="text-xl font-semibold ">Account Management</h2>
                 <p className="text-sm  mt-1">
@@ -50,26 +50,26 @@ function AccountManagement() {
             {Management.map((item, index) => (
                 <div key={item.id}>
                     <div
-                        className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer ${
-                            theme === 'dark'
-                                ? 'hover:bg-gray-700'
-                                : 'hover:bg-white'
-                        }`}
+                        className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer 
+                            // theme === 'dark'
+                            //     ? 'hover:bg-gray-700'
+                            //     : 'hover:bg-white'
+                        `}
                         onClick={() => handleSettingClick(item.id)}
                     >
                         <div
-                            className={` ${
-                                theme === 'dark'
-                                    ? 'text-white'
-                                    : 'text-gray-900'
-                            }`}
+                            className={` 
+                                // theme === 'dark'
+                                //     ? 'text-white'
+                                //     : 'text-gray-900'
+                            `}
                         >
                             <div
-                                className={` ${
-                                    theme === 'dark'
-                                        ? 'text-white'
-                                        : 'text-gray-900'
-                                }`}
+                                className={` 
+                                    // theme === 'dark'
+                                    //     ? 'text-white'
+                                    //     : 'text-gray-900'
+                                `}
                             >
                                 <h3
                                     className={`font-medium ${
@@ -97,9 +97,9 @@ function AccountManagement() {
 
                     {openSetting === item.id && (
                         <div
-                            className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100${
-                                theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-                            }`}
+                            className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100
+                                // theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+                            `}
                         >
                             <div className="p-6 space-y-4">
                                 {item.id === 'delete-account' && (
@@ -150,11 +150,11 @@ function AccountManagement() {
                                         <div className="space-y-4">
                                             <div>
                                                 <div
-                                                    className={` ${
-                                                        theme === 'dark'
-                                                            ? 'text-white'
-                                                            : 'text-gray-900'
-                                                    }`}
+                                                    className={` 
+                                                        // theme === 'dark'
+                                                        //     ? 'text-white'
+                                                        //     : 'text-gray-900'
+                                                    `}
                                                 >
                                                     <label className="block text-sm font-medium  mb-2">
                                                         Type{' '}

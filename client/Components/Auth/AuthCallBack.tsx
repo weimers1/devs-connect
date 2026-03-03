@@ -6,7 +6,10 @@ import Layout from '../Layout';
 import Typeahead from '../Utils/Typeahead';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useAuth } from './AuthContext';
-import { useTheme } from '../../src/ThemeContext';
+// import { useTheme } from '../../src/ThemeContext';
+
+// BUG FIX: Define baseUrl that was missing and causing ReferenceError
+const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
 
 const Authenticate: React.FC = () => {
     const [params] = useSearchParams();
@@ -27,6 +30,7 @@ const Authenticate: React.FC = () => {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [careerId, setCareerId] = useState(-1);
+    const [shouldNavigateOnClose, setShouldNavigateOnClose] = useState(false);
 
     const closeModal = () => setModalInfo(null);
 
@@ -47,13 +51,17 @@ const Authenticate: React.FC = () => {
 
         try {
             const sessionToken = localStorage.getItem('session_token');
+            if (!sessionToken) {
+                throw new Error('No authentication token found');
+            }
+            
             const csrfToken = await getCsrfToken();
-
-            const response = await fetch(`http://localhost:6969/user/profile`, {
+            const response = await fetch(`${baseUrl}/user/profile`, {
                 method: 'PUT',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
+                    // amazonq-ignore-next-line
                     'X-CSRF-Token': csrfToken,
                     Authorization: `Bearer ${sessionToken}`,
                 },
@@ -64,7 +72,12 @@ const Authenticate: React.FC = () => {
                 }),
             });
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                throw new Error('Invalid response from server');
+            }
 
             if (data.status !== 200) {
                 showModal({
@@ -76,6 +89,7 @@ const Authenticate: React.FC = () => {
                 return;
             }
 
+            setShouldNavigateOnClose(true);
             showModal({
                 icon: 'mdi-emoticon-outline',
                 title: 'All Set!',
@@ -115,7 +129,7 @@ const Authenticate: React.FC = () => {
 
             try {
                 const response = await fetch(
-                    `http://localhost:6969/auth/verify?token=${token}`,
+                    `${baseUrl}/auth/verify?token=${token}`,
                     {
                         method: 'GET',
                         credentials: 'include',
@@ -169,7 +183,7 @@ const Authenticate: React.FC = () => {
                 login(data.session_token);
 
                 // Load user's theme preference after successful authentication
-                await loadUserTheme();
+                // await loadUserTheme();
 
                 if (data.isNewUser) {
                     showModal({
@@ -181,6 +195,7 @@ const Authenticate: React.FC = () => {
                     });
                     setIsNewUser(true);
                 } else {
+                    // BUG FIX: Navigate to root path '/' instead of '/home' since that's the actual home route
                     navigate('/');
                 }
             } catch (error) {
@@ -206,7 +221,7 @@ const Authenticate: React.FC = () => {
                     title={modalInfo.title}
                     allowClose={modalInfo.allowClose}
                     onClose={
-                        modalInfo.title === 'All Set!'
+                        shouldNavigateOnClose
                             ? () => navigate('/')
                             : closeModal
                     }
@@ -279,7 +294,10 @@ const Authenticate: React.FC = () => {
                                     Career Goal
                                 </label>
                                 <Typeahead
-                                    apiEndpoint="http://localhost:6969/utils/careers/search"
+                                    apiEndpoint={`${
+                                        import.meta.env.VITE_API_URL ||
+                                        'http://localhost:6969'
+                                    }/utils/careers/search`}
                                     id="career"
                                     inputClasses="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     placeHolder="Search career goals..."

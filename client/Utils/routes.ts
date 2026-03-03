@@ -4,6 +4,8 @@ import Profile from '../Components/Profile/Profile';
 import Messages from '../Components/Messages/Messages';
 import Communities from '../Components/Communities/Communities';
 import Settings from '../Components/Settings/Settings';
+import Create from '../Components/Create';
+import Connections from '../Components/Connections/Connections';
 
 export interface RouteConfig {
     path: string;
@@ -31,39 +33,56 @@ export const defaultRoutes: RouteConfig[] = [
         alt: 'Communities',
         showInNav: true,
     },
-    {
-        path: '/courses',
-        component: Home, // Placeholder until Courses component is created
-        title: 'Courses',
-        icon: 'streamline-freehand:learning-programming-book',
-        alt: 'Courses',
-        showInNav: true,
-    },
-    {
-        path: '/create',
-        component: Home, // Placeholder until Create component is created
-        title: 'Create',
-        icon: 'oui:ml-create-single-metric-job',
-        alt: 'Create',
-        showInNav: true,
-    },
+    // {
+    //     path: '/courses',
+    //     component: Home, // Placeholder until Courses component is created
+    //     title: 'Courses',
+    //     icon: 'streamline-freehand:learning-programming-book',
+    //     alt: 'Courses',
+    //     showInNav: false, // REMOVED: Hide courses from navbar as requested
+    // },
+
 ];
 
 export const protectedRoutes: RouteConfig[] = [
-    {
-        path: '/profile',
-        component: Profile,
-        title: 'Profile',
-        icon: 'mdi:account-circle-outline',
-        alt: 'Profile',
-        showInNav: true,
-    },
     {
         path: '/messages',
         component: Messages,
         title: 'Messages',
         icon: 'mdi:message-reply-text-outline',
         alt: 'Messages',
+        showInNav: true,
+    },
+     {
+        path: '/messages/:userId',
+        component: Messages,
+        title: 'Messages',
+        icon: 'mdi:message-reply-text-outline',
+        alt: 'Messages',
+        showInNav: false,
+    },
+    {
+        path: '/Create',
+        component: Create,
+        title: 'Create',
+        icon: 'oui:ml-create-single-metric-job',
+        alt: 'Create',
+        showInNav: true,
+    },
+    {   //Viewing other peoples profiles 
+        path: '/profile/:userId',
+        component: Profile,
+        title: '',
+        icon: '',
+        alt: '',
+        showInNav: false,
+    },
+    { //Person User Profile
+        path: '/profile',
+        component: Profile,
+        title: 'Profile',
+        icon: 'mdi:account-circle-outline',
+        alt: 'Profile',
         showInNav: true,
     },
     {
@@ -74,6 +93,14 @@ export const protectedRoutes: RouteConfig[] = [
         alt: 'Settings',
         showInNav: false,
     },
+    {
+        path: '/connections',
+        component: Connections,
+        title: 'Connections',
+        icon: 'mdi:account-arrow-right-outline',
+        alt: 'Connections',
+        showInNav: false,
+    }
 ];
 
 export const publicRoutes: RouteConfig[] = [

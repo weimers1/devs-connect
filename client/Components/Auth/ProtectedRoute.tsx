@@ -1,5 +1,5 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "./AuthContext";
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 export const ProtectedRoute: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -8,5 +8,12 @@ export const ProtectedRoute: React.FC = () => {
         return <div>Loading...</div>;
     }
 
-    return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+    return isAuthenticated ? (
+        <Outlet />
+    ) : (
+        <Navigate
+            to="/login"
+            replace
+        />
+    );
 };

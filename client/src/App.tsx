@@ -4,11 +4,18 @@ import { ProtectedRoute } from '../Components/Auth/ProtectedRoute';
 import { PublicRoute } from '../Components/Auth/PublicRoute';
 import AuthCallBack from '../Components/Auth/AuthCallBack';
 import { defaultRoutes, protectedRoutes, publicRoutes } from '../Utils/routes';
-import { ThemeProvider } from './ThemeContext';
+// import { ThemeProvider } from './ThemeContext';
+import CommunityPage from '../Components/Communities/CommunityPage';
+import CreateCommunity from '../Components/Communities/CreateCommunity';
+import EditCommunity from '../Components/Communities/EditCommunity';
+import React from 'react';
+import PostTypes from '../Components/Communities/PostTypes';
+import {UserConnectionContextProvider} from "../Components/Connections/UserConnectionContext";
+import Connections from "../Components/Connections/Connections";
 
 const AppRoutes = () => {
     return (
-        <ThemeProvider>
+        // <ThemeProvider>
             <BrowserRouter>
                 <Routes>
                     {defaultRoutes.map((route) => (
@@ -40,16 +47,39 @@ const AppRoutes = () => {
                         path="authenticate"
                         element={<AuthCallBack />}
                     />
+                    {/* ROUTE FIX: Added missing community dynamic routes */}
+                    <Route
+                        path="/community/:communityId"
+                        element={<CommunityPage />}
+                    />
+                    <Route
+                        path="/communities/create"
+                        element={<CreateCommunity />}
+                    />
+                    <Route
+                        path="/edit-community/:communityId"
+                        element={<EditCommunity />}
+                    />
+                    <Route
+                    path="/profile/:userId"
+                    element={<PostTypes/>}
+                    />
+                    <Route
+                    path="/connections/:userId"
+                    element={<Connections/>}
+                    />
                 </Routes>
             </BrowserRouter>
-        </ThemeProvider>
+        // </ThemeProvider>
     );
 };
 
 const App = () => {
     return (
         <AuthProvider>
-            <AppRoutes />
+            <UserConnectionContextProvider>
+                    <AppRoutes />
+                 </UserConnectionContextProvider>
         </AuthProvider>
     );
 };

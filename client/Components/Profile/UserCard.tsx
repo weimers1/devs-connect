@@ -1,114 +1,337 @@
-import { assets } from "../../assets/assets";
+import { assets } from '../../assets/assets';
 import { Icon } from '@iconify/react';
-import API from "../../Service/service";
-import React, { useState, useEffect } from 'react'; // Missing React import
-import { profile } from "console";
+import { useNavigate } from 'react-router-dom';
+import API from '../../Service/service';
+import React, { useState, useEffect } from 'react';
+import {useUserConnections} from "/Components/Connections/UserConnectionContext";
 
 
-function UserCard() {
+interface UserCardProps {
+    userId: string;
+    isOwnProfile: boolean;
+    profileData: any;
+    currentUserId: string;
+}
+//Connection Data
+ interface connectionData  {
+    career: string;
+    firstName: string;
+    lastName: string;
+    profileImageUrl: string;
+    userId: string;
+}
 
-    const [currentProfileImage, setCurrentProfileImage] = useState('');
-    const [loading, setLoading] = useState(false);
-  // Profile edit data
-  const [profileData, setProfileData] = useState({
-    firstName: '',
-    lastName: '',
-    bio: '',
-    location: '',
-    career: '',
-    school: '',
-    github: '',
-  });
-    useEffect(() => {
-const loadProfileData = async () => {
-    try {
-      const response = await API.getProfileInformation();
-      //Set both current form data and BACKUP
-      setProfileData(response); //Load Data from DB from this page
-      setCurrentProfileImage(response.pfp || '');
-    } catch(error) {
-      console.log("Unable to Fetch settings");
-    } finally {
-      setLoading(false);
+function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCardProps) {
+        // const [imageUploading, setImageUploading] = useState(false);
+        const navigate = useNavigate();
+        // const [currentProfileImage, setCurrentProfileImage] = useState('');
+        const [connectStatus, setconnectStatus] = useState(false);
+        const {connections} = useUserConnections();
+        const [otherConnections, setOtherConnections] = useState<connectionData[] | null>(null);
+
+
+    //Validate Image URL to prevent SSRF attacks
+    //  const validateImageUrl = (url: string) => {
+    //     try {
+    //         const parsedUrl = new URL(url);
+    //         const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com', 'localhost'];
+    //         return (
+    //               (allowedHosts.some((host) =>
+    //                 parsedUrl.hostname.endsWith(host)
+    //             ) && parsedUrl.protocol === 'https:') ||
+    //             (parsedUrl.hostname === 'localhost' && parsedUrl.protocol === 'http:')
+    //         );
+    //     } catch {
+    //         return false;
+    //     }
+    // };
+//  console.log(userId);
+    function handleClick() {
+       navigate("/profile?showProfModal=true");
+       window.location.reload();
     }
-  }
-  loadProfileData();
- }, [])
 
+    const handleConnect = async () => {
+        try{
+            if(!userId) {
+                navigate('/login');  
+            }
+            const connect = await API.connectToUser(userId, currentUserId);
+            if(connect.success == false) {
+                console.log("failed to connect to user");
+                setconnectStatus(false);
+            }
+            setconnectStatus(true);
+        } catch(error) {
+            console.log("there was an error trying to connect to user", error);
+        }
+    }
+    const handleDisconnect = async () => {
+        try {
+            if(!userId) {
+                navigate("/login");
+            }
+            if(connectStatus == true) {
+                const disconnect = await API.disconnecttoUser(userId, currentUserId);
+                if(disconnect.success == false) {
+                    console.log("failed to disconnect");
+                    setconnectStatus(true);
+                }
+                setconnectStatus(false);
+            }
+        }catch(error) {
+            console.log("there was an error trying to disconnect to user", error);
+        }
+    }
+    
+
+    // const handleImageUpload = async (file: File) => {
+    //         setImageUploading(true);
+    
+    //         try {
+    //             // Upload to S3
+    //             const formData = new FormData();
+    //             formData.append('profileImage', file);
+    
+    //             const baseUrl =
+    //                process.env.VITE_API_URL ||
+    //                 'http://localhost:6969';
+    //             const uploadResponse = await fetch(
+    //                 `${baseUrl}/api/upload/profile-image`,
+    //                 {
+    //                     method: 'POST',
+    //                     body: formData,
+    //                 }
+    //             );
+    
+    //             if (!uploadResponse.ok) {
+    //                 throw new Error(`Upload failed: ${uploadResponse.status}`);
+    //             }
+    
+    //             const uploadResult = await uploadResponse.json();
+    
+    //             if (!uploadResult.success) {
+    //                 throw new Error('Upload to S3 failed');
+    //             }
+    
+    //             // Validate returned URL to prevent SSRF
+    //             if (!validateImageUrl(uploadResult.imageUrl)) {
+    //                 throw new Error('Invalid image URL returned from server');
+    //             }
+    
+    //             // Save URL to database
+    //             const token = localStorage.getItem('session_token');
+    //             if (!token) {
+    //                 throw new Error('No authentication token found');
+    //             }
+    //             const saveResponse = await fetch(
+    //                 `${baseUrl}/api/settings/profile-image`,
+    //                 {
+    //                     method: 'PUT',
+    //                     headers: {
+    //                         'Content-Type': 'application/json',
+    //                         Authorization: 'Bearer ' + token,
+    //                     },
+    //                     body: JSON.stringify({
+    //                         imageUrl: uploadResult.imageUrl,
+    //                     }),
+    //                 }
+    //             );
+    
+    //             if (!saveResponse.ok) {
+    //                 throw new Error(`Database save failed: ${saveResponse.status}`);
+    //             }
+    
+    //             let saveResult;
+    //             try {
+    //                 saveResult = await saveResponse.json();
+    //             } catch (jsonError) {
+    //                 throw new Error('Invalid response from server');
+    //             }
+    
+    //             if (!saveResult || saveResult.error) {
+    //                 throw new Error(saveResult?.error || 'Database save failed');
+    //             }
+    
+    //             setCurrentProfileImage(uploadResult.imageUrl);
+    //             console.log('Profile image saved to database!');
+    //         } catch (error) {
+    //             console.error('Upload failed:', error);
+    //             alert('Failed to upload profile image. Please try again.');
+    //         } finally {
+    //             setImageUploading(false);
+    //         }
+    //     };
+//  console.log("logged in userID", currentUserId);
+//  console.log("other userS ID:", userId);
+    useEffect(() => {
+        //No need to check connection status if user is viewing their own profile
+        const getOtherUserConnections = async(userId: string) => {
+            try  {
+               const getOtheruserConnections = await API.getOtherUserConnections(userId);
+               if(!getOtheruserConnections) {
+                console.log("error getting other user connections");
+            }   
+            setOtherConnections(getOtheruserConnections);
+            } catch(error) {
+                console.log("error fetching other user connections", error);
+            }
+        }
+            if (!userId || !currentUserId) return;
+        // setCurrentProfileImage(profileData.pfp);
+        const getConnection = async () => {
+            try {
+                const getconnection = await API.getrelevantconnection(userId.toString(), currentUserId.toString());
+                if(getconnection.success === true) {
+                 
+                    setconnectStatus(true); //if there a connection set this to true
+                } else if(getconnection.success === false) {
+                    setconnectStatus(false);   //else set this to false
+                }
+            } catch(error){
+                console.log("there was an error in trying to obtain the connection", error);
+            }
+        }
+        getOtherUserConnections(userId);
+        getConnection();
+    }, [profileData, connections]);
+    function handleImageClick() {
+        navigate('/profile?showProfModal=true');
+        window.location.reload();
+    }
+    console.log(isOwnProfile);
+    console.log(otherConnections);
     return (
-        <div className="w-full bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2"> 
+        <div className="w-full max-w-2xl bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2 mx-auto">
             {/* Banner - Full width on mobile */}
             <div className="relative">
                 <div className="w-full">
-                    <img 
-                        className="w-full h-28 sm:h-36 md:h-42 object-cover" 
-                        src={assets.Banner} 
+                    <img
+                        className="w-full h-28 sm:h-36 md:h-42 object-cover"
+                        src={assets.Banner}
                         alt="Profile Banner"
                     />
                 </div>
-                
-                {/* Profile Picture - Different positioning for mobile vs desktop */}
+
                 <div className="absolute -bottom-10 sm:-bottom-12 md:-bottom-16 left-4 sm:left-6 md:left-8">
-                    <img 
-                        src={currentProfileImage || assets.Profile}
+                    <img
+                        src={profileData.pfp || assets.Profile}
                         alt="Profile"
                         className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg object-cover"
-                    />
+                        onClick={handleImageClick}
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = assets.Profile;
+                        }}
+                    />     
                 </div>
             </div>
-            
+
             {/* Profile Info Section - Full width on mobile */}
             <div className="bg-white pt-12 sm:pt-16 md:pt-20 pb-4 sm:pb-6 px-4 sm:px-6 md:px-8">
                 {/* Mobile: Stacked layout, Desktop: Side-by-side layout */}
                 <div className="flex flex-col md:flex-row md:justify-between">
                     {/* Left Column - Basic Info */}
                     <div className="md:pr-8">
-                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{profileData.firstName + " " + profileData.lastName}</h1>
-                        <p className="text-gray-600 text-sm md:text-base">Student At {profileData.school}</p>
-                        <p className="text-gray-500 text-xs sm:text-sm">{profileData.location}</p>
-                        
+                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
+                            {profileData.firstName + ' ' + profileData.lastName}
+                        </h1>
+                        <p className="text-gray-600 text-sm md:text-base">
+                            Student At {profileData.school}
+                        </p>
+                        <p className="text-gray-500 text-xs sm:text-sm">
+                            {profileData.location}
+                        </p>
+
                         {/* Connections */}
                         <div className="mt-2 flex items-center">
-                            <span className="text-blue-600 text-xs sm:text-sm font-medium">500+ Mutuals</span>
+                            <button className="text-blue-600 text-xs sm:text-sm font-medium"
+                            onClick={() => isOwnProfile ? navigate('/connections') : navigate(`/connections/${userId}`)}  
+                            >
+                              {isOwnProfile ? `${connections?.length ?? 0} Connections` : `${otherConnections?.length ?? 0} Connections`}
+
+                            </button>
                             <span className="mx-2 text-gray-400">•</span>
-                            <span className="text-blue-600 text-xs sm:text-sm font-medium">Contact info</span>
+                            <span className="text-blue-600 text-xs sm:text-sm font-medium">
+                                Contact info
+                            </span>
                         </div>
-                        
-                        {/* Action Buttons - Full width on mobile, normal on desktop */}
-                        <div className="flex flex-col sm:flex-row mt-3 sm:mt-4 sm:space-x-2 space-y-2 sm:space-y-0">
-                            <button className="w-full sm:w-auto rounded-full bg-blue-600 text-white px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-blue-700">
-                                <Icon icon="mdi:account-plus" className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
-                                <span className="font-medium text-sm">Connect</span>
-                            </button>
-                            <button className="w-full sm:w-auto rounded-full bg-white border border-gray-400 text-gray-700 px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-gray-50">
-                                <Icon icon="mdi:message-reply-text" className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
-                                <span className="font-medium text-sm">Message</span>
-                            </button>
-                            <button className="w-full sm:w-auto rounded-full bg-white border border-gray-400 text-gray-700 px-3 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-gray-50">
-                                <span className="font-medium text-sm">More</span>
-                            </button>
-                        </div>
+
+                        {/* Action Buttons - Only show for other users */}
+                        {!isOwnProfile && (
+                            <div className="flex flex-col sm:flex-row mt-3 sm:mt-4 sm:space-x-2 space-y-2 sm:space-y-0">
+                                <button className="w-full sm:w-auto rounded-full bg-blue-600 text-white px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-blue-700 "
+                                onClick={ connectStatus  ? handleDisconnect : handleConnect}
+                                
+                                >
+                                    
+                                    {connectStatus ? (
+                                         <span className="font-medium text-sm">
+                                        Connected
+                                    </span>
+                                    ) : (<>
+                                      <Icon
+                                        icon="mdi:account-plus"
+                                        className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5"
+                                    />
+                                    <span className="font-medium text-sm">
+                                        Connect
+                                    </span>
+                                  
+                                    </>
+                                    )}
+                                    
+                                </button>
+                                <button 
+                                    onClick={() => navigate(`/messages?user=${userId}`)}
+                                    className="w-full sm:w-auto rounded-full bg-white border border-gray-400 text-gray-700 px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-gray-50"
+                                >
+                                    <Icon
+                                        icon="mdi:message-reply-text"
+                                        className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5"
+                                    />
+                                    <span className="font-medium text-sm">
+                                        Message
+                                    </span>
+                                </button>
+                                <button className="w-full sm:w-auto rounded-full bg-white border border-gray-400 text-gray-700 px-3 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-gray-50">
+                                    <span className="font-medium text-sm">
+                                        More
+                                    </span>
+                                </button>
+                            </div>
+                        )}
                     </div>
-                    
+
                     {/* Right Column - Career Goal (Moves below on mobile) */}
                     <div className="mt-4 md:mt-0 md:ml-4 md:flex-shrink-0">
                         <div className="bg-blue-50 px-3 py-2 rounded-lg">
                             <p className="font-semibold text-sm">Career goal</p>
-                            <p className="text-blue-600 text-sm">{profileData.career}</p>
+                            <p className="text-blue-600 text-sm">
+                                {profileData.career}
+                            </p>
                         </div>
                     </div>
                 </div>
-                
+
                 {/*  section divider */}
                 <div className="mt-4 pt-4 border-t border-gray-200">
                     <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-gray-900">About</p>
-                        <button className="text-gray-400">
-                            <Icon icon="mdi:pencil" className="w-5 h-5" />
-                        </button>
+                        <p className="text-sm font-medium text-gray-900">
+                            About
+                        </p>
+                        {isOwnProfile && (
+                            <button className="text-gray-400"
+                            onClick={handleClick}
+                            >
+                                <Icon
+                                    icon="mdi:pencil"
+                                    className="w-5 h-5"
+                                />
+                            </button>
+                        )}
                     </div>
                     <p className="mt-2 text-sm text-gray-600">
-                            {profileData.bio}
+                        {profileData.bio}
                     </p>
                 </div>
             </div>
@@ -117,6 +340,3 @@ const loadProfileData = async () => {
 }
 
 export default UserCard;
-
-
-

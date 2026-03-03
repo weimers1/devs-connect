@@ -1,12 +1,28 @@
-import express from "express";
-import { getProfileSettings, updateProfileSettings, getDisplaySettings, updateDisplaySettings, getGeneralPreferences, updateGeneralPreferences, updatePrivacySecuritySettings, getPrivacySecuritySettings, requestEmailChange, confirmEmailChange, updateVisibilitySettings, getVisibilitySettings } from "../controllers/settingsController.js";
-import authMiddleware from "../middleware/authMiddleware.js";
-import { addCertification} from "../controllers/ProfileController.js";
-import { updateProfileImage } from "../controllers/uploadController.js";
-import { getCertifications } from "../controllers/ProfileController.js"
-import { updateCertifications, deleteCertification } from "../controllers/ProfileController.js";
-const router = express.Router();
+import express from 'express';
+import {
+    getProfileSettings,
+    updateProfileSettings,
+    // getDisplaySettings,
+    // updateDisplaySettings,
+    getGeneralPreferences,
+    updateGeneralPreferences,
+    updatePrivacySecuritySettings,
+    getPrivacySecuritySettings,
+    requestEmailChange,
+    confirmEmailChange,
+    updateVisibilitySettings,
+    getVisibilitySettings,
+    getGitHubConnection,
+    getGitHubInformation,
+} from '../controllers/settingsController.js';
+import authMiddleware from '../middleware/authMiddleware.js';
+import { linkGitHub } from '../controllers/profileController.js';
+import { updateProfileImage } from '../controllers/uploadController.js';
+// import { getCertifications } from '../controllers/profileController.js';
+import { get } from 'http';
 
+
+const router = express.Router();
 
 router.use(authMiddleware);
 //Get Profile Settings
@@ -14,17 +30,17 @@ router.get('/profile', getProfileSettings);
 //Update Profile Settings
 router.put('/profile', updateProfileSettings);
 //Update || add to profile settings
-router.post('/certifications', addCertification);
-//Get Certs
-router.get('/get-certifications', getCertifications );
+// router.post('/certifications', addCertification);
+// //Get Certs
+// router.get('/get-certifications', getCertifications);
 //Update Certifications
-router.put('/update-certifications/:id', updateCertifications);
+// router.put('/update-certifications/:id', updateCertifications);
 //Delete Certification
-router.delete('/certifications/:id', deleteCertification);
+// router.delete('/certifications/:id', deleteCertification);
 //Get Display Settings
-router.get('/display', getDisplaySettings);
-//Update Display Settings
-router.put('/display', updateDisplaySettings);
+// router.get('/display', getDisplaySettings);
+// //Update Display Settings
+// router.put('/display', updateDisplaySettings);
 //Get General Preferences
 router.get('/general', getGeneralPreferences);
 //Update General Preferences
@@ -43,5 +59,11 @@ router.get('/visibility', getVisibilitySettings);
 router.put('/visibility', updateVisibilitySettings);
 //Update Profile Image URL
 router.put('/profile-image', updateProfileImage);
+//Get GitHub Connection Status
+router.get('/github', getGitHubConnection);
+//Get GitHub Username
+router.get('/github-info', getGitHubInformation);
+//Link github account
+router.put('/link-github', linkGitHub);
 
 export default router;

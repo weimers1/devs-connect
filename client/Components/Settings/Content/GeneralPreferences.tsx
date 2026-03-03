@@ -1,13 +1,73 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-import React, { useState } from 'react';
-import { useTheme } from '../../../src/ThemeContext';
+import React, { useCallback, useState } from 'react';
+import API from "../../../Service/service";
+// import { useTheme } from '../../../src/ThemeContext';
+
+const TOGGLE_SWITCH_CLASSES =
+    "w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600";
+
+
+interface GeneralPreferences {
+    language: string, 
+    time_zone: string, 
+    }
+
+const INITIAL_GENERAL_PREFERENCES: GeneralPreferences = {
+    language: '',
+    time_zone: '',
+};
+
 
 function GeneralPreferences() {
     const [openSetting, setOpenSetting] = useState<string | null>(null);
-    const { theme } = useTheme();
+    const [GeneralPreferences, setGeneralPreferences] = useState<GeneralPreferences>(INITIAL_GENERAL_PREFERENCES);
+    const [hasChanges, setHasChanges] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [originalData, setOriginalData] = useState<GeneralPreferences>(INITIAL_GENERAL_PREFERENCES);
+    const [saveStatus, setSaveStatus] = useState('');
+   
+    // const { theme } = useTheme();
+
+    const handleChange = (feild: string, value: string) => {
+             setGeneralPreferences((prevProfile) => ({
+                ...prevProfile,
+                [feild]: value
+                
+            }));
+            setHasChanges(true);
+        }
+    const handleSave = useCallback(async () => {
+            setLoading(true);
+            setSaveStatus('');
+        try {
+                const generalPreferencesData =  {
+                    ...GeneralPreferences,
+                    language: GeneralPreferences.language, 
+                    time_zone: GeneralPreferences.time_zone,
+                }
+
+                await API.updateGeneralPreferences(generalPreferencesData);
+                    setOriginalData(generalPreferencesData);
+                    setSaveStatus('success');
+                    setHasChanges(false);
+
+                  setTimeout(() => setSaveStatus(''), 3000);
+        } catch(error) {
+            console.log("Couldn't Save general Prefreences Data", error);
+            setSaveStatus('error');
+        } finally {
+            setLoading(false);
+
+        }
+     
+    }, [GeneralPreferences]) 
 
     const handleSettingClick = (settingId: string) => {
         setOpenSetting(openSetting === settingId ? null : settingId);
+    };
+        const handleCancel = () => {
+        setGeneralPreferences(originalData);
+        setHasChanges(false);
     };
 
     const Preferences = [
@@ -42,14 +102,14 @@ function GeneralPreferences() {
         <div>
             <div
                 id="General-Preferences"
-                className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border border-gray-100"  ${
-                    theme === 'dark' ? 'bg-gray-900' : 'bg-white'
-                }`}
+                className={`md:w-200 w-full md:rounded-xl col-start-1 row-start-1 overflow-hidden shadow-sm border border-gray-100"  
+                    // theme === 'dark' ? 'bg-gray-900' : 'bg-white'
+                `}
             >
                 <div
-                    className={`p-6 border-b border-gray-100 ${
-                        theme === 'dark' ? 'text-white' : 'text-gray-900'
-                    }`}
+                    className={`p-6 border-b border-gray-100 
+                        // theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    `}
                 >
                     <h2 className="text-xl font-semibold ">
                         General Preferences
@@ -62,19 +122,19 @@ function GeneralPreferences() {
                 {Preferences.map((item, index) => (
                     <div key={item.id}>
                         <div
-                            className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer ${
-                                theme === 'dark'
-                                    ? 'hover:bg-gray-700'
-                                    : 'hover:bg-white'
-                            }`}
+                            className={`px-6 py-4 flex justify-between items-center transition-colors cursor-pointer 
+                                // theme === 'dark'
+                                //     ? 'hover:bg-gray-700'
+                                //     : 'hover:bg-white'
+                            `}
                             onClick={() => handleSettingClick(item.id)}
                         >
                             <div
-                                className={` ${
-                                    theme === 'dark'
-                                        ? 'text-white'
-                                        : 'text-gray-900'
-                                }`}
+                                className={` 
+                                    // theme === 'dark'
+                                    //     ? 'text-white'
+                                    //     : 'text-gray-900'
+                                `}
                             >
                                 <h3 className="font-medium ">{item.name}</h3>
                                 <p className="text-sm ">{item.description}</p>
@@ -93,44 +153,52 @@ function GeneralPreferences() {
 
                         {openSetting === item.id && (
                             <div
-                                className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100${
-                                    theme === 'dark'
-                                        ? 'bg-gray-800'
-                                        : 'bg-white'
-                                }`}
+                                className={`mx-4 mb-4 rounded-lg shadow-sm border border-gray-100
+                                    // theme === 'dark'
+                                    //     ? 'bg-gray-800'
+                                    //     : 'bg-white'
+                                `}
                             >
                                 <div className="p-6 space-y-4">
                                     {item.id === 'language' && (
                                         <div>
                                             <div
-                                                className={` ${
-                                                    theme === 'dark'
-                                                        ? 'text-white'
-                                                        : 'text-gray-900'
-                                                }`}
+                                                className={` 
+                                                    // theme === 'dark'
+                                                    //     ? 'text-white'
+                                                    //     : 'text-gray-900'
+                                                `}
                                             >
                                                 <label className="block text-sm font-medium mb-2">
                                                     Language
                                                 </label>
                                             </div>
-                                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                onChange={(e) => {
+                                                          handleChange(
+                                                                'language',
+                                                                e.target.value
+                                                            
+                                                            )
+                                                }}
+                                            >
                                                 <option value="en">
-                                                    🇺🇸 English
+                                                    English
                                                 </option>
                                                 <option value="es">
-                                                    🇪🇸 Spanish
+                                                    Spanish
                                                 </option>
                                                 <option value="fr">
-                                                    🇫🇷 French
+                                                    French
                                                 </option>
                                                 <option value="de">
-                                                    🇩🇪 German
+                                                    German
                                                 </option>
                                                 <option value="ja">
-                                                    🇯🇵 Japanese
+                                                    Japanese
                                                 </option>
                                                 <option value="zh">
-                                                    🇨🇳 Chinese
+                                                    Chinese
                                                 </option>
                                             </select>
                                         </div>
@@ -139,17 +207,24 @@ function GeneralPreferences() {
                                     {item.id === 'timezone' && (
                                         <div>
                                             <div
-                                                className={` ${
-                                                    theme === 'dark'
-                                                        ? 'text-white'
-                                                        : 'text-gray-900'
-                                                }`}
+                                                className={` 
+                                                    // theme === 'dark'
+                                                    //     ? 'text-white'
+                                                    //     : 'text-gray-900'
+                                                `}
                                             >
                                                 <label className="block text-sm font-medium mb-2">
                                                     Time Zone
                                                 </label>
                                             </div>
-                                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                  onChange={(e) => {
+                                                          handleChange(
+                                                                'time_zone',
+                                                                e.target.value
+                                                            )
+                                                }}
+                                            >
                                                 <option value="UTC">
                                                     UTC (Coordinated Universal
                                                     Time)
@@ -174,7 +249,63 @@ function GeneralPreferences() {
                                                 </option>
                                             </select>
                                         </div>
+                                        
                                     )}
+                                     <div className="flex justify-end space-x-2 space-y-0">
+                                                                                    <div className="flex justify-center pt-1 bg-red-600 w-25 rounded-2xl h-8.5 hover:bg-red-500 ">
+                                                                                        <button
+                                                                                            className="border-gray-500"
+                                                                                            onClick={() =>
+                                                                                                handleCancel()
+                                                                                            }
+                                                                                        >
+                                                                                            Cancel
+                                                                                        </button>
+                                                                                    </div>
+                                                                                    <button
+                                                                                        onClick={handleSave}
+                                                                                        disabled={
+                                                                                            !hasChanges || loading
+                                                                                        }
+                                                                                        className={`w-25 rounded-2xl font-medium transition-colors ${
+                                                                                            saveStatus === 'success'
+                                                                                                ? 'bg-green-600 text-white'
+                                                                                                : saveStatus ===
+                                                                                                  'error'
+                                                                                                ? 'bg-red-600 text-white'
+                                                                                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                                                                                        }`}
+                                                                                    >
+                                                                                        {' '}
+                                                                                        {loading ? (
+                                                                                            <>
+                                                                                                <Icon
+                                                                                                    icon="mdi:loading"
+                                                                                                    className="animate-spin w-4 h-4 mr-2"
+                                                                                                />
+                                                                                                Saving...
+                                                                                            </>
+                                                                                        ) : saveStatus ===
+                                                                                          'success' ? (
+                                                                                            <>
+                                                                                                <div className="flex justify-center">
+                                                                                                    Saved!
+                                                                                                </div>
+                                                                                            </>
+                                                                                        ) : saveStatus ===
+                                                                                          'error' ? (
+                                                                                            <>
+                                                                                                <Icon
+                                                                                                    icon="mdi:alert"
+                                                                                                    className="w-4 h-4 mr-2"
+                                                                                                />
+                                                                                                Error
+                                                                                            </>
+                                                                                        ) : (
+                                                                                            'Save'
+                                                                                        )}
+                                                                                    </button>
+                                                                                </div>
 
                                     {item.id === 'notifications' && (
                                         <div className="space-y-4">
@@ -212,11 +343,11 @@ function GeneralPreferences() {
                                                     className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
                                                 >
                                                     <div
-                                                        className={` ${
-                                                            theme === 'dark'
-                                                                ? 'text-white'
-                                                                : 'text-gray-900'
-                                                        }`}
+                                                        className={` 
+                                                            // theme === 'dark'
+                                                            //     ? 'text-white'
+                                                            //     : 'text-gray-900'
+                                                        `}
                                                     >
                                                         <div className="font-medium">
                                                             {setting.label}
@@ -236,7 +367,11 @@ function GeneralPreferences() {
                                                                 'sound'
                                                             }
                                                         />
-                                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                                        <div
+                                                            className={
+                                                                TOGGLE_SWITCH_CLASSES
+                                                            }
+                                                        ></div>
                                                     </label>
                                                 </div>
                                             ))}
@@ -270,11 +405,11 @@ function GeneralPreferences() {
                                                     },
                                                 ].map((option) => (
                                                     <div
-                                                        className={` ${
-                                                            theme === 'dark'
-                                                                ? 'hover:bg-gray-600'
-                                                                : 'hover:bg-gray-50'
-                                                        }`}
+                                                        className={` 
+                                                            // theme === 'dark'
+                                                            //     ? 'hover:bg-gray-600'
+                                                            //     : 'hover:bg-gray-50'
+                                                        `}
                                                     >
                                                         <label
                                                             key={option.value}
@@ -293,12 +428,12 @@ function GeneralPreferences() {
                                                                 }
                                                             />
                                                             <div
-                                                                className={` ${
-                                                                    theme ===
-                                                                    'dark'
-                                                                        ? 'text-white'
-                                                                        : 'text-gray-900'
-                                                                }`}
+                                                                className={` 
+                                                                    // theme ===
+                                                                    // 'dark'
+                                                                    //     ? 'text-white'
+                                                                    //     : 'text-gray-900'
+                                                                `}
                                                             >
                                                                 <div className="font-medium ">
                                                                     {
@@ -351,11 +486,11 @@ function GeneralPreferences() {
                                                     className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
                                                 >
                                                     <div
-                                                        className={` ${
-                                                            theme === 'dark'
-                                                                ? 'text-white'
-                                                                : 'text-gray-900'
-                                                        }`}
+                                                        className={` 
+                                                            // theme === 'dark'
+                                                            //     ? 'text-white'
+                                                            //     : 'text-gray-900'
+                                                    `}
                                                     >
                                                         <div className="font-medium ">
                                                             {filter.label}
@@ -372,7 +507,7 @@ function GeneralPreferences() {
                                                                 filter.defaultChecked
                                                             }
                                                         />
-                                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                                        <div className={TOGGLE_SWITCH_CLASSES}></div>
                                                     </label>
                                                 </div>
                                             ))}
@@ -393,3 +528,7 @@ function GeneralPreferences() {
 }
 
 export default GeneralPreferences;
+function setSaveStatus(arg0: string) {
+    throw new Error('Function not implemented.');
+}
+

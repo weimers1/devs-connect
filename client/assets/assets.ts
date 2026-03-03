@@ -1,4 +1,3 @@
-import Icon from '/assets/images/code-icon.png';
 import Home from '/assets/images/Nav-Home.png';
 import Profile from '/assets/images/Nav-Profile.png';
 import Messages from '/assets/images/Nav-Messages.png';
@@ -12,7 +11,6 @@ interface AssetMap {
 }
 
 export const assets: AssetMap = {
-    Icon,
     Home,
     Profile,
     Messages,

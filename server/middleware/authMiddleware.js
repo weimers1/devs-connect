@@ -11,8 +11,14 @@ export const csrfProtection = csurf({
 // use this to check if a user has an active session
 const authMiddleware = async (req, res, next) => {
     try {
-        // grab the session token from the header
-        const token = req.headers.authorization?.split(' ')[1];
+        // grab the session token from the header with validation
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res
+                .status(401)
+                .json({ error: 'Invalid authorization header format' });
+        }
+        const token = authHeader.split(' ')[1];
 
         // if no token, that's a problem
         if (!token) {
