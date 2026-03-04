@@ -272,7 +272,7 @@ export const getCommunitiesDataFromUser = async(req, res) => {
         const { userId } = req.params;
         
         const communitiesDatafromuser = await sequelize.query(
-            ` SELECT
+            `  SELECT
               uc.id,
                 uc.name,
                  uc.icon,
@@ -283,12 +283,12 @@ export const getCommunitiesDataFromUser = async(req, res) => {
                     uc.isOwner,
                     uc.createdBy
                     FROM communities uc
-                    WHERE NOT EXISTS (
+                    WHERE EXISTS (
                         SELECT 1
                         FROM usercommunities u
                         WHERE u.communityId = uc.id
                         AND u.userId = ?
-                        AND u.role = 'banned')
+                        AND u.role != 'banned')
              `,
             {
                 replacements: [userId],
@@ -1169,6 +1169,7 @@ export const getHomeFeed = async (req, res) => {
         const communityIds = userCommunityIds.map(uc => uc.communityId);
 
         let userPosts = [];
+   
         if (communityIds.length > 0) {
             userPosts = await sequelize.query(
                 `SELECT 
@@ -1195,7 +1196,7 @@ export const getHomeFeed = async (req, res) => {
 
         let suggestedQuery = '';
         let suggestedReplacements = {};
-        
+        //Check if a user is in communities and exclude them
         if (communityIds.length > 0) {
             suggestedQuery = `SELECT 
                 p.id, p.content, p.title, p.type, p.createdAt, p.userId, p.tags,
@@ -1212,7 +1213,7 @@ export const getHomeFeed = async (req, res) => {
             ORDER BY c.memberCount DESC, p.createdAt DESC
             LIMIT 4`;
             suggestedReplacements = { communityIds };
-        } else {
+        } else { //if a user is in no communities.
             suggestedQuery = `SELECT 
                 p.id, p.content, p.title, p.type, p.createdAt, p.userId, p.tags,
                 p.codeSnippet, p.language, p.projectType, p.skillsNeeded, p.duration,

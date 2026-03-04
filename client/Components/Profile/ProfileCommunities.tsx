@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
 import API from '../../Service/service';
+import { useParams } from 'react-router-dom';
 
 interface CommunitiesProps {
     userId?: string;
@@ -22,29 +23,36 @@ function Communities({ userId }: CommunitiesProps) {
         isOwner: false,
         role: ''
 }]);
-const [UserId, setUserId] = useState(false);
+const [UserId, setUserId] = useState('');
+// const {userId} = useParams();
     const isOwnProfile = !userId;
-
     //Need to obtain community info 
 
     useEffect(() => {
         const  fetchusercommunities = async() => {
+            
                 try { 
                     const user = await API.getCurrentUser();
                     if(!user) {
-                        console.log("No user is logged in")
+                        console.log("No user is logged in");
+                        return;
                     }
-                    setUserId(user.userId);
-                    const communityData = await API.getCommunitiesDataFromUser(user.userId);
-                    setCommunitiesData(communityData);
+              const targetUserId = userId || user.userId;
+              setUserId(targetUserId);
+              const communityData = await API.getCommunitiesDataFromUser(targetUserId);
+                    if (Array.isArray(communityData)) {
+                   setCommunitiesData(communityData);
+                    } else {
+                        console.error("Received non-array community data", communityData);
+                        setCommunitiesData([]); 
+                    }
+
                 } catch(error) {
                     console.log(error, "error fetching user communities");
                 }
         }
         fetchusercommunities();
-    }, []) 
-
-   
+    }, [userId]) 
 
     return (
         <div className="w-full max-w-2xl bg-white overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2 mx-auto">
@@ -64,7 +72,7 @@ const [UserId, setUserId] = useState(false);
             </div>
 
             <div className="space-y-4 ">
-                {communitiesData.map((community) => (
+                {communitiesData?.map((community) => (
                     <div
                         key={community.id}
                         className="flex border-b border-gray-100 pb-4"

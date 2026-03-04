@@ -60,14 +60,18 @@ const Home = () => {
             <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                     {post.avatar ? (
-                        <img src={post.avatar} alt={post.author} className="w-10 h-10 rounded-full object-cover" />
+                        <img src={post.avatar} alt={post.author} className="w-10 h-10 rounded-full object-cover" 
+                        onClick={() => navigate(`/profile/${post.userId}`)} style={{ cursor: 'pointer' }}
+                        />
                     ) : (
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
                             {post.author.charAt(0)}
                         </div>
                     )}
                     <div>
-                        <p className="font-semibold text-sm">{post.author}</p>
+                        <p className="font-semibold text-sm"
+                         onClick={() => navigate(`/profile/${post.userId}`)} style={{ cursor: 'pointer' }}
+                        >{post.author}</p>
                         <p className="text-xs text-gray-500">
                             from{' '}
                             <span 

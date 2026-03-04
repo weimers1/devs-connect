@@ -199,8 +199,7 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
         navigate('/profile?showProfModal=true');
         window.location.reload();
     }
-    console.log(isOwnProfile);
-    console.log(otherConnections);
+  
     return (
         <div className="w-full max-w-2xl bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2 mx-auto">
             {/* Banner - Full width on mobile */}
