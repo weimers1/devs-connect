@@ -44,7 +44,7 @@ const httpServer = createServer(app);
 //Rate Limiter for API routes
 export const apiLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, //5 minutes
-    limit: 100,
+    limit: process.env.NODE_ENV === 'production' ? 100 : 1000, // Higher limit in dev
     message: "Too many requests from this IP, please try again after 5 minutes",
     standardHeaders: true,
     legacyHeaders: false,

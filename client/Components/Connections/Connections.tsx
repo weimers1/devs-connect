@@ -111,7 +111,7 @@ function Connections() {
   return (
     <Layout>
       <div className="fixed inset-0 flex items-start justify-center pt-4">
-        <div className="bg-stone-100 w-full max-w-3xl md:rounded-xl mt-20 p-6 overflow-y-auto relative border">
+        <div className="bg-stone-100 w-full max-w-3xl h-150  md:rounded-xl mt-20 p-6 overflow-y-auto relative border">
           <h2 className="text-2xl mb-4 text-center">Connections</h2>
 
           <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">

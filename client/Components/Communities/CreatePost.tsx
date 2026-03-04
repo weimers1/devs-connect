@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
+import API from '../../Service/service';
+import { useParams } from 'react-router-dom';
 
 interface CreatePostProps {
     onPostCreate: (postData: any) => void,
@@ -11,9 +13,44 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
     const { requireAuth } = useAuthRedirect();
     const [content, setContent] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
-    
-  
- 
+    const {communityId} = useParams();
+    const [notMemberTab, setNotMemberTab] = useState(false);
+    //Community Membership 
+    const [isMember, setIsMember] = useState(false);
+
+    //UseEffect to determine membership
+    useEffect(() => {
+        const getMembershipStatus = async() => {
+        try{
+        const userId = await API.getCurrentUser();
+        if(userId && communityId) {
+            const membershipStatus = await API.getCommunityMembership(communityId, userId.userId);
+            if(membershipStatus.isMember == true) {
+                 setIsMember(true);
+            } else {
+                setIsMember(false);
+            }
+        }
+        } catch(error) {
+            console.log("There was an error obtaining the membershipstatus", error);
+        }
+    }
+     getMembershipStatus();
+    },[])
+    //Handle Post Click - if user is a member, expand the post form, if not show not member tab
+    const handlePostClick = () => {
+        if(isMember) {
+            setIsExpanded(true);
+        } else {
+            setNotMemberTab(true);
+        const timerId = setTimeout(() => {
+            setNotMemberTab(false);
+        }, 3000)
+         return () => clearTimeout(timerId);
+        }
+        
+    }
+
     //Different Post Types
 
     const PostTypes = 
@@ -24,7 +61,6 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
     ];
 
     
-
     // Programming post fields
     const [codeSnippet, setCodeSnippet] = useState('');
     const [language, setLanguage] = useState('javascript');
@@ -100,7 +136,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                         value={''}
                         placeholder="Share something with the community..."
                         className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                        onClick={() => requireAuth(() => setIsExpanded(true))}
+                        onClick={() => requireAuth(() => handlePostClick())}
                         readOnly
                     />
                 </div>
@@ -219,7 +255,22 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                     </div>
                 </div>
             )}
+             {notMemberTab && (
+                                                <>
+                            <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-20 inset-0 flex items-center justify-center ">
+                           
+                    <div className="bg-white rounded-xl mb-12 p-6  md:w-90 mx-4">
+                          <Icon icon="streamline-plump-color:sad-face-flat" className="mb-2 mx-auto" width="72" height="72" />
+                        <h2 className="text-2xl font-bold mb-6 text-center">{`You are not a member of this community consider joining!`}</h2>
+                        <div className="flex flex-col gap-3">
+                        </div>
+                    </div> 
+            
+                </div>
+                </>
+                                )}
         </div>
+        
     );
 };
 

@@ -219,7 +219,7 @@ export const isCommunityOwner = async (req, res) => {
 export const getCommunityMemberShip = async (req, res) => {
     try {
         const {communityId} = req.params;
-        const userId=  req.user.userId;
+        const userId =  req.user.userId;
 
         const membership = await sequelize.query(
             `SELECT * FROM dev_connect.usercommunities WHERE communityId = ? AND userId = ?`,
