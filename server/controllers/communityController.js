@@ -1152,3 +1152,117 @@ export const deletePost = async (req, res) => {
         res.status(500).json({ error: 'Failed to delete post' });
     }
 };
+
+//Get Home Feed - Get posts from communities the user is a member of + suggested posts
+export const getHomeFeed = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        const userCommunityIds = await sequelize.query(
+            `SELECT communityId FROM usercommunities WHERE userId = ?`,
+            {
+                replacements: [userId],
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        const communityIds = userCommunityIds.map(uc => uc.communityId);
+
+        let userPosts = [];
+        if (communityIds.length > 0) {
+            userPosts = await sequelize.query(
+                `SELECT 
+                    p.id, p.content, p.title, p.type, p.createdAt, p.userId, p.tags,
+                    p.codeSnippet, p.language, p.projectType, p.skillsNeeded, p.duration,
+                    c.name as communityName, c.id as communityId,
+                    u.firstName, u.lastName, up.profileImageUrl,
+                    (SELECT COUNT(*) FROM postlikes WHERE postId = p.id) as likeCount,
+                    (SELECT COUNT(*) FROM postcomments WHERE postId = p.id) as commentCount,
+                    EXISTS(SELECT 1 FROM postlikes WHERE postId = p.id AND userId = :userId) as isLiked
+                FROM Posts p
+                JOIN Communities c ON p.communityId = c.id
+                JOIN Users u ON p.userId = u.id
+                LEFT JOIN UserProfiles up ON u.id = up.userId
+                WHERE p.communityId IN (:communityIds)
+                ORDER BY p.createdAt DESC
+                LIMIT 16`,
+                {
+                    replacements: { communityIds, userId },
+                    type: sequelize.QueryTypes.SELECT
+                }
+            );
+        }
+
+        let suggestedQuery = '';
+        let suggestedReplacements = {};
+        
+        if (communityIds.length > 0) {
+            suggestedQuery = `SELECT 
+                p.id, p.content, p.title, p.type, p.createdAt, p.userId, p.tags,
+                p.codeSnippet, p.language, p.projectType, p.skillsNeeded, p.duration,
+                c.name as communityName, c.id as communityId,
+                u.firstName, u.lastName, up.profileImageUrl,
+                (SELECT COUNT(*) FROM postlikes WHERE postId = p.id) as likeCount,
+                (SELECT COUNT(*) FROM postcomments WHERE postId = p.id) as commentCount
+            FROM Posts p
+            JOIN Communities c ON p.communityId = c.id
+            JOIN Users u ON p.userId = u.id
+            LEFT JOIN UserProfiles up ON u.id = up.userId
+            WHERE p.communityId NOT IN (:communityIds) AND c.isPrivate = false
+            ORDER BY c.memberCount DESC, p.createdAt DESC
+            LIMIT 4`;
+            suggestedReplacements = { communityIds };
+        } else {
+            suggestedQuery = `SELECT 
+                p.id, p.content, p.title, p.type, p.createdAt, p.userId, p.tags,
+                p.codeSnippet, p.language, p.projectType, p.skillsNeeded, p.duration,
+                c.name as communityName, c.id as communityId,
+                u.firstName, u.lastName, up.profileImageUrl,
+                (SELECT COUNT(*) FROM postlikes WHERE postId = p.id) as likeCount,
+                (SELECT COUNT(*) FROM postcomments WHERE postId = p.id) as commentCount
+            FROM Posts p
+            JOIN Communities c ON p.communityId = c.id
+            JOIN Users u ON p.userId = u.id
+            LEFT JOIN UserProfiles up ON u.id = up.userId
+            WHERE c.isPrivate = false
+            ORDER BY c.memberCount DESC, p.createdAt DESC
+            LIMIT 4`;
+        }
+
+        const suggestedPosts = await sequelize.query(suggestedQuery, {
+            replacements: suggestedReplacements,
+            type: sequelize.QueryTypes.SELECT
+        });
+
+        const formatPost = (post) => ({
+            id: post.id,
+            userId: post.userId,
+            type: post.type,
+            author: `${post.firstName} ${post.lastName}`,
+            avatar: post.profileImageUrl || null,
+            timestamp: new Date(post.createdAt).toLocaleDateString(),
+            content: post.content,
+            title: post.title,
+            codeSnippet: post.codeSnippet,
+            language: post.language,
+            projectType: post.projectType,
+            skillsNeeded: post.skillsNeeded,
+            duration: post.duration,
+            tags: post.tags || [],
+            communityName: post.communityName,
+            communityId: post.communityId,
+            likes: post.likeCount || 0,
+            comments: post.commentCount || 0,
+            isLiked: Boolean(post.isLiked)
+        });
+
+        res.json({
+            userPosts: userPosts.map(formatPost),
+            suggestedPosts: suggestedPosts.map(formatPost)
+        });
+
+    } catch (error) {
+        console.error('Error fetching home feed:', error);
+        res.status(500).json({ error: 'Failed to fetch home feed' });
+    }
+}

@@ -261,7 +261,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                            
                     <div className="bg-white rounded-xl mb-12 p-6  md:w-90 mx-4">
                           <Icon icon="streamline-plump-color:sad-face-flat" className="mb-2 mx-auto" width="72" height="72" />
-                        <h2 className="text-2xl font-bold mb-6 text-center">{`You are not a member of this community consider joining!`}</h2>
+                        <h2 className="text-2xl font-bold mb-6 text-center">{`You are not a member of this community, consider joining!`}</h2>
                         <div className="flex flex-col gap-3">
                         </div>
                     </div> 
