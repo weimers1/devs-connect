@@ -10,6 +10,15 @@ import React from "react";
     profileImageUrl: string;
     userId: string;
 }
+
+interface SuggestionData {
+  author: string
+  userId: string,
+  age: string,
+  profileImageUrl: string,
+  career: string,
+  school: string
+}
 //The UserOCnnectionsContext Type | connection Data and setconnection.
 interface UserConnectionsContextType {
     connections: connectionData[] | null;
@@ -17,7 +26,7 @@ interface UserConnectionsContextType {
     React.SetStateAction<connectionData[] | null>
   >;
     currentUser: string | null;
-    OthersConnections: connectionData[] | null;
+    suggestionData: SuggestionData[] | null
 }
 //creating userconnection context
 export const UserConnectionContext = createContext<UserConnectionsContextType | undefined>(
@@ -28,6 +37,7 @@ export const UserConnectionContextProvider: React.FC<{children: ReactNode}> = ({
     children,
 }) => {
     const [connections, setConnections] = useState<connectionData[] | null>(null);
+    const [suggestionData, setsuggestionData] = useState<SuggestionData[] | null>(null);
     const [currentUser, setCurrentUser] = useState<string>();
         useEffect(() =>  {
         const getUserConnections = async() => {
@@ -46,10 +56,20 @@ export const UserConnectionContextProvider: React.FC<{children: ReactNode}> = ({
         console.log("error obtaing all userConnections" ,error);
       }
     }
+    const getUserSuggestions = async () => {
+      try {
+        
+        const response = await API.getUserSuggestions();
+        setsuggestionData(response.UserRecommendations || []);
+      } catch(error) {
+        console.log("getUserSuggestions", error);
+      }
+    }
+    getUserSuggestions();
     getUserConnections();
     }, [])
     return(
-        <UserConnectionContext.Provider value={{connections, setConnections, currentUser}}>
+        <UserConnectionContext.Provider value={{connections, setConnections, currentUser, suggestionData}}>
             {children}
         </UserConnectionContext.Provider>
     )

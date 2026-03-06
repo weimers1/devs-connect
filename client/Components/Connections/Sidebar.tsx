@@ -59,47 +59,6 @@ import {useUserConnections} from "./UserConnectionContext.tsx";
 //     },
 // ];
 
-const SUGGESTIONS_DATA = [
-    {
-        name: 'Alex Rodriguez',
-        currentRole: 'Data Scientist at Netflix',
-        mutualConnections: 5,
-        profileImage: 'AR',
-    },
-    {
-        name: 'Lisa Wang',
-        currentRole: 'Marketing Director at Spotify',
-        mutualConnections: 3,
-        profileImage: 'LW',
-        reason: 'Mutual connections',
-    },
-    {
-        name: 'Alex Rodriguez',
-        currentRole: 'Data Scientist at Netflix',
-        mutualConnections: 5,
-        profileImage: 'AR',
-    },
-    {
-        name: 'Lisa Wang',
-        currentRole: 'Marketing Director at Spotify',
-        mutualConnections: 3,
-        profileImage: 'LW',
-        reason: 'Mutual connections',
-    },
-    {
-        name: 'Alex Rodriguez',
-        currentRole: 'Data Scientist at Netflix',
-        mutualConnections: 5,
-        profileImage: 'AR',
-    },
-    {
-        name: 'Lisa Wang',
-        currentRole: 'Marketing Director at Spotify',
-        mutualConnections: 3,
-        profileImage: 'LW',
-        reason: 'Mutual connections',
-    },
-];
  export interface connectionData  {
     career: string;
     firstName: string;
@@ -111,11 +70,12 @@ const SUGGESTIONS_DATA = [
 function Sidebar() {
     const {connections} = useUserConnections();
     const {currentUser} = useUserConnections();
+    const {suggestionData} = useUserConnections();
     const { isSidebarOpen, toggleSidebar } = useDropdown();
    
        const navigate = useNavigate();
     // const { theme } = useTheme();
-   
+    console.log(suggestionData);
    
     return (
         <section className="overflow-hidden">
@@ -180,7 +140,6 @@ function Sidebar() {
                             <div
                                 key={index}
                                 className="flex items-start space-x-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
-                                  onClick={() => navigate(`/profile/${connection.userId}`)}
                             >
                                 <div className="relative">
                                     <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
@@ -261,28 +220,38 @@ function Sidebar() {
                     </h3>
 
                     <div className="space-y-4 h-[30vh] lg:h-[35vh] overflow-y-scroll">
-                        {SUGGESTIONS_DATA.map((person, index) => (
+                        {suggestionData?.slice(0,4).map((person, index) => (
                             <div
                                 key={index}
                                 className="border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-shadow"
                             >
                                 <div className="flex items-start space-x-3">
                                     <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                        {person.profileImage}
+                                         <button
+                               onClick={() => navigate(`/profile/${person.userId}`)}
+                               >
+                                    {person.profileImageUrl ? (
+                                        <img
+                                className="w-12 h-12 rounded-full object-cover"
+                                src={person.profileImageUrl}
+                                ></img>
+                                    ) : (
+                                        <span>{`${person.author.charAt(0)}${person.author.charAt(person.author.length-1).toUpperCase()}`}</span>
+                                    )}
+                               </button>                 
                                     </div>
-
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-medium text-gray-900 text-sm">
-                                            {person.name}
+                                            {person.author}
                                         </h4>
 
                                         <p className="text-xs text-gray-600 mt-1">
-                                            {person.currentRole}
+                                            {person.career}
                                         </p>
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        {/* <p className="text-xs text-gray-500 mt-1">
                                             {person.mutualConnections} mutual
                                             connections
-                                        </p>
+                                        </p> */}
                                     </div>
                                 </div>
 

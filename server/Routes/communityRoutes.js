@@ -27,7 +27,8 @@ import {
      BanCommunityMember,
      UnBanCommunityMember,
      checkBanStatus,
-     getHomeFeed
+     getHomeFeed,
+     getSideBarRecommendations
      
 } from '../controllers/communityController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
@@ -35,6 +36,7 @@ import authMiddleware from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 router.get('/user', getCommunities);
+router.get('/obtain/sidebar/suggestions', authMiddleware, getSideBarRecommendations); //getting sidebar user suggestions 
 router.get('/feed/home', authMiddleware, getHomeFeed);
 router.delete("/member/:userId/community/:communityId/from/:currentUserId", authMiddleware, kickCommunityMember); //Kick a member from a community
 router.delete('/leave/communityMember/:userId/community/:communityId',authMiddleware, LeaveCommunity);
@@ -63,6 +65,7 @@ router.get('/communityOwner/:id/communities/:createdBy', authMiddleware, isCommu
 router.get('/:userId/communities/Data', authMiddleware,  getCommunitiesDataFromUser) //Get Data from communiites
 router.put('/:userId/community/:communityId/promote/from/:currentUserId', authMiddleware, PromoteCommunityMember);
 router.get('/checkBanStatus/:communityId/member/:userId', authMiddleware, checkBanStatus);
+
 
 
 

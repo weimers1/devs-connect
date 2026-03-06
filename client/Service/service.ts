@@ -509,7 +509,15 @@ const API = {
             method: "GET",
             headers: getAuthHeaders(),
         })
-        if(!response.ok) throw new Error('Failed To Disconnect from user');
+        if(!response.ok) throw new Error('Failed TO get Other User connections');
+        return response.json();
+    },
+    getUserSuggestions: async() => {
+          const response = await fetch(`${BASE_URL}/api/communities/obtain/sidebar/suggestions`,{
+            method: "GET",
+            headers: getAuthHeaders(),
+        })
+        if(!response.ok) throw new Error('Failed To getUser Suggestions');
         return response.json();
     }
 }

@@ -1267,3 +1267,52 @@ export const getHomeFeed = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch home feed' });
     }
 }
+export const getSideBarRecommendations = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        if(!userId) {
+            res.json("There is not user currently logged in");
+            return;
+        }
+
+        //User Connections Pull
+        let UserRecommendations =  []; 
+
+        UserRecommendations = await sequelize.query(`
+            SELECT u.firstName, u.lastName, u.isActive, u.id, up.userId, up.age, up.profileImageUrl, 
+            up.career, up.school FROM dev_connect.users u
+            LEFT JOIN dev_connect.userprofiles up ON u.id = up.userId 
+            WHERE u.id <> 1 
+		    AND NOT EXISTS (
+		    SELECT 1 FROM dev_connect.connections c
+            WHERE (c.user1_id = ? AND c.user2_id = u.id)
+            OR 
+			(c.user1_id = u.id AND c.user2_id = ?)
+            LIMIT 4
+        )      
+            `, {
+                replacements: [userId, userId],
+                type: sequelize.QueryTypes.SELECT
+            })
+        
+            const SuggestiveUser = (user) => ({
+            
+                isActive: user.isActive,
+                author: `${user.firstName} ${user.lastName}`,
+                userId: user.id,
+                age: user.age,
+                profileImageUrl: user.profileImageUrl,
+                career: user.career,
+                school: user.school
+            
+            })
+
+            res.json({UserRecommendations: UserRecommendations.map(SuggestiveUser)});
+
+
+
+    } catch(error) {
+        console.error('Error fetching sidebar recommendations:', error);
+        res.json("Failed to fetch sidebar recommendations");
+    }
+}
