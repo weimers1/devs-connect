@@ -75,7 +75,6 @@ function Sidebar() {
    
        const navigate = useNavigate();
     // const { theme } = useTheme();
-    console.log(suggestionData);
    
     return (
         <section className="overflow-hidden">

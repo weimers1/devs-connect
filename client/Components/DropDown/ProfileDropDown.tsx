@@ -75,7 +75,7 @@ function ProfileDropdown() {
 
     return (
         <div
-            className={`absolute -right-1 bg-stone-200 top-20 ml-2 w-70 rounded-lg shadow-xl border z-50 
+            className={`absolute -right-1 bg-stone-200 top-20 mr-1 w-70  shadow-xl border z-50 
              
             `}
         >

@@ -1282,7 +1282,7 @@ export const getSideBarRecommendations = async (req, res) => {
             SELECT u.firstName, u.lastName, u.isActive, u.id, up.userId, up.age, up.profileImageUrl, 
             up.career, up.school FROM dev_connect.users u
             LEFT JOIN dev_connect.userprofiles up ON u.id = up.userId 
-            WHERE u.id <> 1 
+            WHERE u.id <> ? 
 		    AND NOT EXISTS (
 		    SELECT 1 FROM dev_connect.connections c
             WHERE (c.user1_id = ? AND c.user2_id = u.id)
@@ -1291,7 +1291,7 @@ export const getSideBarRecommendations = async (req, res) => {
             LIMIT 4
         )      
             `, {
-                replacements: [userId, userId],
+                replacements: [userId, userId, userId],
                 type: sequelize.QueryTypes.SELECT
             })
         
