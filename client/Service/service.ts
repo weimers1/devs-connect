@@ -519,6 +519,25 @@ const API = {
         })
         if(!response.ok) throw new Error('Failed To getUser Suggestions');
         return response.json();
+    },
+    
+    // Platform-wide search
+    searchCommunities: async(query: string) => {
+        const response = await fetch(`${BASE_URL}/api/search/communities?q=${encodeURIComponent(query)}`, {
+            method: "GET",
+            headers: getAuthHeaders(false, false),
+        });
+        if(!response.ok) throw new Error('Failed to search communities');
+        return response.json();
+    },
+    
+    searchUsers: async(query: string) => {
+        const response = await fetch(`${BASE_URL}/api/search/users?q=${encodeURIComponent(query)}`, {
+            method: "GET",
+            headers: getAuthHeaders(),
+        });
+        if(!response.ok) throw new Error('Failed to search users');
+        return response.json();
     }
 }
 

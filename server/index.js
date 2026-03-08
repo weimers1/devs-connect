@@ -32,6 +32,7 @@ import uploadRoutes from './Routes/uploadRoutes.js';
 import githubRoutes from './Routes/github.js';
 import connectionsRoutes from "./Routes/connectionsRoutes.js";
 import communityRoutes from './Routes/communityRoutes.js';
+import searchRoutes from './Routes/searchRoutes.js';
 import passport from 'passport';
 import session from 'express-session';
 import { rateLimit } from 'express-rate-limit';
@@ -225,6 +226,9 @@ app.use(errorHandler);
 
 //Connections API
 app.use('/api/connections', connectionsRoutes);
+
+//Search API
+app.use('/api/search', searchRoutes);
 
 // Clean up duplicate email indexes
 async function cleanUpEmailIndexes() {

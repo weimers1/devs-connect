@@ -32,6 +32,8 @@ const Navbar: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [name, setName] = useState('');
     const [communities, setCommunities] = useState<Community[]>([]); // Community Data
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showSearch, setShowSearch] = useState(false);
     
 
     useEffect(() => {
@@ -69,11 +71,17 @@ const Navbar: React.FC = () => {
 }, [isAuthenticated]);
 
 
-    //Overall Search Bar Udpdate
-    const handleChange = (e) => {
-        setName(e.target.value);
-    }
- const filteredCommunities = communities.filter((community) => community.name.toLowerCase().includes(name.toLowerCase()));
+    //Overall Search Bar Update
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearchQuery(value);
+        setShowSearch(value.trim().length > 0);
+    };
+
+    const handleSearchClose = () => {
+        setSearchQuery('');
+        setShowSearch(false);
+    };
     // Combine routes based on auth status and filter by showInNav
     const availableRoutes = isAuthenticated
         ? [
@@ -128,8 +136,8 @@ const Navbar: React.FC = () => {
                         </Link>
                         
                          {/* Desktop Search Bar */}
-                    <div className="hidden md:block flex-1 max-w-sm ml-3 mt-0.5 ">
-                        <div className="relative ">
+                    <div className="hidden md:block flex-1 max-w-sm ml-3 mt-0.5 relative">
+                        <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Icon
                                     icon="mdi:magnify"
@@ -139,33 +147,24 @@ const Navbar: React.FC = () => {
                             
                             <input
                                 type="text"
-                                className={`block rounded-2xl w-full pl-10 pr-3 py-1.5 border leading-5 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out 
-                                    // theme === 'dark'
-                                    //     ? 'bg-gray-700 border-gray-600 text-white'
-                                    //     : 'bg-white border-black'
-                                `}
-                                placeholder="Search..."
-                                onChange={handleChange}
-                          
+                                value={searchQuery}
+                                className="block rounded-2xl w-full pl-10 pr-3 py-1.5 border leading-5 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out bg-white border-black"
+                                placeholder="Search communities and people..."
+                                onChange={handleSearchChange}
                             />
-                        </div> 
-                            
-                    </div>
-                          {name != "" && isAuthenticated &&  (
-                            <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-10 inset-0 "
-                            onClick={() => setName('')}
-                            >
-                            
+                        </div>
+                        
+                        {showSearch && (
                             <NavBarSearch
-                            community={filteredCommunities}
-
+                                searchQuery={searchQuery}
+                                onClose={handleSearchClose}
                             />
-                            </div>
                         )}
+                    </div>
 
                     
                                       {/* Mobile Search Bar  */}
-                    <div className="md:hidden flex-1 max-w-xl mx-3">
+                    <div className="md:hidden flex-1 max-w-xl mx-3 relative">
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Icon
@@ -175,16 +174,19 @@ const Navbar: React.FC = () => {
                             </div>
                             <input
                                 type="text"
-                                className={`block w-full pl-9 pr-3 py-1.5 text-sm border rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                                   
-                                    // theme === 'dark'
-                                    //     ? 'bg-gray-700 border-gray-600 text-white'
-                                    //     : 'bg-white border-gray-300'
-                                }`}
+                                value={searchQuery}
+                                className="block w-full pl-9 pr-3 py-1.5 text-sm border rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white border-gray-300"
                                 placeholder="Search..."
-                                onChange={handleChange}
+                                onChange={handleSearchChange}
                             />
                         </div>
+                        
+                        {showSearch && (
+                            <NavBarSearch
+                                searchQuery={searchQuery}
+                                onClose={handleSearchClose}
+                            />
+                        )}
                     </div>
                       </div>
               
