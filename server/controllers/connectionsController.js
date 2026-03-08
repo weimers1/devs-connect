@@ -118,7 +118,7 @@ export const connectToUser = async(req,res) => {
 }
 
 
-//Unconnect User
+//disconnect to User
 
 export const disconnecttotUser = async(req,res) => {
     const {userId, currentUserId} = req.params; //Obtain the 2nd user Id;

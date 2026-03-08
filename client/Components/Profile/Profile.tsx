@@ -176,7 +176,7 @@ function Profile() {
 
             //  CHECK REDIRECT: If URL ID matches Logged-in ID
             if (userId && userId.toString() === user.userId.toString()) {
-                navigate('/profile', { replace: true });
+                navigate('/connections', { replace: true });
                 return; // Stop execution here; the navigate will trigger a re-render
             }
 

@@ -26,6 +26,7 @@ function Connections() {
   // Decide which connections to display
   const data = isOwnProfile ? connections : otherConnections;
 
+
   const handleProfileClick = (userId: string) => {
     requireAuth(() => {
       if (userId === currentUser) {
@@ -56,6 +57,27 @@ function Connections() {
       setName("");
     }
   };
+  useEffect(() => {
+    if (isOwnProfile) {
+      navigate('/connections', { replace: true });
+      return;
+    }
+
+    const getOtherUserConnections = async () => {
+      if (!profileUserId) return;
+
+      try {
+        const result = await API.getOtherUserConnections(profileUserId);
+        setOtherConnections(result);
+      } catch (error) {
+        console.log("error fetching other user connections", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getOtherUserConnections();
+  }, [profileUserId, isOwnProfile, navigate]);
 
   // const handleRemoveConnection = async (userId: string) => {
   //   try {
@@ -91,22 +113,7 @@ function Connections() {
   // };
 
   // Fetch other user's connections only if viewing another profile
-  useEffect(() => {
-    const getOtherUserConnections = async () => {
-      if (!profileUserId || isOwnProfile) return;
-
-      try {
-        const result = await API.getOtherUserConnections(profileUserId);
-        setOtherConnections(result);
-      } catch (error) {
-        console.log("error fetching other user connections", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getOtherUserConnections();
-  }, [profileUserId, isOwnProfile]);
+ 
 
   return (
     <Layout>
