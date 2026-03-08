@@ -1,63 +1,10 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-// import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDropdown } from '../DropDown/DropDownContext';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
-// import API from '../../Service/service';
+import API from '../../Service/service';
 import {useUserConnections} from "./UserConnectionContext.tsx";
-
-// import { useTheme } from '../../src/ThemeContext';
-
-// const CONNECTIONS_DATA = [
-//     {
-//         name: 'Sarah Johnson',
-//         currentRole: 'Software Engineer at Google',
-//         lastOnline: '',
-//         profileImage: 'SJ',
-//         isOnline: true,
-//         connectionType: '2nd',
-//     },
-//     {
-//         name: 'Mike Chen',
-//         currentRole: 'Software Engineer',
-//         lastOnline: '2 days ago',
-//         profileImage: 'MC',
-//         isOnline: false,
-//         connectionType: '3rd',
-//     },
-//     {
-//         name: 'Emily Davis',
-//         currentRole: 'Web Development',
-//         lastOnline: '14 hours ago',
-//         profileImage: 'ED',
-//         isOnline: false,
-//         connectionType: '2nd',
-//     },
-//     {
-//         name: 'Sarah Johnson',
-//         currentRole: 'Software Engineer at Google',
-//         lastOnline: '',
-//         profileImage: 'SJ',
-//         isOnline: true,
-//         connectionType: '2nd',
-//     },
-//     {
-//         name: 'Mike Chen',
-//         currentRole: 'Software Engineer',
-//         lastOnline: '10 minutes ago',
-//         profileImage: 'MC',
-//         isOnline: false,
-//         connectionType: '3rd',
-//     },
-//     {
-//         name: 'Emily Davis',
-//         currentRole: 'Web Development',
-//         lastOnline: '',
-//         profileImage: 'ED',
-//         isOnline: true,
-//         connectionType: '2nd',
-//     },
-// ];
 
  export interface connectionData  {
     career: string;
@@ -68,13 +15,56 @@ import {useUserConnections} from "./UserConnectionContext.tsx";
 }
 
 function Sidebar() {
-    const {connections, handleConnect, handleDisconnect, connectStatus} = useUserConnections();
+    const {connections} = useUserConnections();
     const {currentUser} = useUserConnections();
     const {suggestionData} = useUserConnections();
     const { isSidebarOpen, toggleSidebar } = useDropdown();
+    const [connectedUsers, setConnectedUsers] = useState<Set<string>>(new Set());
+    const [dismissedUsers, setDismissedUsers] = useState<Set<string>>(new Set());
    
-       const navigate = useNavigate();
-    // const { theme } = useTheme();
+    const navigate = useNavigate();
+
+    const handleConnect = async (userId: string) => {
+        try {
+            if (!currentUser) {
+                navigate('/login');
+                return;
+            }
+            const connect = await API.connectToUser(userId, currentUser);
+            if (connect.success !== false) {
+                setConnectedUsers(prev => new Set([...prev, userId]));
+            }
+        } catch (error) {
+            console.log("Error connecting to user", error);
+        }
+    };
+
+    const handleDisconnect = async (userId: string) => {
+        try {
+            if (!currentUser) {
+                navigate('/login');
+                return;
+            }
+            const disconnect = await API.disconnecttoUser(userId, currentUser);
+            if (disconnect.success !== false) {
+                setConnectedUsers(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(userId);
+                    return newSet;
+                });
+            }
+        } catch (error) {
+            console.log("Error disconnecting from user", error);
+        }
+    };
+
+    const handleDismiss = (userId: string) => {
+        setDismissedUsers(prev => new Set([...prev, userId]));
+    };
+
+    const filteredSuggestions = suggestionData?.filter(person => 
+        !dismissedUsers.has(person.userId)
+    ) || [];
    
     return (
         <section className="overflow-hidden">
@@ -219,9 +209,9 @@ function Sidebar() {
                     </h3>
 
                     <div className="space-y-4 h-[30vh] lg:h-[35vh] overflow-y-scroll">
-                        {suggestionData?.slice(0,4).map((person, index) => (
+                        {filteredSuggestions?.slice(0,4).map((person, index) => (
                             <div
-                                key={index}
+                                key={person.userId}
                                 className="border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-shadow"
                             >
                                 <div className="flex items-start space-x-3">
@@ -247,18 +237,12 @@ function Sidebar() {
                                         <p className="text-xs text-gray-600 mt-1">
                                             {person.career}
                                         </p>
-                                        {/* <p className="text-xs text-gray-500 mt-1">
-                                            {person.mutualConnections} mutual
-                                            connections
-                                        </p> */}
                                     </div>
                                 </div>
 
-                                <div className="flex space-x-2 mt-3"
-                                    key={index}
-                                >
-                                    {connectStatus  ? (
-                                          <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+                                <div className="flex space-x-2 mt-3">
+                                    {connectedUsers.has(person.userId) ? (
+                                          <button className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
                                     onClick={() => handleDisconnect(person.userId)}
                                     >
                                         Connected
@@ -271,7 +255,9 @@ function Sidebar() {
                                     </button>
                                     )}
                                    
-                                    <button className="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-50 transition-colors">
+                                    <button className="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-50 transition-colors"
+                                        onClick={() => handleDismiss(person.userId)}
+                                    >
                                         Dismiss
                                     </button>
                                 </div>
