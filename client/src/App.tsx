@@ -16,7 +16,7 @@ import Connections from "../Components/Connections/Connections";
 const AppRoutes = () => {
     return (
         // <ThemeProvider>
-            <BrowserRouter>
+          
                 <Routes>
                     {defaultRoutes.map((route) => (
                         <Route
@@ -69,7 +69,7 @@ const AppRoutes = () => {
                     element={<Connections/>}
                     />
                 </Routes>
-            </BrowserRouter>
+   
         // </ThemeProvider>
     );
 };
@@ -77,9 +77,11 @@ const AppRoutes = () => {
 const App = () => {
     return (
         <AuthProvider>
+              <BrowserRouter>
             <UserConnectionContextProvider>
                     <AppRoutes />
                  </UserConnectionContextProvider>
+                 </BrowserRouter>
         </AuthProvider>
     );
 };

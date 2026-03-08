@@ -68,7 +68,7 @@ import {useUserConnections} from "./UserConnectionContext.tsx";
 }
 
 function Sidebar() {
-    const {connections} = useUserConnections();
+    const {connections, handleConnect, handleDisconnect, connectStatus} = useUserConnections();
     const {currentUser} = useUserConnections();
     const {suggestionData} = useUserConnections();
     const { isSidebarOpen, toggleSidebar } = useDropdown();
@@ -227,7 +227,7 @@ function Sidebar() {
                                 <div className="flex items-start space-x-3">
                                     <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
                                          <button
-                               onClick={() => navigate(`/profile/${person.userId}`)}
+                                    onClick={() => navigate(`/profile/${person.userId}`)}
                                >
                                     {person.profileImageUrl ? (
                                         <img
@@ -254,10 +254,23 @@ function Sidebar() {
                                     </div>
                                 </div>
 
-                                <div className="flex space-x-2 mt-3">
-                                    <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors">
+                                <div className="flex space-x-2 mt-3"
+                                    key={index}
+                                >
+                                    {connectStatus  ? (
+                                          <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+                                    onClick={() => handleDisconnect(person.userId)}
+                                    >
+                                        Connected
+                                    </button>
+                                    ) : (
+                                         <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+                                    onClick={() => handleConnect(person.userId)}
+                                    >
                                         Connect
                                     </button>
+                                    )}
+                                   
                                     <button className="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-50 transition-colors">
                                         Dismiss
                                     </button>

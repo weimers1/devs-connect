@@ -7,7 +7,7 @@ import { useAuthRedirect } from "../Auth/useAuthRedirect";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
 function Connections() {
-  const { connections, currentUser,  setConnections } = useUserConnections();
+  const { connections, currentUser, handleDisconnect } = useUserConnections();
   const { requireAuth } = useAuthRedirect();
   const navigate = useNavigate();
   const { userId } = useParams();
@@ -57,38 +57,38 @@ function Connections() {
     }
   };
 
-  const handleRemoveConnection = async (userId: string) => {
-    try {
-      setIsLoading(true);
+  // const handleRemoveConnection = async (userId: string) => {
+  //   try {
+  //     setIsLoading(true);
 
-      if (!userId || !currentUser) {
-        navigate("/login");
-        return;
-      }
-    const removedConnection = connections?.find(c => c.userId === userId);
+  //     if (!userId || !currentUser) {
+  //       navigate("/login");
+  //       return;
+  //     }
+  //   const removedConnection = connections?.find(c => c.userId === userId);
 
-      setConnections(prev => 
-      prev?.filter(conn => conn.userId !== userId) || null
-    );
-    setareyousure(false);
+  //     setConnections(prev => 
+  //     prev?.filter(conn => conn.userId !== userId) || null
+  //   );
+  //   setareyousure(false);
 
-      const disconnect = await API.disconnecttoUser(userId, currentUser);
+  //     const disconnect = await API.disconnecttoUser(userId, currentUser);
 
-       if (!disconnect.success) {
-      // Restore the removed connection
-      if (removedConnection) {
-        setConnections(prev => [...(prev || []), removedConnection]);
-      }
-      alert("Failed to remove connection");
-    }
+  //      if (!disconnect.success) {
+  //     // Restore the removed connection
+  //     if (removedConnection) {
+  //       setConnections(prev => [...(prev || []), removedConnection]);
+  //     }
+  //     alert("Failed to remove connection");
+  //   }
 
     
-    } catch (error) {
-      console.log("error removing connection", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //   } catch (error) {
+  //     console.log("error removing connection", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   // Fetch other user's connections only if viewing another profile
   useEffect(() => {
@@ -226,7 +226,7 @@ function Connections() {
                             <button
                               className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg"
                               onClick={() =>
-                                handleRemoveConnection(
+                               handleDisconnect(
                                   connection.userId
                                 )
                               }

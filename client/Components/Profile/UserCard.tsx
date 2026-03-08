@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import {useUserConnections} from "/Components/Connections/UserConnectionContext";
 
 
+
 interface UserCardProps {
     userId: string;
     isOwnProfile: boolean;
@@ -25,11 +26,9 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
         // const [imageUploading, setImageUploading] = useState(false);
         const navigate = useNavigate();
         // const [currentProfileImage, setCurrentProfileImage] = useState('');
-        const [connectStatus, setconnectStatus] = useState(false);
-        const {connections} = useUserConnections();
+        const {connections, handleConnect, handleDisconnect, connectStatus, setconnectStatus} = useUserConnections();
         const [otherConnections, setOtherConnections] = useState<connectionData[] | null>(null);
-
-
+    
     //Validate Image URL to prevent SSRF attacks
     //  const validateImageUrl = (url: string) => {
     //     try {
@@ -51,38 +50,38 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
        window.location.reload();
     }
 
-    const handleConnect = async () => {
-        try{
-            if(!userId) {
-                navigate('/login');  
-            }
-            const connect = await API.connectToUser(userId, currentUserId);
-            if(connect.success == false) {
-                console.log("failed to connect to user");
-                setconnectStatus(false);
-            }
-            setconnectStatus(true);
-        } catch(error) {
-            console.log("there was an error trying to connect to user", error);
-        }
-    }
-    const handleDisconnect = async () => {
-        try {
-            if(!userId) {
-                navigate("/login");
-            }
-            if(connectStatus == true) {
-                const disconnect = await API.disconnecttoUser(userId, currentUserId);
-                if(disconnect.success == false) {
-                    console.log("failed to disconnect");
-                    setconnectStatus(true);
-                }
-                setconnectStatus(false);
-            }
-        }catch(error) {
-            console.log("there was an error trying to disconnect to user", error);
-        }
-    }
+    // const handleConnect = async () => {
+    //     try{
+    //         if(!userId) {
+    //             navigate('/login');  
+    //         }
+    //         const connect = await API.connectToUser(userId, currentUserId);
+    //         if(connect.success == false) {
+    //             console.log("failed to connect to user");
+    //             setconnectStatus(false);
+    //         }
+    //         setconnectStatus(true);
+    //     } catch(error) {
+    //         console.log("there was an error trying to connect to user", error);
+    //     }
+    // }
+    // const handleDisconnect = async () => {
+    //     try {
+    //         if(!userId) {
+    //             navigate("/login");
+    //         }
+    //         if(connectStatus == true) {
+    //             const disconnect = await API.disconnecttoUser(userId, currentUserId);
+    //             if(disconnect.success == false) {
+    //                 console.log("failed to disconnect");
+    //                 setconnectStatus(true);
+    //             }
+    //             setconnectStatus(false);
+    //         }
+    //     }catch(error) {
+    //         console.log("there was an error trying to disconnect to user", error);
+    //     }
+    // }
     
 
     // const handleImageUpload = async (file: File) => {
@@ -164,6 +163,7 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
     //     };
 //  console.log("logged in userID", currentUserId);
 //  console.log("other userS ID:", userId);
+
     useEffect(() => {
         //No need to check connection status if user is viewing their own profile
         const getOtherUserConnections = async(userId: string) => {
@@ -259,7 +259,7 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
                         {!isOwnProfile && (
                             <div className="flex flex-col sm:flex-row mt-3 sm:mt-4 sm:space-x-2 space-y-2 sm:space-y-0">
                                 <button className="w-full sm:w-auto rounded-full bg-blue-600 text-white px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-blue-700 "
-                                onClick={ connectStatus  ? handleDisconnect : handleConnect}
+                                onClick={() => connectStatus  ? handleDisconnect(userId) : handleConnect(userId)}
                                 
                                 >
                                     

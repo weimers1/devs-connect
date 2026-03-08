@@ -1,6 +1,8 @@
-import { createContext, useEffect, useState, type ReactNode } from "react";
-import API from "../../Service/service";
+import { createContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import React from "react";
+import API from '../../Service/service';
+import { useNavigate } from "react-router-dom";
+
 
 //Connection Data
  interface connectionData  {
@@ -19,12 +21,15 @@ interface SuggestionData {
   career: string,
   school: string
 }
+
 //The UserOCnnectionsContext Type | connection Data and setconnection.
 interface UserConnectionsContextType {
     connections: connectionData[] | null;
     setConnections: React.Dispatch<
     React.SetStateAction<connectionData[] | null>
   >;
+    handleConnect: (targetUserId: string) => Promise<void>;
+    handleDisconnect: (targetUserId: string) => Promise<void>;
     currentUser: string | null;
     suggestionData: SuggestionData[] | null
 }
@@ -36,9 +41,15 @@ export const UserConnectionContext = createContext<UserConnectionsContextType | 
 export const UserConnectionContextProvider: React.FC<{children: ReactNode}> = ({
     children,
 }) => {
+
+    //  const {userId} = useParams(); //2nd userId
+    const [connectStatus, setconnectStatus] = useState(false);
     const [connections, setConnections] = useState<connectionData[] | null>(null);
     const [suggestionData, setsuggestionData] = useState<SuggestionData[] | null>(null);
-    const [currentUser, setCurrentUser] = useState<string>();
+    const [currentUser, setCurrentUser] = useState<string | null>(null);
+     const navigate = useNavigate();
+    //Handle Connect to user
+       
         useEffect(() =>  {
         const getUserConnections = async() => {
       try {
@@ -68,8 +79,50 @@ export const UserConnectionContextProvider: React.FC<{children: ReactNode}> = ({
     getUserSuggestions();
     getUserConnections();
     }, [])
+
+    //Connect to User
+      const handleConnect = async (userId: string) => {
+        try{
+            if(!userId ) {
+                navigate('/login');  
+            }
+            if(currentUser == undefined) return;
+            const connect = await API.connectToUser(currentUser, userId);
+            if(connect.success == false) {
+                console.log("failed to connect to user");
+                setconnectStatus(false);
+            }
+            setconnectStatus(true);
+              const updatedConnections = await API.getUserConnections(currentUser);
+              setConnections(updatedConnections);
+        } catch(error) {
+            console.log("there was an error trying to connect to user", error);
+        }
+      } 
+      //Hanlde Disconnect
+       const handleDisconnect = async (userId: string) => {
+        try {
+            if(!userId) {
+                navigate("/login");
+            }
+            if(connectStatus == true && currentUser != undefined) {
+                const disconnect = await API.disconnecttoUser(userId, currentUser);
+                if(disconnect.success == false) {
+                    console.log("failed to disconnect");
+                    setconnectStatus(true);
+                }
+                setconnectStatus(false);
+            }
+        }catch(error) {
+            console.log("there was an error trying to disconnect to user", error);
+        }
+    }
+    const value = useMemo(() => ({
+    connections, currentUser, suggestionData, handleConnect, handleDisconnect, setconnectStatus, setConnections, connectStatus
+}), [connections, currentUser, suggestionData, connectStatus]); // Only re-render when these change
+
     return(
-        <UserConnectionContext.Provider value={{connections, setConnections, currentUser, suggestionData}}>
+        <UserConnectionContext.Provider value={value}>
             {children}
         </UserConnectionContext.Provider>
     )
