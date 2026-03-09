@@ -99,20 +99,24 @@ export const UserConnectionContextProvider: React.FC<{children: ReactNode}> = ({
             console.log("there was an error trying to connect to user", error);
         }
       } 
-      //Hanlde Disconnect
+      //Handle Disconnect
        const handleDisconnect = async (userId: string) => {
         try {
-            if(!userId) {
+            if(!currentUser) {
                 navigate("/login");
+                return;
             }
-            if(connectStatus == true && currentUser != undefined) {
-                const disconnect = await API.disconnecttoUser(userId, currentUser);
-                if(disconnect.success == false) {
-                    console.log("failed to disconnect");
-                    setconnectStatus(true);
-                }
-                setconnectStatus(false);
+            
+            const disconnect = await API.disconnecttoUser(userId, currentUser);
+            if(disconnect.success === false) {
+                console.log("failed to disconnect");
+                return;
             }
+            
+            // Update connections state by removing the disconnected user
+            setConnections(prev => 
+                prev?.filter(conn => conn.userId !== userId) || null
+            );
         }catch(error) {
             console.log("there was an error trying to disconnect to user", error);
         }
