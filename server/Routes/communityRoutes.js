@@ -31,7 +31,8 @@ import {
      getSideBarRecommendations
      
 } from '../controllers/communityController.js';
-import authMiddleware from '../middleware/authMiddleware.js';
+import  optionalAuth from '../middleware/authMiddleware.js';
+import  authMiddleware from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -64,7 +65,7 @@ router.get("/:communityId/communityAdmin/:userId", authMiddleware, getCommunityA
 router.get('/communityOwner/:id/communities/:createdBy', authMiddleware, isCommunityOwner); //Gets a community Owner
 router.get('/:userId/communities/Data', authMiddleware,  getCommunitiesDataFromUser) //Get Data from communiites
 router.put('/:userId/community/:communityId/promote/from/:currentUserId', authMiddleware, PromoteCommunityMember);
-router.get('/checkBanStatus/:communityId/member/:userId', authMiddleware, checkBanStatus);
+router.get('/checkBanStatus/:communityId/member', optionalAuth, checkBanStatus);
 
 
 

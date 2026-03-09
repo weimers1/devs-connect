@@ -762,18 +762,20 @@ export const joinCommunity = async (req, res) => {
 //Check banstatus
 export const checkBanStatus = async (req, res) => {
     try {
-        const { userId, communityId } = req.params;
+        const { communityId } = req.params;
+        const userId = req.user?.userId;
 
-        if (!userId || !communityId) {
-            return res.status(400).json({
-                error: "Need userId and communityId"
-            });
-        }
+            if (!userId) {
+            return res.json({ banned: false });
+    }
+
 
         const result = await sequelize.query(
             `SELECT BanStatus 
              FROM dev_connect.usercommunities
-             WHERE userId = ? AND communityId = ?;`,
+             WHERE userId = ? AND communityId = ?
+             LIMIT 1
+             ;`,
             {
                 replacements: [userId, communityId],
                 type: sequelize.QueryTypes.SELECT,

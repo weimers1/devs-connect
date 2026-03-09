@@ -1,9 +1,8 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { useEffect, useState } from 'react';
+import {useState } from 'react';
 import { useDropdown } from '../DropDown/DropDownContext';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
-import API from '../../Service/service';
 import {useUserConnections} from "./UserConnectionContext.tsx";
 
  export interface connectionData  {
@@ -15,48 +14,47 @@ import {useUserConnections} from "./UserConnectionContext.tsx";
 }
 
 function Sidebar() {
-    const {connections} = useUserConnections();
-    const {currentUser} = useUserConnections();
+    const {connections, handleConnect, handleDisconnect} = useUserConnections();
     const {suggestionData} = useUserConnections();
     const { isSidebarOpen, toggleSidebar } = useDropdown();
-    const [connectedUsers, setConnectedUsers] = useState<Set<string>>(new Set());
+    // const [connectedUsers, setConnectedUsers] = useState<Set<string>>(new Set());
     const [dismissedUsers, setDismissedUsers] = useState<Set<string>>(new Set());
    
     const navigate = useNavigate();
 
-    const handleConnect = async (userId: string) => {
-        try {
-            if (!currentUser) {
-                navigate('/login');
-                return;
-            }
-            const connect = await API.connectToUser(userId, currentUser);
-            if (connect.success !== false) {
-                setConnectedUsers(prev => new Set([...prev, userId]));
-            }
-        } catch (error) {
-            console.log("Error connecting to user", error);
-        }
-    };
+    // const handleConnect = async (userId: string) => {
+    //     try {
+    //         if (!currentUser) {
+    //             navigate('/login');
+    //             return;
+    //         }
+    //         const connect = await API.connectToUser(userId, currentUser);
+    //         if (connect.success !== false) {
+    //             setConnectedUsers(prev => new Set([...prev, userId]));
+    //         }
+    //     } catch (error) {
+    //         console.log("Error connecting to user", error);
+    //     }
+    // };
 
-    const handleDisconnect = async (userId: string) => {
-        try {
-            if (!currentUser) {
-                navigate('/login');
-                return;
-            }
-            const disconnect = await API.disconnecttoUser(userId, currentUser);
-            if (disconnect.success !== false) {
-                setConnectedUsers(prev => {
-                    const newSet = new Set(prev);
-                    newSet.delete(userId);
-                    return newSet;
-                });
-            }
-        } catch (error) {
-            console.log("Error disconnecting from user", error);
-        }
-    };
+    // const handleDisconnect = async (userId: string) => {
+    //     try {
+    //         if (!currentUser) {
+    //             navigate('/login');
+    //             return;
+    //         }
+    //         const disconnect = await API.disconnecttoUser(userId, currentUser);
+    //         if (disconnect.success !== false) {
+    //             setConnectedUsers(prev => {
+    //                 const newSet = new Set(prev);
+    //                 newSet.delete(userId);
+    //                 return newSet;
+    //             });
+    //         }
+    //     } catch (error) {
+    //         console.log("Error disconnecting from user", error);
+    //     }
+    // };
 
     const handleDismiss = (userId: string) => {
         setDismissedUsers(prev => new Set([...prev, userId]));
@@ -241,7 +239,7 @@ function Sidebar() {
                                 </div>
 
                                 <div className="flex space-x-2 mt-3">
-                                    {connectedUsers.has(person.userId) ? (
+                                  {connections?.some(conn => conn.userId === person.userId) ? (
                                           <button className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
                                     onClick={() => handleDisconnect(person.userId)}
                                     >

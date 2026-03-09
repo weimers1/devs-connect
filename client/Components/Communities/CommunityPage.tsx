@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../Layout';
 import CommunityHeader from './CommunityHeader';
@@ -19,12 +19,12 @@ const CommunityPage: React.FC = () => {
   const [community, setCommunity] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [banStatus, setBanStatus] = useState(true);
+  const [banStatus, setBanStatus] = useState(false);
   const [seconds, setSeconds] = useState(3);
   const [showMembersCenter, setShowMembersCenter] = useState(false);
-
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    // let intervalId: NodeJS.Timeout;
 
     if (!communityId) {
       const timeoutId = setTimeout(() => navigate('/communities'), 0);
@@ -47,39 +47,40 @@ const CommunityPage: React.FC = () => {
       }
     };
 
-    const checkBanStatus = async () => {
-      try {
-        const currentUser = await API.getCurrentUser();
-        if (!currentUser) navigate('/login');
+const checkBanStatus = async () => {
+  try {
+    // Call the backend for both guests and logged-in users
+    const banStatusRes = await API.checkBanStatus(communityId);
 
-        const banStatusRes = await API.checkBanStatus(communityId, currentUser.userId);
-        setBanStatus(banStatusRes.banned);
+    setBanStatus(banStatusRes.banned);
 
-        if (banStatusRes.banned) {
-          intervalId = setInterval(() => {
-            setSeconds(prev => {
-              if (prev <= 0) {
-                clearInterval(intervalId);
-                navigate('/communities');
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        }
-      } catch (error) {
-        console.log('Error checking ban status', error);
-      }
-    };
+    if (banStatusRes.banned) {
+      // Initialize countdown for banned users
+      setSeconds(10);
 
+      if (intervalRef.current) clearInterval(intervalRef.current);
+
+      intervalRef.current = setInterval(() => {
+        setSeconds(prev => {
+          if (prev <= 1) {
+            clearInterval(intervalRef.current!);
+            navigate("/communities");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  } catch (error) {
+    console.log("Error checking ban status", error);
+  }
+};
     fetchCommunity();
     checkBanStatus();
 
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [communityId, navigate]);
+  }, []);
 
+   
   if (loading) {
     return (
       <Layout>

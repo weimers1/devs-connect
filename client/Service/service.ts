@@ -465,8 +465,8 @@ const API = {
         if(!response.ok) throw new Error('Failed to unban user');
         return response.json();
     },
-    checkBanStatus: async(communityId: string, userId: string) => {
-        const response = await fetch(`${BASE_URL}/api/communities/checkBanStatus/${communityId}/member/${userId}`, {
+    checkBanStatus: async(communityId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/checkBanStatus/${communityId}/member`, {
             headers: getAuthHeaders(),
         })
         if(!response.ok) throw new Error('Failed to unban user');

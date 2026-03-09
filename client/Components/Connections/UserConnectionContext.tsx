@@ -83,9 +83,11 @@ export const UserConnectionContextProvider: React.FC<{children: ReactNode}> = ({
     //Connect to User
       const handleConnect = async (userId: string) => {
         try{
-            if(!userId ) {
-                navigate('/login');  
+            if(!currentUser ) {
+                navigate('/login');
+                return;
             }
+        
             if(currentUser == undefined) return;
             const connect = await API.connectToUser(currentUser, userId);
             if(connect.success == false) {
