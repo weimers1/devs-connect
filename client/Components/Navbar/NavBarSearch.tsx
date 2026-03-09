@@ -66,7 +66,7 @@ const NavBarSearch: React.FC<NavBarSearchProps> = ({ searchQuery, onClose }) => 
             }
         };
 
-        const debounceTimer = setTimeout(searchPlatform, 300);
+        const debounceTimer = setTimeout(searchPlatform, 200);
         return () => clearTimeout(debounceTimer);
     }, [searchQuery]);
 

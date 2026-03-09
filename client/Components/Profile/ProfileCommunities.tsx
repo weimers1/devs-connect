@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
 import API from '../../Service/service';
-import { useParams } from 'react-router-dom';
+import {useNavigate} from "react-router-dom";
 
 interface CommunitiesProps {
     userId?: string;
@@ -27,7 +27,7 @@ const [UserId, setUserId] = useState('');
 // const {userId} = useParams();
     const isOwnProfile = !userId;
     //Need to obtain community info 
-
+    const navigate = useNavigate();
     useEffect(() => {
         const  fetchusercommunities = async() => {
             
@@ -61,14 +61,6 @@ const [UserId, setUserId] = useState('');
                 {/* Header */}
                 <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-800">Communities</h2>
-                {isOwnProfile && (
-                    <button className="text-blue-600 hover:text-blue-800">
-                        <Icon
-                            icon="mdi:plus"
-                            className="w-5 h-5"
-                        />
-                    </button>
-                )}
             </div>
 
             <div className="space-y-4 ">
@@ -125,7 +117,9 @@ const [UserId, setUserId] = useState('');
                 </button>
 
                 {isOwnProfile && (
-                    <button className="text-blue-600 font-medium text-sm hover:text-blue-800 flex items-center">
+                    <button className="text-blue-600 font-medium text-sm hover:text-blue-800 flex items-center"
+                      onClick={(() => navigate("/communities"))}
+                    >
                         Discover new
                         <Icon
                             icon="mdi:arrow-right"

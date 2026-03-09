@@ -113,7 +113,7 @@ function Connections() {
   // };
 
   // Fetch other user's connections only if viewing another profile
- 
+
 
   return (
     <Layout>
@@ -218,7 +218,7 @@ function Connections() {
                   {areyousure &&
                     selectedUserId === connection.userId && (
                       <div className="fixed inset-0 backdrop-invert backdrop-opacity-10 flex items-center justify-center">
-                        <div className="bg-white rounded-xl p-6 md:w-90 mx-4">
+                        <div className="bg-white rounded-xl p-6 md:w-90 mx-4 md:mb-100 inset-1">
                           <Icon
                             icon="streamline-plump-color:sad-face-flat"
                             className="mb-2 mx-auto"
