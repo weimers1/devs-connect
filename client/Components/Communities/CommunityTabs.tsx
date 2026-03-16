@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import PostsFeed from './PostsFeed';
 import LFGFeed from './LFGFeed';
 import QAFeed from './QAFeed';
+import Events from "./Events";
 
 interface CommunityTabsProps {
     activeTab: string;
@@ -43,13 +44,15 @@ const CommunityTabs: React.FC<CommunityTabsProps> = ({ activeTab, onTabChange, c
                 
                 {activeTab === 'qanda' && <QAFeed communityId={communityId}  activeTab={activeTab}/>}
 
-                {activeTab === 'events' && (
+                {activeTab === 'events' && <Events communityId={communityId} activeTab={activeTab}/>}
+
+                {/* {activeTab === 'events' && (
                     <div className="text-center py-12">
                         <Icon icon="mdi:calendar" className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">No upcoming events</h3>
                         <p className="text-gray-600">Check back later for community events and meetups.</p>
                     </div>
-                )}
+                )} */}
 
                 {activeTab === 'resources' && (
                     <div className="space-y-4">

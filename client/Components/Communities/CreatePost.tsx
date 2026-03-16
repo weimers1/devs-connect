@@ -3,6 +3,8 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
 import API from '../../Service/service';
 import { useParams } from 'react-router-dom';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface CreatePostProps {
     onPostCreate: (postData: any) => void,
@@ -15,6 +17,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const {communityId} = useParams();
     const [notMemberTab, setNotMemberTab] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(new Date());
     //Community Membership 
     const [isMember, setIsMember] = useState(false);
 
@@ -57,7 +60,38 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
     [
     { type: 'posts', icon: 'mdi:code-tags', label: 'Posts', color: 'blue' },
     { type: 'lfg', icon: 'mdi:account-group', label: 'LFG', color: 'green' },
-    { type: 'qanda', icon: 'mdi:help-circle', label: 'Q&A', color: 'purple' }
+    { type: 'qanda', icon: 'mdi:help-circle', label: 'Q&A', color: 'purple' },
+    { type: 'event', icon: 'mdi:calendar', label: 'events', color: 'red' }
+    ];
+
+    //Const Times
+    const Times = [
+        {value: "1:00 am"},
+         {value: "2:00 am"},
+          {value: "3:00 am"},
+           {value: "4:00 am"},
+            {value: "5:00 am"},
+             {value: "6:00 am"},
+              {value: "7:00 am"},
+               {value: "8:00 am"},
+                {value: "9:00 am"},
+                 {value: "10:00 am"},
+                  {value: "11:00 am"},
+                  {value: "12:00 pm"},
+                     {value: "1:00 pm"},
+                        {value: "2:00 pm"},
+                           {value: "3:00 pm"},
+                              {value: "4:00 pm"},
+                                 {value: "5:00 pm"},
+                                    {value: "6:00 pm"},
+                                       {value: "7:00 pm"},
+                                          {value: "8:00 pm"},
+                                             {value: "9:00 pm"},
+                                                {value: "10:00 pm"},
+                                                   {value: "11:00 pm"},
+                                                   {value: "12:00 am"},
+
+
     ];
 
     
@@ -72,9 +106,24 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
 
     // Q&A post fields
     const [question, setQuestion] = useState('');
+    //Events
+    const [event, setEvent] = useState('');
+    const [Time, setTime] = useState('');
+   
+
+    //Min
+    const minDate = new Date();
+    const maxDate = new Date(2031, 0, 1);
+
+        
+    
+// Mon Mar 09 2026 20:04:35 GMT-0700 (Pacific Daylight Time)
+
     const handleSubmit = () => {
         const basePost = {
             type: activeTab.toLowerCase().toString(),
+            event,//I dont know if this will work
+            date, //I dont know if this will work
             content,
             tags: []
         };
@@ -107,6 +156,12 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                     tags: ['question', 'help']
                 };
                 break;
+            case 'events': 
+                postData = {
+                    ...postData,
+                    event, 
+                    date,
+                }
         }
       
         onPostCreate(postData);
@@ -118,6 +173,8 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
         setSkillsNeeded('');
         setDuration('');
         setQuestion('');
+        setEvent('');
+        setDate('');
         setIsExpanded(false);
    
        
@@ -175,11 +232,13 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                     )}
 
                     {/* Main Content */}
+                     {activeTab === "events" &&  <p className="font-bold text-black text-xl">Event Topic</p>}
                     <textarea
                         placeholder={
                             activeTab === 'posts' ? "Post an exciting accomplishment or something you learned..." :
                             activeTab === 'lfg' ? "Describe your project and what you're looking for..." :
-                            "Provide more details about your question..."
+                            activeTab === "events" ? "What's Your event?"  :
+                            "provide more details about your questions..."
                         }
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
@@ -208,6 +267,40 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                                 className="w-full bg-gray-900 text-green-400 font-mono text-sm border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px] resize-none"
                             />
                         </div>
+                    ) }
+
+                        {/* Events WIP */}
+                               {activeTab == 'events' && (
+                                
+                       <div className="mx-4 container mb-4">
+  <div className="flex flex-row items-end gap-4 w-full justify-around">
+    <div className="flex flex-col">
+      <label className="text-xl text-black">Start Date</label>
+      <div className="react-datepicker rounded-x md:w-32 md:h-8  ">
+        <DatePicker minDate={minDate} maxDate={maxDate} 
+        className=" md:w-32 items-center md:h-8 px-6 text-black py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        onChange={date => setSelectedDate(date)}
+        selected={selectedDate}
+        />
+      </div>
+    </div>
+    <div className="flex flex-col">
+      <label className="text-xl text-black">Start Time</label>
+      <select 
+        value={Time}
+        onChange={(e) => setTime(e.target.value)} 
+        className="bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        {Times.map(option => {
+       return <option key={option.value}
+        
+       >{option.value}</option> 
+})}
+      </select>
+    </div>
+
+  </div>
+</div>
                     ) }
 
                     {/* LFG Post Fields */}

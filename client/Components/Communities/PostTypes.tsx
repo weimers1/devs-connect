@@ -7,7 +7,7 @@ import { useAuthRedirect } from '../Auth/useAuthRedirect';
 export interface Post {
     id: number;
     userId?: number;
-    type: 'posts' | 'lfg' | 'qanda';
+    type: 'posts' | 'lfg' | 'qanda' | 'events';
     author: string;
     avatar: string;
     timestamp: string;
@@ -27,6 +27,9 @@ export interface Post {
     question?: string;
     isAnswered?: boolean;
     bestAnswer?: string;
+    //Events Specific
+    event: string;
+    Date: string;
 }
 
 interface PostCardProps {
@@ -216,6 +219,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                 return { icon: 'mdi:account-group', color: 'text-green-600', bg: 'bg-green-100' };
             case 'qanda':
                 return { icon: 'mdi:help-circle', color: 'text-purple-600', bg: 'bg-purple-100' };
+            case 'events':  
+                return {icon: 'mdi:calendar', color: 'text-red-500', bg: 'bg-red-200'};
         }
     };
 
@@ -340,6 +345,20 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                                 </div>
                             </div>
                         )}
+                              {post?.type === 'events' && post?.event && (
+                            <div className="mt-3 bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-gray-400 text-xs font-medium">{post?.language}</span>
+                                    <button className="text-gray-400 hover:text-white text-xs">
+                                        <Icon icon="mdi:calendar" className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <pre className="text-green-400 text-sm font-mono">
+                                    <code>{post?.event}</code>
+                                </pre>
+                            </div>
+                        )}
+                       
                     </div>
                     
                     {/* Tags */}
