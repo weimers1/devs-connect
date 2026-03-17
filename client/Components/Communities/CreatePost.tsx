@@ -121,11 +121,12 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
 
     const handleSubmit = () => {
         const basePost = {
-            type: activeTab.toLowerCase().toString(),
-            event,//I dont know if this will work
-            date, //I dont know if this will work
+            type: activeTab.toLowerCase().toString(),  
             content,
-            tags: []
+            tags: [],
+            Time,
+            event,
+            DateOfEvent: selectedDate
         };
 
         let postData = { ...basePost };
@@ -159,8 +160,11 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
             case 'events': 
                 postData = {
                     ...postData,
-                    event, 
-                    date,
+                    content,
+                    Time,
+                    event,
+                    DateOfEvent: selectedDate
+                     //Lets see if that works
                 }
         }
       
@@ -174,13 +178,13 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
         setDuration('');
         setQuestion('');
         setEvent('');
-        setDate('');
+      
         setIsExpanded(false);
    
        
 
     };
-
+    console.log(Time);
     return (
         <div className="bg-gray-50 rounded-xl p-4 mb-6">
             {!isExpanded ? (

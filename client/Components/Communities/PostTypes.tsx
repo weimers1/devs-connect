@@ -28,8 +28,8 @@ export interface Post {
     isAnswered?: boolean;
     bestAnswer?: string;
     //Events Specific
-    event: string;
-    Date: string;
+    Time?: string;
+    DateOfEvent?: string
 }
 
 interface PostCardProps {
@@ -304,6 +304,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                         )}
                         
                         <p className="text-gray-700">{post?.content}</p>
+                 
                         
                         {/* Programming Post - Code Snippet */}
                         {post?.type === 'posts' && post?.codeSnippet && (
@@ -345,17 +346,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                                 </div>
                             </div>
                         )}
-                              {post?.type === 'events' && post?.event && (
-                            <div className="mt-3 bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                              {post?.type === 'events' && (
+                            <div className="mt-3  rounded-lg  overflow-x-auto">
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-gray-400 text-xs font-medium">{post?.language}</span>
-                                    <button className="text-gray-400 hover:text-white text-xs">
-                                        <Icon icon="mdi:calendar" className="w-4 h-4" />
-                                    </button>
                                 </div>
-                                <pre className="text-green-400 text-sm font-mono">
-                                    <code>{post?.event}</code>
-                                </pre>
+                                <div className="flex justify-around">
+                                <p className="text-black">{post?.Time}</p>
+                                <label>{post.DateOfEvent}</label>
+                                </div>
                             </div>
                         )}
                        

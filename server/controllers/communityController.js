@@ -575,6 +575,7 @@ export const getCommunityPosts = async (req, res) => {
             `
             SELECT 
                 p.*,
+                p.Time as eventTime,
                 u.firstName,
                 u.lastName,
                 up.profileImageUrl
@@ -616,6 +617,8 @@ export const getCommunityPosts = async (req, res) => {
             likes: post.likes,
             comments: post.comments,
             canDelete: post.userId === currentUserId,
+            Time: post.Time,
+            DateOfEvent: post.DateOfEvent,
         }));
 
         res.json(formattedPosts);
@@ -677,6 +680,8 @@ export const createCommunityPost = async (req, res) => {
             duration,
             question,
             tags,
+            Time,
+            DateOfEvent
         } = req.body;
 
         if (!content || !type) {
@@ -698,6 +703,8 @@ export const createCommunityPost = async (req, res) => {
             duration,
             question,
             tags,
+            Time,
+            DateOfEvent
         });
 
         res.status(201).json({

@@ -15,14 +15,15 @@ interface Events  {
 const Events: React.FC<Events> = ({communityId, activeTab}) => {
       const [posts, setPosts] = useState<Post[]>([]);
       const [loading, setLoading] = useState(true);
-
+    
+ 
          useEffect(() => {
         const fetchPosts = async () => {
             try {
                 const postsData = await API.getCommunityPosts(communityId, 'events');
                 setPosts(postsData);
             } catch (error) {
-                console.error('Failed to fetch LFG posts:', error);
+                console.error('Failed to fetch Event posts:', error);
                 setPosts([]);
             } finally {
                 setLoading(false);
