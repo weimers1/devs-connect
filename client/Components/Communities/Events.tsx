@@ -3,6 +3,7 @@ import type {Post} from './PostTypes';
 import API from "../../Service/service";
 import CreatePost from './CreatePost';
 import PostCard from './PostTypes';
+import { Icon } from "@iconify/react/dist/iconify.js";
 
 interface Events  {
     communityId: string,
@@ -15,8 +16,9 @@ interface Events  {
 const Events: React.FC<Events> = ({communityId, activeTab}) => {
       const [posts, setPosts] = useState<Post[]>([]);
       const [loading, setLoading] = useState(true);
-    
- 
+    //   const [adminStatus, setadminStatus] = useState(false); //Determine Admin/Ownership
+    //   const [currentUser, setcurrentUser] = useState('');
+
          useEffect(() => {
         const fetchPosts = async () => {
             try {
@@ -29,7 +31,7 @@ const Events: React.FC<Events> = ({communityId, activeTab}) => {
                 setLoading(false);
             }
         };
-
+ 
         fetchPosts();
     }, [communityId]);
 
@@ -61,9 +63,10 @@ const Events: React.FC<Events> = ({communityId, activeTab}) => {
             </div>
         );
     }
+   
     return (
          <div className="space-y-6">
-            <CreatePost onPostCreate={handlePostCreate} activeTab={activeTab} />
+            <CreatePost onPostCreate={handlePostCreate} activeTab={activeTab}  />
             
             {posts.length > 0 ? (
                 posts.map((post) => (

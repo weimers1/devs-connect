@@ -20,6 +20,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
     const [selectedDate, setSelectedDate] = useState(new Date());
     //Community Membership 
     const [isMember, setIsMember] = useState(false);
+    const [adminstatus, setadminStatus] = useState(false);
 
     //UseEffect to determine membership
     useEffect(() => {
@@ -38,8 +39,26 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
             console.log("There was an error obtaining the membershipstatus", error);
         }
     }
-     getMembershipStatus();
+               const determineStatus = async () =>  {
+          
+        try {
+            const currentUser = await API.getCurrentUser(); 
+             if(currentUser.userId && communityId) {
+            const isOwnerOrAdmin = await API.getCommunityAdmins(communityId, currentUser.userId);
+            setadminStatus(isOwnerOrAdmin.admin);
+             }
+            
+        } catch(error) {
+            console.log("failed to determine the staus of the user", error);
+        } 
+    }
+    determineStatus();
+     getMembershipStatus();    
+     
+   
     },[])
+
+  
     //Handle Post Click - if user is a member, expand the post form, if not show not member tab
     const handlePostClick = () => {
         if(isMember) {
@@ -184,15 +203,18 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
        
 
     };
-    console.log(Time);
+  //Check for admin status to post on the event posts
+   
     return (
         <div className="bg-gray-50 rounded-xl p-4 mb-6">
             {!isExpanded ? (
-                <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                 <div className="flex items-center space-x-3">
+                        {(adminstatus && activeTab  === "events") || activeTab === "qanda" || activeTab==="posts" || activeTab==="lfg"  ? (
+                            <>
+                                 <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
                         <Icon icon="mdi:account" className="w-5 h-5 text-white" />
                     </div>
-                    <input
+                          <input
                         type="text"
                         value={''}
                         placeholder="Share something with the community..."
@@ -200,7 +222,14 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                         onClick={() => requireAuth(() => handlePostClick())}
                         readOnly
                     />
-                </div>
+                   
+                  </>
+
+                        ) : (
+                            <div></div>
+                        )}
+                        </div>
+                   
             ) : (
                 <div className="space-y-4">
                     {/* Post Type Selector */}
@@ -274,7 +303,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                     ) }
 
                         {/* Events WIP */}
-                               {activeTab == 'events' && (
+                               {adminstatus && activeTab == 'events' ? (
                                 
                        <div className="mx-4 container mb-4">
   <div className="flex flex-row items-end gap-4 w-full justify-around">
@@ -305,7 +334,9 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
 
   </div>
 </div>
-                    ) }
+                    ) : (
+                        <div></div>
+                    )}
 
                     {/* LFG Post Fields */}
                     {activeTab === 'lfg' && (

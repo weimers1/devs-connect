@@ -506,7 +506,6 @@ export const LeaveCommunity = async (req, res) => {
 export const getCommunityAdmins = async (req, res) => {
     try {
         const {communityId, userId} = req.params; 
-
         if(!userId || !communityId) {
             console.log("need user and communityId to fetch admins");
             return res.status(400).json({error: "Missing userId or communityId"});
@@ -514,16 +513,18 @@ export const getCommunityAdmins = async (req, res) => {
 
         const admins = await sequelize.query(`
                 
-            SELECT * from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`, {
-                replacements: [userId, communityId],
+            SELECT * from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'
+            OR userId = ? AND communityId = ? AND role='owner';`, {
+                replacements: [userId, communityId, userId, communityId],
                   type: sequelize.QueryTypes.SELECT,
             }) 
-            if(!admins || admins.length === 0) {
+            if(admins.length === 0) {
                 return res.status(403).json({error: "User is not an admin of this community"});
             }
         res.json({admin: true}); 
         
     } catch(error) {
+        
         console.log(error, "Something Went Wrong Trying to fetch the communityAdmins");
         res.json({error: "Failed to fetch community admins" });
     }
@@ -628,7 +629,7 @@ export const getCommunityPosts = async (req, res) => {
     }
 };
 
-//Promote Community Member 
+//Promote Community Member (Only Owner Can Promote)
 
 export const PromoteCommunityMember = async (req, res) => {
     const transaction = await sequelize.transaction();
@@ -669,6 +670,9 @@ export const PromoteCommunityMember = async (req, res) => {
 export const createCommunityPost = async (req, res) => {
     try {
         const { id } = req.params;
+        if(!id) {
+            res.status(403).json({error: "No User signed in"});
+        }
         const {
             type,
             content,
