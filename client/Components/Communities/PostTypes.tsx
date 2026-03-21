@@ -40,7 +40,23 @@ interface PostCardProps {
 
 // const postId  = useParams<{postId: string}>();
 
+
+
+
 const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete }) => {
+    // Source - https://stackoverflow.com/a/63440872
+// Posted by Volobot Advanced Systems, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-03-20, License - CC BY-SA 4.0
+
+const [width, setWidth] = useState<number>(window.innerWidth);
+
+function handleWindowSizeChange() {
+    setWidth(window.innerWidth);
+}
+
+
+const isMobile = width <= 768;
+
     const navigate = useNavigate();
     const { requireAuth } = useAuthRedirect();
     const [isLiked, setIsLiked] = useState(false);
@@ -57,6 +73,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
     // const [canDelete, setCanDelete] = useState(true);
     
     useEffect(() => {
+         window.addEventListener('resize', handleWindowSizeChange);
+    
           const fetchlikes = async () => { 
         try { 
             const getlikes = await API.getLikes(post.id);
@@ -102,11 +120,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
             console.log(error, "error while trying to obtain the user profile image");
             return;
         }
+        
 
     }
+    
        getProfileImage();
         getLikeStatus();
         fetchlikes();
+        return () => {
+        window.removeEventListener('resize', handleWindowSizeChange);
+    }
     }, [post?.id, post?.userId]);
 
     const handleProfileClick = async () => {
@@ -245,7 +268,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                                 onClick={handleProfileClick}
                                 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
                             >
-                                {post?.author}
+                                {isMobile ? post?.author.slice(0, 8) : post?.author.slice(0,20) }
 
                             </button>
                             <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeInfo?.bg} ${typeInfo?.color}`}>
@@ -347,12 +370,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete })
                             </div>
                         )}
                               {post?.type === 'events' && (
-                            <div className="mt-3  rounded-lg  overflow-x-auto">
-                                <div className="flex items-center justify-between mb-2">
+                            <div className="md:mt-10 rounded-lg ">
+                                <div className="flex gap-1 justify-around md:mb-10 mt-2 ">
+                                    <div className=" p-2 bg-blue-600  font-mono select-none rounded hover:bg-blue-500"> 
+                                <p className="text-white font-mono select-none">Start Time: {post?.Time}</p>
                                 </div>
-                                <div className="flex justify-around">
-                                <p className="text-black">{post?.Time}</p>
-                                <label>{post.DateOfEvent}</label>
+                                 <div className="bg-blue-600  hover:bg-blue-500 p-2 rounded">
+                                <label className="text-white font-mono select-none">Start Date:  {post.DateOfEvent.slice(0,10)}</label>
+                                </div> 
                                 </div>
                             </div>
                         )}
