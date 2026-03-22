@@ -39,12 +39,12 @@ const Events: React.FC<Events> = ({communityId, activeTab}) => {
         if (postData.type !== 'events') return;
         
         try {
-            await API.createCommunityPost(communityId, postData);
+            await API.createEventPost(communityId, postData);
             // Refresh posts after creating
             const updatedPosts = await API.getCommunityPosts(communityId, 'events');
             setPosts(updatedPosts);
         } catch (error) {
-            console.error('Failed to create an Event:', error);
+            console.error('Failed to crseate an Event:', error);
         }
     };
 

@@ -28,7 +28,8 @@ import {
      UnBanCommunityMember,
      checkBanStatus,
      getHomeFeed,
-     getSideBarRecommendations
+     getSideBarRecommendations,
+     createEventPost
      
 } from '../controllers/communityController.js';
 import  optionalAuth from '../middleware/authMiddleware.js';
@@ -49,6 +50,7 @@ router.get('/:id/posts', getCommunityPosts);
 router.get('/:id/members', getCommunityMembers);
 router.get('/:id/posts', getCommunityPosts);
 router.post('/:id/posts', authMiddleware, createCommunityPost);
+router.post('/:communityId/event/create', authMiddleware, createEventPost);
 router.post('/:communityId/join', authMiddleware, joinCommunity);
 router.post('/create', authMiddleware, createCommunity);
 router.put('/:id', authMiddleware, updateCommunity);

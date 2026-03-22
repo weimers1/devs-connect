@@ -255,6 +255,19 @@ const API = {
         return response.json();
     },
 
+    createEventPost: async(communityId: string, postData: object) => {
+        const response = await fetch (
+            `${BASE_URL}/api/communities/${communityId}/event/create`,
+            {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                body: JSON.stringify(postData)
+            }
+        );
+        if (!response.ok) throw new Error('Failed to create post');
+        return response.json();
+    },
+
     //Create Community Post
     createCommunityPost: async (communityId: string, postData: object) => {
         const response = await fetch(

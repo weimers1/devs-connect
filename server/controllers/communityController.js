@@ -401,7 +401,7 @@ export const kickCommunityMember = async (req, res) => {
         // First, find the record to get the primary key (id)
         const memberRecord = await sequelize.query(`
             SELECT id FROM dev_connect.usercommunities 
-            WHERE userId = ? AND communityId = ? AND role = "member"
+             WHERE userId = ? AND communityId = ? AND role = "member"
         `, {
             replacements: [userId, communityId],
             type: sequelize.QueryTypes.SELECT,
@@ -669,10 +669,11 @@ export const PromoteCommunityMember = async (req, res) => {
 
 export const createCommunityPost = async (req, res) => {
     try {
+        //Need to check for only admins/Owners creating Event posts
         const { id } = req.params;
-        if(!id) {
-            res.status(403).json({error: "No User signed in"});
-        }
+        
+
+        //Check for Admin
         const {
             type,
             content,
@@ -724,6 +725,65 @@ export const createCommunityPost = async (req, res) => {
         res.status(500).json({ error: 'Failed to create post' });
     }
 };
+
+//Event POst
+export const createEventPost = async (req, res) => {
+    try {
+        //Need to check for only admins/Owners creating Event posts
+        const { communityId } = req.params;
+        const currentUserId = req.user.userId;
+
+        //Check for Admin
+         const isadmin = await sequelize.query(`    
+            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'
+             OR  userId = ? AND communityId = ? AND role='owner';
+            `, {
+                replacements: [currentUserId, communityId, currentUserId, communityId],
+                  type: sequelize.QueryTypes.SELECT,
+            })
+        
+            if(isadmin.length === 0) {
+                res.status(403).json({error: "Not Allowed to Create Event"});
+                return;
+            }
+
+
+        const {
+            type,
+            content,
+            Time,
+            DateOfEvent
+        } = req.body;
+
+        if (!content || !type) {
+            return res
+                .status(400)
+                .json({ error: 'Content and type are required' });
+        }
+
+        const post = await Post.create({
+            communityId: communityId,
+            userId: req.user.userId,
+            type,
+            content,
+            Time,
+            DateOfEvent
+        });
+
+        res.status(201).json({
+            message: 'Post created successfully',
+            post: {
+                id: post.id,
+                type: post.type,
+                content: post.content,
+            },
+        });
+    } catch (error) {
+        console.error('Error creating community post:', error);
+        res.status(500).json({ error: 'Failed to create post' });
+    }
+};
+
 
 export const joinCommunity = async (req, res) => {
     const transaction = await sequelize.transaction();
