@@ -209,6 +209,22 @@ function Connections() {
                                   height="24"
                                 />
                               </button>
+                               <button
+                                className="w-full p-3 flex justify-between hover:bg-gray-100"
+                                onClick={() =>
+                                  areyousureCall(
+                                    true,
+                                    connection.firstName
+                                  )
+                                }
+                              >
+                                Block
+                                <Icon
+                                  icon="fa-solid:user-lock"
+                                  width="24"
+                                  height="24"
+                                />
+                              </button>
                             </div>
                           )}
                       </div>

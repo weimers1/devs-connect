@@ -22,7 +22,12 @@ const { communityId } = useParams<{ communityId: string }>(); //Get the communit
 const [membershipStatus, setMembershipStatus] = useState(false);
 const [isOwner, setOwnerStatus] = useState(false);
 const [isAdmin, setIsAdmin] = useState(false);
+const [isReview, setisReview] = useState(false);
 // const [ownerId, setOwnerId] = useState<string | null>();
+
+     function handleReviewClick() {
+
+    }
 
     const onJoin = async () =>  {
     // Implement join community logic here
@@ -146,7 +151,42 @@ useEffect(() => {
                             />
                             {membershipStatus ? 'Joined' : 'Join Community'}
                         </button>
-                    
+                        <button className="hover:scale-120 transition-transform"
+                        onClick={() =>setisReview(true)}
+                        >
+                              <Icon
+
+                                                                        icon="mdi:star"
+                                                                        className={`w-12 h-12 text-yellow-400`}
+                                                                    />
+                        </button>
+                              {isReview && (
+                                                                <>
+                                            <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-20 inset-0 flex items-center justify-center ">
+                                           
+                                    <div className="bg-white rounded-xl mb-12 p-6  md:w-90 md:h-60  ">
+                                        <div className="flex">
+                                          <h2 className="text-3xl font-bold  text-center ml-7">{`Leave A Review`}</h2>
+                                          <button className="ml-8.5"
+                                          onClick={() => setisReview(false)}
+                                          ><Icon icon="icomoon-free:cross" width="18" height="18"/></button>
+                                          </div>
+                                        <div className="flex mt-10 text-gray-400 ">
+                                             <Icon icon="mdi:star" className="mb-2 mx-auto " width="60" height="60" />
+                                                 <Icon icon="mdi:star" className="mb-2 mx-auto" width="60" height="60" />
+                                                     <Icon icon="mdi:star" className="mb-2 mx-auto" width="60" height="60" />
+                                                         <Icon icon="mdi:star" className="mb-2 mx-auto" width="60" height="60" />
+                                                             <Icon icon="mdi:star" className="mb-2 mx-auto" width="60" height="60" />
+                                                             
+                                                               
+                                        </div>
+                                       
+                                               
+                                    </div> 
+                             
+                                </div>
+                                </>
+                                                )}
                 </div>
             </div>
         </div>
