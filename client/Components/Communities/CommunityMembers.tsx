@@ -4,6 +4,7 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import API from '../../Service/service';
 import Profile from '/assets/images/Nav-Profile.png';
 
+
 interface CommunityMember {
   id: string;
   role: string;
@@ -111,21 +112,30 @@ const navigate = useNavigate();
   return (
     <div className="bg-white shadow-sm md:rounded-xl w-full md:w-1/3 p-4 md:border md:rounded-xl">
       <div className="flex items-center justify-between mb-5">
-    <button
+    {members.length > 10 ? (
+         <button
     onClick={leftArrowClick}
     >
       <Icon icon="tabler:arrow-narrow-left" className="mt-1.5 hover:bg-gray-100 rounded-2xl" width="24" height="24" />
     </button>
+    ) : (
+      <div></div>
+    )}
+ 
   
     
     <h1 className="text-2xl font-bold text-center flex-1">
       Members
     </h1>
+    {members.length > 10 ? (
       <button
     onClick={rightarrowclick}
     >
     <Icon icon="tabler:arrow-narrow-right" className="mt-1.5 hover:bg-gray-100 rounded-2xl" width="24" height="24" />
     </button>
+    ): (
+      <div></div>
+    )}
   </div>
       {/* Active Members */}
       <div className="space-y-3">

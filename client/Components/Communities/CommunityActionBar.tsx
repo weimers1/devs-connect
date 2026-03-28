@@ -23,11 +23,13 @@ const [membershipStatus, setMembershipStatus] = useState(false);
 const [isOwner, setOwnerStatus] = useState(false);
 const [isAdmin, setIsAdmin] = useState(false);
 const [isReview, setisReview] = useState(false);
+const [reviewValue, setreviewValue] = useState(0);
+// const [promoteUser, setpromoteUser] = useState(false);
 // const [ownerId, setOwnerId] = useState<string | null>();
 
-     function handleReviewClick() {
+    //  function handleReviewClick() {
 
-    }
+    // }
 
     const onJoin = async () =>  {
     // Implement join community logic here
@@ -58,6 +60,10 @@ const [isReview, setisReview] = useState(false);
             console.log("no user logged in ");
             return;
         }
+        // if(isOwner) {
+        //     setpromoteUser(true);
+        //     return;
+        // }
         if(membershipStatus == true && user && communityId) {
             const leavecommunity = await API.LeaveCommunity(user.userId, communityId);
             if(!leavecommunity.success){
@@ -171,19 +177,29 @@ useEffect(() => {
                                           onClick={() => setisReview(false)}
                                           ><Icon icon="icomoon-free:cross" width="18" height="18"/></button>
                                           </div>
-                                        <div className="flex mt-10 text-gray-400 ">
-                                             <Icon icon="mdi:star" className="mb-2 mx-auto " width="60" height="60" />
-                                                 <Icon icon="mdi:star" className="mb-2 mx-auto" width="60" height="60" />
-                                                     <Icon icon="mdi:star" className="mb-2 mx-auto" width="60" height="60" />
-                                                         <Icon icon="mdi:star" className="mb-2 mx-auto" width="60" height="60" />
-                                                             <Icon icon="mdi:star" className="mb-2 mx-auto" width="60" height="60" />
-                                                             
-                                                               
-                                        </div>
-                                       
-                                               
+                                        <div className="flex mt-10  ">
+                                             <button  onClick={() => setreviewValue(1)}>
+                                                <Icon key={1} icon="mdi:star"  width="60" height="60" className={`mb-2 mx-auto  ${
+                                                    reviewValue >= 1 ? "text-yellow-400" : "text-gray-400"
+                                                }`} /></button>
+                                                 <button onClick={() => setreviewValue(2)}>
+                                                     <Icon key={2} icon="mdi:star"  width="60" height="60" className={`mb-2 mx-auto  ${
+                                                    reviewValue >= 2 ? "text-yellow-400" : "text-gray-400"
+                                                }`} /></button>
+                                                     <button  onClick={() => setreviewValue(3)}>
+                                                         <Icon key={3} icon="mdi:star"   width="60" height="60" className={`mb-2 mx-auto ${
+                                                    reviewValue >= 3 ? "text-yellow-400" : "text-gray-400"
+                                                }`} /></button>
+                                                        <button  onClick={() => setreviewValue(4)}>
+                                                             <Icon key={4} icon="mdi:star"  width="60" height="60" className={`mb-2 mx-auto  ${
+                                                    reviewValue >= 4 ? "text-yellow-400" : "text-gray-400"
+                                                }`} /></button>
+                                                             <button  onClick={() => setreviewValue(5)}>
+                                                                <Icon key={5} icon="mdi:star" width="60" height="60" className={`mb-2 mx-auto  ${
+                                                    reviewValue >= 5 ? "text-yellow-400" : "text-gray-400"
+                                                }`} /></button>
+                                        </div>            
                                     </div> 
-                             
                                 </div>
                                 </>
                                                 )}
