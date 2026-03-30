@@ -29,7 +29,8 @@ import {
      checkBanStatus,
      getHomeFeed,
      getSideBarRecommendations,
-     createEventPost
+     createEventPost,
+     handleReviewSubmit
      
 } from '../controllers/communityController.js';
 import  optionalAuth from '../middleware/authMiddleware.js';
@@ -54,6 +55,7 @@ router.post('/:communityId/event/create', authMiddleware, createEventPost);
 router.post('/:communityId/join', authMiddleware, joinCommunity);
 router.post('/create', authMiddleware, createCommunity);
 router.put('/:id', authMiddleware, updateCommunity);
+router.put('/submit/review/from/:communityId/:Review/user', authMiddleware,  handleReviewSubmit);
 router.post('/posts/:postId/like', authMiddleware, likePost);
 router.post('/posts/:postId/comment', authMiddleware, commentOnPost);
 router.get('/posts/:postId/comments', authMiddleware, getPostComments);

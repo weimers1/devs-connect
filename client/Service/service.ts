@@ -267,7 +267,18 @@ const API = {
         if (!response.ok) throw new Error('Failed to create post');
         return response.json();
     },
-
+    //Handle Reivew Submit
+    handleReviewSubmit: async(communityId: string, Review: number) => {
+        const response = await fetch(
+            `${BASE_URL}/api/communities/submit/review/from/${communityId}/${Review}/user`,
+            {
+                method: 'PUT',
+                headers: getAuthHeaders(true),
+           }
+        );
+        if(!response.ok) throw new Error("Failed to handleReviewSubmit");
+        return response.json();
+    },
     //Create Community Post
     createCommunityPost: async (communityId: string, postData: object) => {
         const response = await fetch(

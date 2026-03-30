@@ -24,6 +24,7 @@ const [isOwner, setOwnerStatus] = useState(false);
 const [isAdmin, setIsAdmin] = useState(false);
 const [isReview, setisReview] = useState(false);
 const [reviewValue, setreviewValue] = useState(0);
+const [loading, setLoading] = useState(false);
 // const [promoteUser, setpromoteUser] = useState(false);
 // const [ownerId, setOwnerId] = useState<string | null>();
 
@@ -31,6 +32,31 @@ const [reviewValue, setreviewValue] = useState(0);
 
     // }
 
+//Handle The Review Submission
+const handleReviewSubmit = async() => {
+    try{
+        const userId = await API.getCurrentUser();
+        if(!userId) {
+            console.log("No User Logged IN");
+            return;
+        }
+    if(communityId) {
+        setLoading(true);
+        const review = await API.handleReviewSubmit(communityId, reviewValue);
+      
+        if(!review.sucess) {
+            console.log("Failed To Submit A review")
+        }
+    } 
+    } catch(error) {
+        console.log("There was an error trying to submit the review", error);
+        return;
+    } finally {
+        setLoading(false);
+        setisReview(false);
+    }
+}
+    console.log(loading);
     const onJoin = async () =>  {
     // Implement join community logic here
     try{    
@@ -157,7 +183,8 @@ useEffect(() => {
                             />
                             {membershipStatus ? 'Joined' : 'Join Community'}
                         </button>
-                        <button className="hover:scale-120 transition-transform"
+                        {membershipStatus && (
+                                  <button className="hover:scale-120 transition-transform"
                         onClick={() =>setisReview(true)}
                         >
                               <Icon
@@ -166,6 +193,8 @@ useEffect(() => {
                                                                         className={`w-12 h-12 text-yellow-400`}
                                                                     />
                         </button>
+                        )}
+                  
                               {isReview && (
                                                                 <>
                                             <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-20 inset-0 flex items-center justify-center ">
@@ -198,9 +227,18 @@ useEffect(() => {
                                                                 <Icon key={5} icon="mdi:star" width="60" height="60" className={`mb-2 mx-auto  ${
                                                     reviewValue >= 5 ? "text-yellow-400" : "text-gray-400"
                                                 }`} /></button>
-                                        </div>            
+                                              
+                                        </div>
+                                                  <button onClick={() => handleReviewSubmit()} className=" mt-3 flex p-1.5 rounded-xl float-right bg-blue-800 text-white">{loading ? 
+          
+          <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-1"></div>
+        : 'Submit'}
+                                                    
+                                                   </button>    
                                     </div> 
+                                    
                                 </div>
+                                
                                 </>
                                                 )}
                 </div>

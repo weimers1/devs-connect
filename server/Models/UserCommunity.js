@@ -7,6 +7,7 @@ const UserCommunity = sequelize.define('UserCommunity', {
   role: { type: DataTypes.ENUM('member', 'admin', 'owner', 'banned'), defaultValue: 'member' },
   joinedAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   BanStatus: {type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false},
+  Review: {type: DataTypes.INTEGER,  Max:5, allowNull: true, defaultValue: 0  }
 });
 
 export default UserCommunity;

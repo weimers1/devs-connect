@@ -1389,3 +1389,29 @@ export const getSideBarRecommendations = async (req, res) => {
         res.json("Failed to fetch sidebar recommendations");
     }
 }
+
+export const handleReviewSubmit = async (req,res) => {
+    try{
+        const userId = req.user.userId;
+       const {communityId, Review} = req.params; 
+          if(!userId) {
+            res.json("There is not user currently logged in");
+            return;
+        }
+
+        const review = await sequelize.query(`
+            UPDATE dev_connect.usercommunities SET Review = ? where userId = ? AND communityId = ?;
+            
+            `, {
+                replacements:[Review, userId, communityId],
+                type: sequelize.QueryTypes.UPDATE
+            })
+            res.json({
+                review: review,
+                message:"Updated Successfully"
+            })
+    } catch(error){
+        console.log("There was an error trying to submit a review", error);
+        res.status(500).error({error: "Error Updating communtiy"})
+    }
+}
