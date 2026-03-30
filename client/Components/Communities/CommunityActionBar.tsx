@@ -35,16 +35,17 @@ const [loading, setLoading] = useState(false);
 //Handle The Review Submission
 const handleReviewSubmit = async() => {
     try{
+         setLoading(true);
         const userId = await API.getCurrentUser();
         if(!userId) {
             console.log("No User Logged IN");
             return;
         }
     if(communityId) {
-        setLoading(true);
+       
         const review = await API.handleReviewSubmit(communityId, reviewValue);
       
-        if(!review.sucess) {
+        if(!review.success) {
             console.log("Failed To Submit A review")
         }
     } 
