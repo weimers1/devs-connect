@@ -562,7 +562,15 @@ const API = {
         });
         if(!response.ok) throw new Error('Failed to search users');
         return response.json();
-    }
+    },
+    getReview: async(communityId: string) => {
+        const response = await fetch(`${BASE_URL}/api/communities/obtain/from/${communityId}`,{
+            method:"GET",
+            headers: getAuthHeaders(),
+        });
+         if(!response.ok) throw new Error('Failed To Get Review');
+        return response.json();
+    }   
 }
 
 export default API;

@@ -1415,3 +1415,31 @@ export const handleReviewSubmit = async (req,res) => {
         res.status(500).error({error: "Error Updating communtiy"})
     }
 }
+
+
+//Obtaining The Review Number
+export const getReview = async (req, res) => {
+    try {
+        const {communityId} = req.params;
+        const userId =  req.user.userId;
+
+        const reviewValued = await sequelize.query(
+            `SELECT Review FROM dev_connect.usercommunities WHERE communityId = ? AND userId = ?;`,
+            {
+                replacements: [communityId, userId],
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+        
+        if(!reviewValued || reviewValued.length === 0) {
+            return res.json({Review: 0});
+        }
+        
+        return res.json({Review: reviewValued});
+    } catch (error) {
+        console.log("Error fetching community membership:", error);
+        res.status(500).json({
+            error: 'Failed to fetch membership: ' + error.message
+        });
+    }
+}

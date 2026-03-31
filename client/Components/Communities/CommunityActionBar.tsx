@@ -31,7 +31,7 @@ const [loading, setLoading] = useState(false);
     //  function handleReviewClick() {
 
     // }
-
+   
 //Handle The Review Submission
 const handleReviewSubmit = async() => {
     try{
@@ -57,7 +57,6 @@ const handleReviewSubmit = async() => {
         setisReview(false);
     }
 }
-    console.log(loading);
     const onJoin = async () =>  {
     // Implement join community logic here
     try{    
@@ -110,18 +109,22 @@ useEffect(() => {
         const user = await API.getCurrentUser();
         if (!user?.userId) return;
 
-        const [membership, owner, admin] = await Promise.all([
+     const results = await Promise.allSettled([
             API.getCommunityMembership(communityId, user.userId),
             API.isCommunityOwner(user.userId, communityId),
             API.getCommunityAdmins(communityId, user.userId),
-        ]);
+            API.getReview(communityId),
+]);
 
-        setMembershipStatus(membership?.isMember ?? false);
-        setOwnerStatus(owner?.owner ?? false);
-        setIsAdmin(admin?.admin ?? false);
-
+            const [membership, owner, admin, review] = results;
+           
+        setMembershipStatus(membership.status === "fulfilled" ? membership.value?.isMember : false);
+        setOwnerStatus(owner.status === "fulfilled" ? owner.value?.owner : false);
+        setIsAdmin(admin.status === "fulfilled" ? admin.value?.admin : false);
+        setreviewValue(review.status === "fulfilled" ? review.value?.Review?.[0].Review : null);
     };
 
+   
     fetchUserCommunityStatus();
 }, [communityId]);
 

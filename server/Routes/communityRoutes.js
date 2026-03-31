@@ -30,7 +30,8 @@ import {
      getHomeFeed,
      getSideBarRecommendations,
      createEventPost,
-     handleReviewSubmit
+     handleReviewSubmit,
+     getReview
      
 } from '../controllers/communityController.js';
 import  optionalAuth from '../middleware/authMiddleware.js';
@@ -38,6 +39,7 @@ import  authMiddleware from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+router.get('/obtain/from/:communityId', authMiddleware, getReview); //Obtaining the review from the community
 router.get('/user', getCommunities);
 router.get('/obtain/sidebar/suggestions', authMiddleware, getSideBarRecommendations); //getting sidebar user suggestions 
 router.get('/feed/home', authMiddleware, getHomeFeed);
@@ -47,7 +49,6 @@ router.put('/demote/:communityId/member/:userId/with/:currentUserId', authMiddle
 router.put('/Ban/:communityId/member/:userId/from/:currentUserId', authMiddleware, BanCommunityMember)//Ban Community Member
 router.put('/Unban/communityMember/:userId/in/community/:communityId/from/:currentUserId', authMiddleware, UnBanCommunityMember);
 router.get('/:id', getCommunityById);
-router.get('/:id/posts', getCommunityPosts);
 router.get('/:id/members', getCommunityMembers);
 router.get('/:id/posts', getCommunityPosts);
 router.post('/:id/posts', authMiddleware, createCommunityPost);
