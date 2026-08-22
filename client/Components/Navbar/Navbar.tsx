@@ -12,7 +12,7 @@ import NavBarSearch from './NavBarSearch';
 
 export interface Community {
     id: string;
-    name:  string;
+    name: string;
     description?: string;
     memberCount: number;
     image?: string;
@@ -34,42 +34,40 @@ const Navbar: React.FC = () => {
     const [communities, setCommunities] = useState<Community[]>([]); // Community Data
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
-    
 
     useEffect(() => {
-    const loadProfileData = async () => {
-        try {
-            const response = await API.getProfileInformation();
-            if (response?.pfp) {
-                setUserProfile(response.pfp);
-            } else {
-                setUserProfile('');
+        const loadProfileData = async () => {
+            try {
+                const response = await API.getProfileInformation();
+                if (response?.pfp) {
+                    setUserProfile(response.pfp);
+                } else {
+                    setUserProfile('');
+                }
+            } catch (error) {
+                console.error('Failed to Load UserProfile', error);
             }
-        } catch (error) {
-            console.error('Failed to Load UserProfile', error);
+        };
+
+        const fetchCommunities = async () => {
+            try {
+                const currentUser = await API.getCurrentUser();
+                if (!currentUser) return;
+
+                const data = await API.getCommunities();
+                setCommunities(data);
+            } catch (error) {
+                console.error('Failed to fetch communities:', error);
+            }
+        };
+
+        if (isAuthenticated) {
+            loadProfileData();
+            fetchCommunities();
+        } else {
+            setLoading(false);
         }
-    };
-
-    const fetchCommunities = async () => {
-        try {
-            const currentUser = await API.getCurrentUser();
-            if (!currentUser) return;
-
-            const data = await API.getCommunities();
-            setCommunities(data);
-        } catch (error) {
-            console.error('Failed to fetch communities:', error);
-        }
-    };
-
-    if (isAuthenticated) {
-        loadProfileData();
-        fetchCommunities();
-    } else {
-        setLoading(false);
-    }
-}, [isAuthenticated]);
-
+    }, [isAuthenticated]);
 
     //Overall Search Bar Update
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,71 +132,67 @@ const Navbar: React.FC = () => {
                                 DevConnect
                             </span>
                         </Link>
-                        
-                         {/* Desktop Search Bar */}
-                    <div className="hidden md:block flex-1 max-w-sm ml-3 mt-0.5 relative">
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Icon
-                                    icon="mdi:magnify"
-                                    className="h-5 w-5 text-gray-400"
+
+                        {/* Desktop Search Bar */}
+                        <div className="hidden md:block flex-1 max-w-sm ml-3 mt-0.5 relative">
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Icon
+                                        icon="mdi:magnify"
+                                        className="h-5 w-5 text-gray-400"
+                                    />
+                                </div>
+
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    className="block rounded-2xl w-full pl-10 pr-3 py-1.5 border leading-5 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out bg-white border-black"
+                                    placeholder="Search communities and people..."
+                                    onChange={handleSearchChange}
                                 />
                             </div>
-                            
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                className="block rounded-2xl w-full pl-10 pr-3 py-1.5 border leading-5 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out bg-white border-black"
-                                placeholder="Search communities and people..."
-                                onChange={handleSearchChange}
-                            />
-                        </div>
-                        
-                        {showSearch && (
-                            <NavBarSearch
-                                searchQuery={searchQuery}
-                                onClose={handleSearchClose}
-                            />
-                        )}
-                    </div>
 
-                    
-                                      {/* Mobile Search Bar  */}
-                    <div className="md:hidden flex-1 max-w-xl mx-3 relative">
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Icon
-                                    icon="mdi:magnify"
-                                    className="h-6 w-6 text-gray-400"
+                            {showSearch && (
+                                <NavBarSearch
+                                    searchQuery={searchQuery}
+                                    onClose={handleSearchClose}
+                                />
+                            )}
+                        </div>
+
+                        {/* Mobile Search Bar  */}
+                        <div className="md:hidden flex-1 max-w-xl mx-3 relative">
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Icon
+                                        icon="mdi:magnify"
+                                        className="h-6 w-6 text-gray-400"
+                                    />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    className="block w-full pl-9 pr-3 py-1.5 text-sm border rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white border-gray-300"
+                                    placeholder="Search..."
+                                    onChange={handleSearchChange}
                                 />
                             </div>
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                className="block w-full pl-9 pr-3 py-1.5 text-sm border rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white border-gray-300"
-                                placeholder="Search..."
-                                onChange={handleSearchChange}
-                            />
-                        </div>
-                        
-                        {showSearch && (
-                            <NavBarSearch
-                                searchQuery={searchQuery}
-                                onClose={handleSearchClose}
-                            />
-                        )}
-                    </div>
-                      </div>
-              
-                            
 
-                        <div className=" hidden md:flex items-center pr-22">
+                            {showSearch && (
+                                <NavBarSearch
+                                    searchQuery={searchQuery}
+                                    onClose={handleSearchClose}
+                                />
+                            )}
+                        </div>
+                    </div>
+
+                    <div className=" hidden md:flex items-center pr-22">
                         {pages.map((page, i) => {
                             const active = isActive(page.route);
                             return (
                                 <Link
                                     key={`desktop-link-${i}`}
-                                
                                     to={page.route}
                                     className={`px-6 py-2 rounded-lg text-me font-medium transition-all duration-200 flex items-center space-x-2 ${
                                         active
@@ -218,11 +212,10 @@ const Navbar: React.FC = () => {
                                 </Link>
                             );
                         })}
-                        </div>
-                        
+                    </div>
+
                     {/* Desktop Navigation Links */}
                     <div className="hidden md:flex items-center  space-x-3 mx-12">
-                                  
                         {/* User Profile / DROPDOWN - Only show if authenticated */}
                         {isAuthenticated && (
                             <div className="ml-4 flex items-center space-x-3">
@@ -241,7 +234,7 @@ const Navbar: React.FC = () => {
                                 <div className="relative ">
                                     <button
                                         onClick={toggleProfileDropdown}
-                                        className="h-8 w-8 rounded-full  bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
+                                        className="h-8 w-8 rounded-full flex items-center justify-center"
                                     >
                                         {userProfile ? (
                                             <img
@@ -254,17 +247,14 @@ const Navbar: React.FC = () => {
                                                 }}
                                             />
                                         ) : (
-                                            <span className="text-white text-sm font-medium">
+                                            <span className="text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-600">
                                                 U
                                             </span>
                                         )}
                                     </button>
-                         
                                 </div>
-                                        
-                                    {isProfileDropdownOpen && (
-                                        <ProfileDropdown />
-                                    )}
+
+                                {isProfileDropdownOpen && <ProfileDropdown />}
                             </div>
                         )}
 
@@ -300,11 +290,8 @@ const Navbar: React.FC = () => {
                                 className="w-6 h-6"
                             />
                         </button>
-                        
                     </div>
-                    
                 </div>
-                
             </div>
 
             {/* Mobile menu */}
@@ -372,9 +359,7 @@ const Navbar: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            
                         </div>
-                        
                     ) : (
                         <div
                             className={`border-t px-4 py-3 
@@ -394,9 +379,7 @@ const Navbar: React.FC = () => {
                     )}
                 </div>
             )}
-             
         </nav>
-   
     );
 };
 

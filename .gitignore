@@ -26,3 +26,5 @@ dist-ssr
 
 .env
 AdminDash
+server/firebase-admin-key.json
+firebase-admin-key.json

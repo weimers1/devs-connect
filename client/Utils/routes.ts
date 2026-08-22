@@ -6,6 +6,8 @@ import Communities from '../Components/Communities/Communities';
 import Settings from '../Components/Settings/Settings';
 import Create from '../Components/Create';
 import Connections from '../Components/Connections/Connections';
+import AdminDashboard from '../Components/FireBaseAuth/AdminDashboard';
+import AdminLogin from '../Components/FireBaseAuth/AdminLogin';
 
 export interface RouteConfig {
     path: string;
@@ -79,7 +81,7 @@ export const protectedRoutes: RouteConfig[] = [
     },
     { //Person User Profile
         path: '/profile',
-        component: Profile,
+        component: Profile, 
         title: 'Profile',
         icon: 'mdi:account-circle-outline',
         alt: 'Profile',
@@ -100,8 +102,28 @@ export const protectedRoutes: RouteConfig[] = [
         icon: 'mdi:account-arrow-right-outline',
         alt: 'Connections',
         showInNav: false,
+    },
+    {
+         path: '/admin',
+    component: AdminDashboard,
+    title: 'Admin Dashboard',
+    icon: 'mdi:shield-account-outline',
+    alt: 'Admin Dashboard',
+    showInNav: true,
     }
 ];
+
+export const adminRoutes: RouteConfig[] = [
+    {
+    path: '/admin-login',
+    component: AdminLogin,
+    title: 'Admin Login',
+    icon: 'mdi:login',
+    alt: 'Admin Login',
+    showInNav: false,
+    }
+]
+
 
 export const publicRoutes: RouteConfig[] = [
     {

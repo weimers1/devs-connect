@@ -10,66 +10,76 @@ import CreateCommunity from '../Components/Communities/CreateCommunity';
 import EditCommunity from '../Components/Communities/EditCommunity';
 import React from 'react';
 import PostTypes from '../Components/Communities/PostTypes';
-import {UserConnectionContextProvider} from "../Components/Connections/UserConnectionContext";
-import Connections from "../Components/Connections/Connections";
+import { UserConnectionContextProvider } from '../Components/Connections/UserConnectionContext';
+import Connections from '../Components/Connections/Connections';
+import AdminDashboard from '../Components/FireBaseAuth/AdminDashboard';
+import AdminLogin from '../Components/FireBaseAuth/AdminLogin';
 
 const AppRoutes = () => {
     return (
         // <ThemeProvider>
-          
-                <Routes>
-                    {defaultRoutes.map((route) => (
-                        <Route
-                            key={route.path}
-                            path={route.path}
-                            element={<route.component />}
-                        />
-                    ))}
-                    <Route element={<ProtectedRoute />}>
-                        {protectedRoutes.map((route) => (
-                            <Route
-                                key={route.path}
-                                path={route.path}
-                                element={<route.component />}
-                            />
-                        ))}
-                    </Route>
-                    <Route element={<PublicRoute />}>
-                        {publicRoutes.map((route) => (
-                            <Route
-                                key={route.path}
-                                path={route.path}
-                                element={<route.component />}
-                            />
-                        ))}
-                    </Route>
+
+        <Routes>
+            {defaultRoutes.map((route) => (
+                <Route
+                    key={route.path}
+                    path={route.path}
+                    element={<route.component />}
+                />
+            ))}
+            <Route element={<ProtectedRoute />}>
+                {protectedRoutes.map((route) => (
                     <Route
-                        path="authenticate"
-                        element={<AuthCallBack />}
+                        key={route.path}
+                        path={route.path}
+                        element={<route.component />}
                     />
-                    {/* ROUTE FIX: Added missing community dynamic routes */}
+                ))}
+            </Route>
+            <Route element={<PublicRoute />}>
+                {publicRoutes.map((route) => (
                     <Route
-                        path="/community/:communityId"
-                        element={<CommunityPage />}
+                        key={route.path}
+                        path={route.path}
+                        element={<route.component />}
                     />
-                    <Route
-                        path="/communities/create"
-                        element={<CreateCommunity />}
-                    />
-                    <Route
-                        path="/edit-community/:communityId"
-                        element={<EditCommunity />}
-                    />
-                    <Route
-                    path="/profile/:userId"
-                    element={<PostTypes/>}
-                    />
-                    <Route
-                    path="/connections/:userId"
-                    element={<Connections/>}
-                    />
-                </Routes>
-   
+                ))}
+            </Route>
+            <Route
+                path="authenticate"
+                element={<AuthCallBack />}
+            />
+            {/* ROUTE FIX: Added missing community dynamic routes */}
+            <Route
+                path="/community/:communityId"
+                element={<CommunityPage />}
+            />
+            <Route
+                path="/communities/create"
+                element={<CreateCommunity />}
+            />
+            <Route
+                path="/edit-community/:communityId"
+                element={<EditCommunity />}
+            />
+            <Route
+                path="/profile/:userId"
+                element={<PostTypes />}
+            />
+            <Route
+                path="/connections/:userId"
+                element={<Connections />}
+            />
+            <Route
+                path="/admin"
+                element={<AdminDashboard />}
+            />
+            <Route
+                path="/admin-login"
+                element={<AdminLogin />}
+            />
+        </Routes>
+
         // </ThemeProvider>
     );
 };
@@ -77,11 +87,11 @@ const AppRoutes = () => {
 const App = () => {
     return (
         <AuthProvider>
-              <BrowserRouter>
-            <UserConnectionContextProvider>
+            <BrowserRouter>
+                <UserConnectionContextProvider>
                     <AppRoutes />
-                 </UserConnectionContextProvider>
-                 </BrowserRouter>
+                </UserConnectionContextProvider>
+            </BrowserRouter>
         </AuthProvider>
     );
 };
