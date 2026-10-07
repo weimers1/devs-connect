@@ -27,7 +27,7 @@ const CommunityMembers: React.FC = () => {
   const [rightvalue, setrightvalue] = useState(13);
   const [leftvalue, setleftvalue] = useState(0);
 
-  const Temppfp = Profile;
+  // const Temppfp = Profile;
 const navigate = useNavigate();
   const fetchMembers = async () => {
     if (!communityId) return;
