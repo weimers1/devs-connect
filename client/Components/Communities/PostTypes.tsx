@@ -283,7 +283,7 @@ const isMobile = width <= 768;
                                 className="text-gray-400 hover:text-red-600 transition-colors"
                                 title="Delete post"
                             >
-                                <Icon icon="mdi:delete" className="w-4 h-4" />
+                                <Icon icon="mdi:delete" className="w-5 h-5" />
                             </button>
                         )}
                       {wantingToDelete  && (

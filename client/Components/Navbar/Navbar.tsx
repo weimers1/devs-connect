@@ -239,7 +239,7 @@ const Navbar: React.FC = () => {
                                         {userProfile ? (
                                             <img
                                                 alt="Profile"
-                                                src={userProfile}
+                                                src={userProfile || assets.Profile}
                                                 className="w-8 h-8 fixed rounded-full object-cover"
                                                 onError={(e) => {
                                                     e.currentTarget.style.display =

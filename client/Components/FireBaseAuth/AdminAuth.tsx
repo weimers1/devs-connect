@@ -16,7 +16,9 @@ import {
     browserSessionPersistence,
     type UserCredential,
 } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 
+// import { useNavigate } from 'react-router-dom';
 interface AdminAuthContextType {
     adminUser: User | null; // Renamed to keep separate from Stytch user
     adminLoading: boolean;
@@ -24,6 +26,7 @@ interface AdminAuthContextType {
     adminLogin: (email: string, password: string) => Promise<UserCredential>;
     adminLogout: () => Promise<void>;
 }
+
 
 // Named context specifically for administrators
 const AdminAuthContext = createContext<AdminAuthContextType | null>(null);
@@ -33,15 +36,26 @@ interface AdminAuthProviderProps {
 }
 
 export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
+    // const [sessionToken, setSessionToken] = useState('');
+    // const navigate = useNavigate();
     const [adminUser, setAdminUser] = useState<User | null>(null);
     const [adminLoading, setAdminLoading] = useState<boolean>(true);
     const [adminToken, setAdminToken] = useState<string | null>(null);
+ 
+    
     useEffect(() => {
+        //    const original_Token = localStorage.getItem('session_token');
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setAdminUser(currentUser);
             setAdminLoading(false);
             if (currentUser) {
                 try {
+            //   const token  =  localStorage.getItem('session_token');
+            //     if(token == '' || token == null || token != original_Token) {
+            //      console.log('test');
+            //     } else  {
+            //         setSessionToken(token);
+            //     }
                     // Generates the ID token right after a successful login
                     // Passing 'true' forces a fresh token pull from Firebase servers
                     const idToken = await currentUser.getIdToken(true);
@@ -59,6 +73,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
         return () => unsubscribe();
     }, []);
 
+
     const adminLogin = async (email: string, password: string) => {
         await setPersistence(auth, browserSessionPersistence);
 
@@ -67,6 +82,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     const adminLogout = () => signOut(auth);
 
     return (
+        
         <AdminAuthContext.Provider
             value={{
                 adminUser,

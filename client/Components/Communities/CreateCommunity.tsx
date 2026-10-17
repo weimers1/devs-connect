@@ -90,7 +90,7 @@ const CreateCommunity: React.FC = () => {
             if (selectedImage) {
                 const uploadResult =
                     await API.uploadCommunityImage(selectedImage);
-                imageUrl = uploadResult.imageUrl;
+                 imageUrl = uploadResult.imageUrl;
             }
 
             const result = await API.createCommunity({

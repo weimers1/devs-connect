@@ -217,7 +217,12 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                           <input
                         type="text"
                         value={''}
-                        placeholder="Share something with the community..."
+                        placeholder={
+                            activeTab === 'posts' ? "Post an exciting accomplishment or something you learned..." :
+                            activeTab === 'lfg' ? "Describe your project and what you're looking for..." :
+                            activeTab === "events" ? "What's Your event?"  :
+                            "What's your question?"
+                        }
                         className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                         onClick={() => requireAuth(() => handlePostClick())}
                         readOnly

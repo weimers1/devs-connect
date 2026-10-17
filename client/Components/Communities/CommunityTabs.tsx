@@ -20,7 +20,7 @@ const CommunityTabs: React.FC<CommunityTabsProps> = ({ activeTab, onTabChange, c
                     { key: 'lfg', label: 'LFG', icon: 'mdi:account-group' },
                     { key: 'qanda', label: 'Q&A', icon: 'mdi:help-circle' },
                     { key: 'events', label: 'Events', icon: 'mdi:calendar' },
-                    { key: 'resources', label: 'Resources', icon: 'mdi:book-open' }
+                    // { key: 'resources', label: 'Resources', icon: 'mdi:book-open' }
                 ].map((tab) => (
                     <button
                         key={tab.key}
@@ -54,7 +54,7 @@ const CommunityTabs: React.FC<CommunityTabsProps> = ({ activeTab, onTabChange, c
                     </div>
                 )} */}
 
-                {activeTab === 'resources' && (
+                {/* {activeTab === 'resources' && (
                     <div className="space-y-4">
                         <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
                             <h3 className="font-semibold text-blue-900 mb-2">Learning Resources</h3>
@@ -64,7 +64,7 @@ const CommunityTabs: React.FC<CommunityTabsProps> = ({ activeTab, onTabChange, c
                             </button>
                         </div>
                     </div>
-                )}
+                )} */}
             </div>
         </div>
     );

@@ -573,7 +573,17 @@ const API = {
         });
          if(!response.ok) throw new Error('Failed To Get Review');
         return response.json();
-    }   
+    },
+    //ADMIN ROUTE:
+    getUserInfo: async(userId: string) => {
+      const response = await fetch(`${BASE_URL}/api/users/Obtain/${userId}/Users`,{
+            method:"GET",
+            headers: getAuthHeaders(),
+            //TODO BUILD AN ADMIN AUTH HEADERS
+        });
+         if(!response.ok) throw new Error('Failed To Get Review');
+        return response.json();
+    }
 }
 
 export default API;

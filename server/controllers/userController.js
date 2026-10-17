@@ -1,6 +1,6 @@
 import User from '../models/User.js';
 import UserProfile from '../Models/UserProfile.js';
-
+import sequelize from '../config/database.js';
 export const getUserProfile = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -50,3 +50,38 @@ export const getCurrentUser = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch current user' });
     }
 };
+//Obtain All User information:
+export const getAllUsers = async(req,res) => {
+        try {
+            const currentUser = req.userId;
+            // if(!currentUser || currentUser != '1'
+            // ) {
+            //     return;
+            // }
+            let UserData =[]
+                    UserData= await sequelize.query(
+            `
+            SELECT u.firstName, u.lastName, u.email, u.verifiedAt, u.id, u.createdAt, up.userId,up.school, up.career, up.profileImageUrl FROM dev_connect.users u
+  LEFT JOIN dev_connect.userprofiles up ON u.id = up.userId;
+            
+            `,
+            {
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+      const FormattedData =  UserData.map((index) => ({
+        firstName: index.firstName || 'First Name',
+        lastName: index.lastName || 'Last Name',
+        email: index.email,
+        id: index.id,
+        createdAt: index.createdAt,
+        verifiedAt: index.verifiedAt,
+        career: index.career || 'Temp',
+        profileImage: index.profileImageUrl, 
+        }));  
+
+        res.json(FormattedData)
+        } catch(error){
+            console.log("THERE WAS AN ERROR OBTAINING USER INFORMATION", error);
+        }
+}

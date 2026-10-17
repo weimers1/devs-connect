@@ -329,7 +329,7 @@ export const getCommunitiesDataFromUser = async (req, res) => {
 export const getCommunityMembers = async (req, res) => {
     try {
         const { id } = req.params;
-        console.log('Fetching members for community:', id);
+        // console.log('Fetching members for community:', id);
 
         if (!UserCommunity) {
             console.error('UserCommunity model not found');
