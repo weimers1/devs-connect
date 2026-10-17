@@ -5,18 +5,26 @@ import type { ReactNode } from 'react';
 type DropdownContextType = {
     isProfileDropdownOpen: boolean;
     isSidebarOpen: boolean;
+    isNavSideBarSidebarOpen: boolean;
+    // togglemetrics: boolean,
     toggleProfileDropdown: () => void;
     toggleSidebar: () => void;
     closeAll: () => void;
+    toggleAdminSidebar: () => void;
+   
 };
 
 // Create context with default values
 const DropdownContext = createContext<DropdownContextType>({
     isProfileDropdownOpen: false,
     isSidebarOpen: false,
+     isNavSideBarSidebarOpen: false,
+// togglemetrics: false,     
     toggleProfileDropdown: () => {},
     toggleSidebar: () => {},
     closeAll: () => {},
+    toggleAdminSidebar: () => {},
+  
 });
 
 type DropdownProviderProps = {
@@ -27,7 +35,8 @@ type DropdownProviderProps = {
 export const DropdownProvider = ({ children }: DropdownProviderProps) => {
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
+    const [isNavSideBarSidebarOpen, setIsNavSideBarSidebarOpen] = useState(false);
+    // const [togglemetrics, settogglemetrics] = useState(false);
     const toggleProfileDropdown = () => {
         setIsProfileDropdownOpen(!isProfileDropdownOpen);
         // Close sidebar when profile dropdown opens
@@ -36,10 +45,16 @@ export const DropdownProvider = ({ children }: DropdownProviderProps) => {
             setIsSidebarOpen(false);
         }
     };
-
+    const toggleAdminSidebar = () => {
+    setIsNavSideBarSidebarOpen(!isNavSideBarSidebarOpen);
+       
+  
+    }
+        
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
         // Close profile dropdown when sidebar opens
+        // Debugging line
         if (!isSidebarOpen) {
             setIsProfileDropdownOpen(false);
         }
@@ -55,9 +70,14 @@ export const DropdownProvider = ({ children }: DropdownProviderProps) => {
             value={{
                 isProfileDropdownOpen,
                 isSidebarOpen,
+                isNavSideBarSidebarOpen,
                 toggleProfileDropdown,
                 toggleSidebar,
                 closeAll,
+                toggleAdminSidebar,
+                // togglemetrics
+            
+                
             }}
         >
             {children}

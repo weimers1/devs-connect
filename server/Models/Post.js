@@ -3,7 +3,7 @@ import { DataTypes } from 'sequelize';
 
 const Post = sequelize.define('Post', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  communityId: { type: DataTypes.INTEGER, allowNull: false },
+  communityId: { type: DataTypes.STRING, allowNull: false },
   userId: { type: DataTypes.INTEGER, allowNull: false },
   type: { type: DataTypes.ENUM('posts', 'lfg', 'qanda', 'events'), allowNull: false },
   content: { type: DataTypes.TEXT, allowNull: false },

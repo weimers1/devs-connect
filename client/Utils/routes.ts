@@ -103,26 +103,26 @@ export const protectedRoutes: RouteConfig[] = [
         alt: 'Connections',
         showInNav: false,
     },
-    {
-         path: '/admin',
-    component: AdminDashboard,
-    title: 'Admin Dashboard',
-    icon: 'mdi:shield-account-outline',
-    alt: 'Admin Dashboard',
-    showInNav: true,
-    }
+    // {
+    //      path: '/admin',
+    // component: AdminDashboard,
+    // title: 'Admin Dashboard',
+    // icon: 'mdi:shield-account-outline',
+    // alt: 'Admin Dashboard',
+    // showInNav: true,
+    // }
 ];
 
-export const adminRoutes: RouteConfig[] = [
-    {
-    path: '/admin-login',
-    component: AdminLogin,
-    title: 'Admin Login',
-    icon: 'mdi:login',
-    alt: 'Admin Login',
-    showInNav: false,
-    }
-]
+// export const adminRoutes: RouteConfig[] = [
+//     {
+//     path: '/admin-login',
+//     component: AdminLogin,
+//     title: 'Admin Login',
+//     icon: 'mdi:login',
+//     alt: 'Admin Login',
+//     showInNav: false,
+//     }
+// ]
 
 
 export const publicRoutes: RouteConfig[] = [

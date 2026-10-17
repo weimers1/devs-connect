@@ -100,6 +100,7 @@ const handleReviewSubmit = async() => {
     } catch(error) {
         console.log("There was some issue with leaving community", error);
     }
+
   }
 
 useEffect(() => {

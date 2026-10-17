@@ -10,19 +10,35 @@ export default function LoginForm() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-
+    // const [sessionToken, setSessionToken] = useState('');
+    // const original_Token = localStorage.getItem('session_token');
+            // useEffect(() => {
+            // //    const token  =  localStorage.getItem('session_token');
+                
+            //     // if(token == '' || token == null || token != original_Token) {
+            //     //     navigate('/login')
+            //     // } else  {
+            //     //     setSessionToken(token);
+            //     // }
+            // },);
+ 
+            // 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
-
+        //   const token  =  localStorage.getItem('session_token');
+        //         if(token == '' || token == null) {
+        //             navigate('/login')
+        //         } else  {
+        //             setSessionToken(token);
+        //         }
         try {
-            // Sends credentials straight to Firebase Auth
             const userCredential = await signInWithEmailAndPassword(
                 auth,
                 email,
                 password,
-            );
+            );    
             console.log('Logged in successfully:', userCredential.user);
             navigate('/admin');
             // Route user to dashboard or home page here

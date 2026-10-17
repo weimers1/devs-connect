@@ -269,7 +269,7 @@ app.get('/csrf-token', csurf({ cookie: true }), (req, res) => {
 // Core Functional Application API Endpoint Links
 app.use('/api/messages', messageRoutes);
 app.use('/auth', authRouter);
-app.use('/user', userRouter);
+// app.use('/user', userRouter);
 app.use('/utils', utilsRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/upload', uploadRoutes);

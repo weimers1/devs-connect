@@ -72,9 +72,9 @@ function Communities({ userId }: CommunitiesProps) {
             }
         }, 200);
     };
-
+    
     return (
-        <div className="w-full max-w-2xl bg-white overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2 mx-auto">
+        <div className="w-full max-w-2xl bg-white overflow-hidden sm:rounded-lg border- shadow-md mb-2 mt-2 mx-auto">
             <div className="p-4 sm:p-6">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-4">
@@ -92,16 +92,16 @@ function Communities({ userId }: CommunitiesProps) {
                                 ref={(el) => {
                                     itemRefs.current[String(community.id)] = el;
                                 }}
-                                className="flex border-b border-gray-100 pb-4 hover:bg-gray-300"
+                                className="flex  border-gray-100 rounded-xl pb-4 mt-2 hover:bg-gray-300"
                             >
                                 {/* Community Logo */}
-                                <div className="flex-shrink-0 mr-4">
+                                <div className="flex-shrink-0 mr-6">
                                     <Icon
                                         icon={
                                             community.icon ||
                                             'mdi:account-group'
                                         }
-                                        className="w-10 h-10 rounded-full bg-gray-200 p-2 text-gray-600"
+                                        className="w-10 h-10 ml-4 rounded-full bg-gray-200 p-2 text-gray-600"
                                         onClick={() =>
                                             navigate(
                                                 `/community/${community.id}`,
@@ -114,7 +114,7 @@ function Communities({ userId }: CommunitiesProps) {
                                 <div className="flex-1 overflow-hidden">
                                     <div className="flex items-center">
                                         <h3
-                                            className="font-medium text-gray-900 truncate"
+                                            className="font-medium text-gray-900 truncate text-xm"
                                             onClick={() =>
                                                 navigate(
                                                     `/community/${community.id}`,
@@ -122,10 +122,11 @@ function Communities({ userId }: CommunitiesProps) {
                                             }
                                         >
                                             {community.name}
+                                            
                                         </h3>
                                         {community.createdBy.toString() ==
                                             UserId.toString() && (
-                                            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                            <span className="ml-2 px-3 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
                                                 Owner
                                             </span>
                                         )}
@@ -138,10 +139,10 @@ function Communities({ userId }: CommunitiesProps) {
 
                                 {/* Actions */}
                                 <div className="flex-shrink-0">
-                                    <button className="text-gray-400 hover:text-gray-600">
+                                    <button className="text-slate-900 hover:text-gray-600 bordered-2xl">
                                         <Icon
                                             icon="mdi:dots-vertical"
-                                            className="w-5 h-5"
+                                            className="w-5 h-6"
                                         />
                                     </button>
                                 </div>
