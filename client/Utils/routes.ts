@@ -6,8 +6,6 @@ import Communities from '../Components/Communities/Communities';
 import Settings from '../Components/Settings/Settings';
 import Create from '../Components/Create';
 import Connections from '../Components/Connections/Connections';
-import AdminDashboard from '../Components/FireBaseAuth/AdminDashboard';
-import AdminLogin from '../Components/FireBaseAuth/AdminLogin';
 
 export interface RouteConfig {
     path: string;

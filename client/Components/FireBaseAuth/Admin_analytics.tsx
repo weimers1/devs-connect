@@ -2,12 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from './AdminAuth';
 import { fetchAdminStats } from '../../Utils/AdminAPis';
-import { getAuth, signOut } from 'firebase/auth';
+// import { getAuth, signOut } from 'firebase/auth';
 import { useDropdown } from '../DropDown/DropDownContext';
 
-
-const auth = getAuth();
-const user = auth.currentUser;
+// const auth = null;
+// const user = null;
 interface SystemStats {
     status: string;
     systemLoad: string;
@@ -54,13 +53,13 @@ export function AdminDashboardInfo() {
         getDashboardMetrics();
         // If The User Leaves The Page The Token IS Destroyed Locally
         const handleBeforeUnload = () => {
-            signOut(auth)
-                .then(() => {
-                    console.log('Token destroyed locally');
-                })
-                .catch((error) => {
-                    console.log('Error signing out', error);
-                });
+            // signOut(auth)
+            //     .then(() => {
+            //         console.log('Token destroyed locally');
+            //     })
+            //     .catch((error) => {
+            //         console.log('Error signing out', error);
+            //     });
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);

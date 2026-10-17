@@ -1,7 +1,7 @@
 // src/components/LoginForm.jsx
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../FireBaseAuth/Firebase';
+// import { signInWithEmailAndPassword } from 'firebase/auth';
+// import { auth } from '../FireBaseAuth/Firebase';
 import { useNavigate } from 'react-router-dom';
 
 export default function LoginForm() {
@@ -33,13 +33,13 @@ export default function LoginForm() {
         //         } else  {
         //             setSessionToken(token);
         //         }
-        try {
-            const userCredential = await signInWithEmailAndPassword(
-                auth,
-                email,
-                password,
-            );    
-            console.log('Logged in successfully:', userCredential.user);
+            // const userCredential = await signInWithEmailAndPassword(
+            //     auth,
+            //     email,
+            //     password,
+            // );    
+            // console.log('Logged in successfully:', userCredential.user);
+            console.log('Firebase disabled');
             navigate('/admin');
             // Route user to dashboard or home page here
         } catch (err) {

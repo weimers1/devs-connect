@@ -12,8 +12,6 @@ import React from 'react';
 import PostTypes from '../Components/Communities/PostTypes';
 import { UserConnectionContextProvider } from '../Components/Connections/UserConnectionContext';
 import Connections from '../Components/Connections/Connections';
-import AdminDashboard from '../Components/FireBaseAuth/AdminDashboard';
-import AdminLogin from '../Components/FireBaseAuth/AdminLogin';
 
 const AppRoutes = () => {
     return (
@@ -70,14 +68,14 @@ const AppRoutes = () => {
                 path="/connections/:userId"
                 element={<Connections />}
             />
-            <Route
+            {/* <Route
                 path="/admin"
                 element={<AdminDashboard />}
             />
             <Route
                 path="/admin-login"
                 element={<AdminLogin />}
-            />
+            /> */}
         </Routes>
 
         // </ThemeProvider>

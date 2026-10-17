@@ -5,7 +5,7 @@ import React, {
     useEffect,
     type ReactNode,
 } from 'react';
-import { validateSession, extendSession } from '../../Utils/Session';
+import { validateSession } from '../../Utils/Session';
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -47,8 +47,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
             if (isValid) {
                 setIsAuthenticated(true);
-                // Extend session for returning users
-                await extendSession(sessionToken);
             } else {
                 logout();
             }

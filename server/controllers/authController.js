@@ -1,21 +1,6 @@
 import stytchClient from '../config/stytch.js';
-import Session from '../models/Session.js';
 import User from '../models/User.js';
 import { v4 as uuidv4 } from 'uuid';
-
-export const getCsrfToken = (req, res) => {
-    try {
-        res.status(200).json({ csrfToken: req.csrfToken() });
-    } catch (error) {
-        console.error('CSRF token generation failed:', error);
-        res.status(500).json({
-            error: {
-                status_code: 500,
-                error_message: 'Failed to generate CSRF token',
-            },
-        });
-    }
-};
 
 export const loginOrSignup = async (req, res) => {
     try {
@@ -77,7 +62,7 @@ export const verifyMagicLink = async (req, res) => {
         // authenticate the magic link with stytch and create a session within stytch
         const session = await stytchClient.magicLinks.authenticate({
             token: token,
-            session_duration_minutes: 5, // temporarily using 1 minute for testing
+            session_duration_minutes: 10080,
         });
 
         // grab their email from the created stytch session
@@ -105,6 +90,10 @@ export const verifyMagicLink = async (req, res) => {
             });
         }
 
+        if (user.stytchUserId !== session.user_id) {
+            await user.update({ stytchUserId: session.user_id });
+        }
+
         // assume they already existed before this
         let isNewUser = false;
 
@@ -113,32 +102,13 @@ export const verifyMagicLink = async (req, res) => {
             isNewUser = true;
         }
 
-        // mark all previous sessions as inactive for a user to ensure there are no duplicate active sessions
-        await Session.update(
-            { isActive: false },
-            { where: { userId: user.id, isActive: true } }
-        );
-
-        // create a session for them in the database
-        const dbSession = await Session.create({
-            userId: user.id,
-            token: session.session_token,
-            isActive: true,
-            isExtended: false, // setting to false: manageSessionLifecycle happens in 60 min; by then, session should be extended
-        });
-
         // if they're a new user, mark them as verified
         if (isNewUser) {
             user.verifiedAt = new Date();
-            user.save();
+            await user.save();
         }
 
-        // call the manageSessionLifecycle function in 60 minutes
-        setTimeout(() => {
-            manageSessionLifecycle(dbSession.token);
-        }, 1000 * 60 * 5); // temporarily using 1 minute for testing
-
-        res.status(200).json({ isNewUser, session_token: dbSession.token });
+        res.status(200).json({ isNewUser, session_token: session.session_token });
     } catch (error) {
         // general error catch
         res.status(error.status || error.status_code || 500).json({
@@ -148,31 +118,4 @@ export const verifyMagicLink = async (req, res) => {
             },
         });
     }
-};
-
-export const manageSessionLifecycle = (token) => {
-    // check if the session has been extended (via the isExtended column in the session record);
-    // if it has, start a countdown to manageSessionLifecycle again; but if it hasn't been extended, mark it inactive
-    // and log them out
-    Session.findOne({ where: { token } })
-        .then((session) => {
-            if (!session) return;
-
-            // if the session is not extended, mark it inactive and drop it
-            if (!session.isExtended) {
-                session.isActive = false;
-                return session.save();
-            }
-
-            // if the session is extended, call to manageSessionLifecycle again in 60 min;
-            // also mark isExtended false now (since this will be set via the endpoint)
-            setTimeout(() => {
-                manageSessionLifecycle(token);
-            }, 1000 * 60 * 5); // temporarily using 1 minute for testing
-            session.isExtended = false;
-            return session.save();
-        })
-        .catch((error) => {
-            console.error('Failed to check session:', error.message);
-        });
 };

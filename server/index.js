@@ -11,10 +11,6 @@ import { rateLimit } from 'express-rate-limit';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getAuth } from 'firebase-admin/auth';
-import admin from 'firebase-admin';
-import { initializeApp, cert } from 'firebase-admin/app';
-// Firebase Admin SDK Imports
 
 // Database & Sequelize Models
 import sequelize from './config/database.js';
@@ -55,47 +51,47 @@ const app = express();
 const httpServer = createServer(app);
 
 // ============================================================================
-// 3. FIREBASE ADMIN SDK INITIALIZATION & MIDDLEWARE
+// 3. FIREBASE ADMIN SDK INITIALIZATION & MIDDLEWARE (COMMENTED OUT)
 // ============================================================================
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const keyPath = path.resolve(__dirname, 'firebase-admin-key.json');
-const serviceAccount = JSON.parse(readFileSync(keyPath, 'utf8'));
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// const keyPath = path.resolve(__dirname, 'firebase-admin-key.json');
+// const serviceAccount = JSON.parse(readFileSync(keyPath, 'utf8'));
 
 // Modern modular initialization syntax
-initializeApp({
-    credential: cert(serviceAccount),
-});
+// initializeApp({
+//     credential: cert(serviceAccount),
+// });
 
 // Express Auth Verification Token Interceptor Middleware Layer
-export const verifyAdminToken = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res
-            .status(401)
-            .json({ error: 'Access Denied: Missing identity token.' });
-    }
+// export const verifyAdminToken = async (req, res, next) => {
+//     const authHeader = req.headers.authorization;
+//     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+//         return res
+//             .status(401)
+//             .json({ error: 'Access Denied: Missing identity token.' });
+//     }
 
-    const token = authHeader.split(' ')[1]; // Extract token string safely
+//     const token = authHeader.split(' ')[1]; // Extract token string safely
 
-    try {
-        const decodedToken = await getAuth().verifyIdToken(token);
+//     try {
+//         const decodedToken = await getAuth().verifyIdToken(token);
 
-        // Strict Custom Claim Guard Validation
-        if (!decodedToken.admin) {
-            return res.status(403).json({
-                error: 'Access Forbidden: Admin privileges required.',
-            });
-        }
+//         // Strict Custom Claim Guard Validation
+//         if (!decodedToken.admin) {
+//             return res.status(403).json({
+//                 error: 'Access Forbidden: Admin privileges required.',
+//             });
+//         }
 
-        req.adminUser = decodedToken;
-        next();
-    } catch (error) {
-        return res
-            .status(403)
-            .json({ error: 'Access Forbidden: Invalid console credentials.' });
-    }
-};
+//         req.adminUser = decodedToken;
+//         next();
+//     } catch (error) {
+//         return res
+//             .status(403)
+//             .json({ error: 'Access Forbidden: Invalid console credentials.' });
+//     }
+// };
 
 // ============================================================================
 // 4. GLOBAL MIDDLEWARES & RATE LIMITERS
@@ -278,15 +274,15 @@ app.use('/api/users', userRouter);
 app.use('/api/connections', connectionsRoutes);
 app.use('/api/search', searchRoutes);
 
-// --- PROTECTED ADMIN ROUTE ---
-app.get('/api/admin/system-stats', verifyAdminToken, (req, res) => {
-    res.json({
-        status: 'online',
-        systemLoad: 'Stable (1.02%)',
-        activeDatabaseContext: 'devs-connect-944ba', // Maps to project id from console
-        authorizedOperator: req.adminUser.email,
-    });
-});
+// --- PROTECTED ADMIN ROUTE (COMMENTED OUT - RELIES ON FIREBASE) ---
+// app.get('/api/admin/system-stats', verifyAdminToken, (req, res) => {
+//     res.json({
+//         status: 'online',
+//         systemLoad: 'Stable (1.02%)',
+//         activeDatabaseContext: 'devs-connect-944ba', // Maps to project id from console
+//         authorizedOperator: req.adminUser.email,
+//     });
+// });
 
 // Global Application Error Interceptor Middleware Fallback
 app.use(errorHandler);

@@ -68,7 +68,12 @@ const User = sequelize.define(
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaulValue: false 
-        }
+        },
+        stytchUserId: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            unique: true,
+        },
     },
     {
         tableName: 'Users',

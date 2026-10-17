@@ -1,70 +1,62 @@
-import csurf from 'csurf';
 import stytchClient from '../config/stytch.js';
-import Session from '../models/Session.js';
+import User from '../models/User.js';
 
-// set up csrf middleware (call once, reuse)
-export const csrfProtection = csurf({
-    cookie: { httpOnly: true, secure: process.env.STAGE_ENV === 'production' },
-});
-
-// use this to check if a user has an active session
-const authMiddleware = async (req, res, next) => {
+export const authMiddleware = async (req, res, next) => {
     try {
-        // grab the session token from the header with validation
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res
-                .status(401)
-                .json({ error: 'Invalid authorization header format' });
+            return res.status(401).json({ error: 'No token provided' });
         }
         const token = authHeader.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
 
-        // if no token, that's a problem
-        if (!token) return res.status(401).json({ error: 'No token provided' });
-
-        // verify that token is active in database
-        const dbSession = await Session.findOne({
-            where: { token, isActive: true },
+        const { session } = await stytchClient.sessions.authenticate({
+            session_token: token,
         });
 
-        // if the session is not active in the database, that's a problem
-        if (!dbSession)
-            return res.status(401).json({ error: 'Session expired' });
+        const user = await User.findOne({
+            where: { stytchUserId: session.user_id },
+        });
 
-        // grab the user with the active session
-        req.user = { userId: dbSession.userId };
+        if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+        }
 
-        // proceed
+        req.user = { userId: user.id };
         next();
     } catch (error) {
-        console.error('Authentication middleware error:', {
-            message: error.message,
-            stack: error.stack,
-            url: req.originalUrl,
-            method: req.method,
-            timestamp: new Date().toISOString()
-        });
-        res.status(401).json({ error: 'Authentication failed' });
+        return res.status(401).json({ error: 'Authentication failed' });
     }
 };
-//Optional middleware to check if user is authenticated, but doesn't block access if not (For access to looking at communitites)
-export const optionalAuth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    return next(); // guest user
-  }
+export const optionalAuth = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return next();
+        }
+        const token = authHeader.split(' ')[1];
+        if (!token) {
+            return next();
+        }
 
-  try {
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const { session } = await stytchClient.sessions.authenticate({
+            session_token: token,
+        });
 
-    req.user = decoded;
-  } catch (err) {
-    // invalid token → treat as guest
-  }
+        const user = await User.findOne({
+            where: { stytchUserId: session.user_id },
+        });
 
-  next();
+        if (user) {
+            req.user = { userId: user.id };
+        }
+        next();
+    } catch (error) {
+        next();
+    }
 };
 
 export default authMiddleware;

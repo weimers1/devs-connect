@@ -2,7 +2,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { StytchProvider } from '@stytch/react';
 import { StytchUIClient } from '@stytch/vanilla-js';
-import { AdminAuthProvider } from '../Components/FireBaseAuth/AdminAuth.tsx';
 import './index.css';
 import App from './App.tsx';
 import { AuthProvider } from '../Components/Auth/AuthContext.tsx';
@@ -25,9 +24,9 @@ try {
         <StrictMode>
             <StytchProvider stytch={stytch}>
                 <AuthProvider>
-                    <AdminAuthProvider>
-                        <App />
-                    </AdminAuthProvider>
+                    {/* <AdminAuthProvider> */}
+                    <App />
+                    {/* </AdminAuthProvider> */}
                 </AuthProvider>
             </StytchProvider>
         </StrictMode>,
