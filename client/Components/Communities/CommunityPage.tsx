@@ -6,47 +6,77 @@ import CommunityActionBar from './CommunityActionBar';
 import CommunityTabs from './CommunityTabs';
 import CommunitySidebar from './CommunitySidebar';
 import API from '../../Service/service';
-import { useAuthRedirect } from '../Auth/useAuthRedirect';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 import { Icon } from '@iconify/react/dist/iconify.js';
+
+interface CommunityRecord {
+    id: string | number;
+    name: string;
+    description?: string | null;
+    createdAt?: string;
+    image?: string | null;
+    icon?: string | null;
+    color?: string | null;
+    isPrivate?: boolean;
+    isOwner?: boolean;
+    isMember?: boolean;
+    rules?: string | null;
+}
+
+interface CommunityMemberRecord {
+    id: string;
+    publicId: string;
+    role: string;
+    firstName: string;
+    lastName: string;
+    profileImageUrl: string | null;
+    isOnline?: boolean;
+}
 
 const CommunityPage: React.FC = () => {
     const { communityId } = useParams<{ communityId: string }>();
     const navigate = useNavigate();
-    const { requireAuth } =  useAuthRedirect();
+    const { t } = useLanguage();
 
     const [activeTab, setActiveTab] = useState('posts');
     const [isJoined, setIsJoined] = useState(false);
-    const [community, setCommunity] = useState<any>(null);
-    const [members, setMembers] = useState<any[]>([]);
+    const [community, setCommunity] = useState<CommunityRecord | null>(null);
+    const [members, setMembers] = useState<CommunityMemberRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [banStatus, setBanStatus] = useState(false);
     const [seconds, setSeconds] = useState(3);
     const [showMembersCenter, setShowMembersCenter] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     useEffect(() => {
-        // let intervalId: NodeJS.Timeout;
-        console.log(communityId);
+        let isActive = true;
+        setLoading(true);
+
         if (!communityId) {
             const timeoutId = setTimeout(() => navigate('/communities'), 0);
-            return () => clearTimeout(timeoutId);
+            return () => {
+                isActive = false;
+                clearTimeout(timeoutId);
+            };
         }
 
         const fetchCommunity = async () => {
             try {
-                const communityData = await API.getCommunityById(communityId);
+                const [communityData, membersData] = await Promise.all([
+                    API.getCommunityById(communityId),
+                    API.getCommunityMembers(communityId),
+                ]);
+                if (!isActive) return;
                 setCommunity(communityData);
-                console.log(communityData);
                 setIsJoined(
                     communityData.isOwner || communityData.isMember || false,
                 );
-
-                const membersData = await API.getCommunityMembers(communityId);
                 setMembers(membersData);
             } catch (error) {
+                if (!isActive) return;
                 console.error('Failed to fetch community:', error);
                 setCommunity(null);
             } finally {
-                setLoading(false);
+                if (isActive) setLoading(false);
             }
         };
 
@@ -54,6 +84,7 @@ const CommunityPage: React.FC = () => {
             try {
                 // Call the backend for both guests and logged-in users
                 const banStatusRes = await API.checkBanStatus(communityId);
+                if (!isActive) return;
 
                 setBanStatus(banStatusRes.banned);
 
@@ -75,12 +106,20 @@ const CommunityPage: React.FC = () => {
                     }, 1000);
                 }
             } catch (error) {
-                console.log('Error checking ban status', error);
+                if (isActive) console.error('Error checking ban status', error);
             }
         };
         fetchCommunity();
         checkBanStatus();
-    }, []);
+
+        return () => {
+            isActive = false;
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
+        };
+    }, [communityId, navigate]);
 
     if (loading) {
         return (
@@ -88,7 +127,7 @@ const CommunityPage: React.FC = () => {
                 <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                     <div className="text-center">
                         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading community...</p>
+                        <p className="text-gray-600">{t('communities.page.loading')}</p>
                     </div>
                 </div>
             </Layout>
@@ -100,12 +139,12 @@ const CommunityPage: React.FC = () => {
             <Layout>
                 <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                     <div className="text-center">
-                        <p className="text-red-600">Community not found</p>
+                        <p className="text-red-600">{t('communities.page.notFound')}</p>
                         <button
                             onClick={() => navigate('/communities')}
                             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
                         >
-                            Back to Communities
+                            {t('communities.page.backToCommunities')}
                         </button>
                     </div>
                 </div>
@@ -114,46 +153,43 @@ const CommunityPage: React.FC = () => {
     }
 
     const handleJoinCommunity = async () => {
-        requireAuth(async () => {
-            if (!communityId) return;
-            try {
-                const currentUser = await API.getCurrentUser();
-                if (!currentUser) return;
+        if (!communityId) throw new Error(t('communities.page.errorNoCommunity'));
+        const currentUser = await API.getCurrentUser();
+        if (!currentUser?.userId) throw new Error(t('communities.page.errorSignIn'));
 
-                const membershipStatus = await API.getCommunityMembership(
-                    communityId,
-                    currentUser.id,
-                );
-                if (membershipStatus) return;
+        const nextMembershipStatus = !isJoined;
+        if (nextMembershipStatus) {
+            await API.joinCommunity(communityId);
+        } else {
+            await API.LeaveCommunity(String(currentUser.userId), communityId);
+        }
 
-                await API.joinCommunity(communityId);
-                setIsJoined(true);
-
-                const [updatedCommunity, updatedMembers] = await Promise.all([
-                    API.getCommunityById(communityId),
-                    API.getCommunityMembers(communityId),
-                ]);
-                setCommunity(updatedCommunity);
-                setMembers(updatedMembers);
-            } catch (error) {
-                console.error('Failed to join community:', error);
-            }
-        });
+        const [updatedCommunity, updatedMembers] = await Promise.all([
+            API.getCommunityById(communityId),
+            API.getCommunityMembers(communityId),
+        ]);
+        setCommunity(updatedCommunity);
+        setMembers(updatedMembers);
+        setIsJoined(nextMembershipStatus);
     };
 
     // Transform community for sidebar
     const transformedCommunity = {
         ...community,
+        id: String(community.id),
         membersTotal: members.length.toString(),
         membersOnline: members.filter((m) => m.isOnline).length.toString(),
-        category: 'Development',
+        category: t('communities.page.categoryDevelopment'),
         image:
             community.image ||
             'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=400&fit=crop',
+        color: community.color || 'bg-gradient-to-r from-blue-500 to-indigo-600',
+        icon: community.icon || 'mdi:account-group',
         tags: [],
         createdDate: community.createdAt,
         members: members,
-        rules: community.rules,
+        description: community.description || '',
+        rules: community.rules || t('communities.page.noRules'),
     };
 
     return (
@@ -168,12 +204,12 @@ const CommunityPage: React.FC = () => {
                             height="72"
                         />
                         <h2 className="text-2xl font-bold mb-6">
-                            You Are Unable To Perform That Action At This Time
+                            {t('communities.page.actionUnavailable')}
                         </h2>
                         <p className="text-2xl font-bold">
                             {seconds > 0
-                                ? `Being Redirected in: ${seconds}s`
-                                : 'Redirected!'}
+                                ? t('communities.page.redirecting', { seconds })
+                                : t('communities.page.redirected')}
                         </p>
                     </div>
                 </div>

@@ -17,6 +17,8 @@ import {
     getCommunitiesFromUser,
     getLikes,
     getLikeStatus,
+    toggleSavedPost,
+    getSavedPosts,
     getCommunityAdmins, 
     kickCommunityMember,
     isCommunityOwner,
@@ -29,28 +31,30 @@ import {
      checkBanStatus,
      getHomeFeed,
      getSideBarRecommendations,
+     getSidebarCommunityRecommendations,
      createEventPost,
      handleReviewSubmit,
      getReview
      
 } from '../controllers/communityController.js';
-import  optionalAuth from '../middleware/authMiddleware.js';
+import { optionalAuth } from '../middleware/authMiddleware.js';
 import  authMiddleware from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 router.get('/obtain/from/:communityId', authMiddleware, getReview); //Obtaining the review from the community
-router.get('/user', getCommunities);
+router.get('/user', optionalAuth, getCommunities);
 router.get('/obtain/sidebar/suggestions', authMiddleware, getSideBarRecommendations); //getting sidebar user suggestions 
-router.get('/feed/home', authMiddleware, getHomeFeed);
+router.get('/obtain/sidebar/community-suggestions', authMiddleware, getSidebarCommunityRecommendations);
+router.get('/feed/home', optionalAuth, getHomeFeed);
 router.delete("/member/:userId/community/:communityId/from/:currentUserId", authMiddleware, kickCommunityMember); //Kick a member from a community
 router.delete('/leave/communityMember/:userId/community/:communityId',authMiddleware, LeaveCommunity);
 router.put('/demote/:communityId/member/:userId/with/:currentUserId', authMiddleware, demoteCommunityMember);
 router.put('/Ban/:communityId/member/:userId/from/:currentUserId', authMiddleware, BanCommunityMember)//Ban Community Member
 router.put('/Unban/communityMember/:userId/in/community/:communityId/from/:currentUserId', authMiddleware, UnBanCommunityMember);
-router.get('/:id', getCommunityById);
-router.get('/:id/members', getCommunityMembers);
-router.get('/:id/posts', getCommunityPosts);
+router.get('/:id', optionalAuth, getCommunityById);
+router.get('/:id/members', optionalAuth, getCommunityMembers);
+router.get('/:id/posts', optionalAuth, getCommunityPosts);
 router.post('/:id/posts', authMiddleware, createCommunityPost);
 router.post('/:communityId/event/create', authMiddleware, createEventPost);
 router.post('/:communityId/join', authMiddleware, joinCommunity);
@@ -59,6 +63,8 @@ router.put('/:id', authMiddleware, updateCommunity);
 router.put('/submit/review/from/:communityId/:Review/user', authMiddleware,  handleReviewSubmit);
 router.post('/posts/:postId/like', authMiddleware, likePost);
 router.post('/posts/:postId/comment', authMiddleware, commentOnPost);
+router.get('/posts/saved', authMiddleware, getSavedPosts);
+router.post('/posts/:postId/save', authMiddleware, toggleSavedPost);
 router.get('/posts/:postId/comments', authMiddleware, getPostComments);
 router.post('/posts/:postId/interest', authMiddleware, expressInterest);
 router.delete('/posts/:postId', authMiddleware, deletePost);

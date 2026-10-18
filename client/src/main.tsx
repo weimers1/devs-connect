@@ -1,7 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { StytchProvider } from '@stytch/react';
-import { StytchUIClient } from '@stytch/vanilla-js';
+import { createStytchUIClient, StytchProvider } from '@stytch/react';
 import './index.css';
 import App from './App.tsx';
 import { AuthProvider } from '../Components/Auth/AuthContext.tsx';
@@ -12,7 +11,7 @@ if (!stytchToken) {
     throw new Error('Stytch public token not found in environment variables');
 }
 
-const stytch = new StytchUIClient(stytchToken);
+const stytch = createStytchUIClient(stytchToken);
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

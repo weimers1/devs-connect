@@ -4,6 +4,8 @@ import PostsFeed from './PostsFeed';
 import LFGFeed from './LFGFeed';
 import QAFeed from './QAFeed';
 import Events from "./Events";
+import CommunityProjects from './CommunityProjects';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 interface CommunityTabsProps {
     activeTab: string;
@@ -12,14 +14,16 @@ interface CommunityTabsProps {
 }
 
 const CommunityTabs: React.FC<CommunityTabsProps> = ({ activeTab, onTabChange, communityId }) => {
+    const { t } = useLanguage();
     return (
         <div className="bg-white rounded-xl shadow-sm border mb-6">
             <div className="flex border-b overflow-x-auto">
                 {[
-                    { key: 'posts', label: 'Posts', icon: 'mdi:code-tags' },
-                    { key: 'lfg', label: 'LFG', icon: 'mdi:account-group' },
-                    { key: 'qanda', label: 'Q&A', icon: 'mdi:help-circle' },
-                    { key: 'events', label: 'Events', icon: 'mdi:calendar' },
+                    { key: 'posts', label: t('communities.tabs.posts'), icon: 'mdi:code-tags' },
+                    { key: 'lfg', label: t('communities.tabs.lfg'), icon: 'mdi:account-group' },
+                    { key: 'qanda', label: t('communities.tabs.qa'), icon: 'mdi:help-circle' },
+                    { key: 'events', label: t('communities.tabs.events'), icon: 'mdi:calendar' },
+                    { key: 'projects', label: t('communities.tabs.projects'), icon: 'mdi:rocket-launch-outline' },
                     // { key: 'resources', label: 'Resources', icon: 'mdi:book-open' }
                 ].map((tab) => (
                     <button
@@ -46,6 +50,7 @@ const CommunityTabs: React.FC<CommunityTabsProps> = ({ activeTab, onTabChange, c
 
                 {activeTab === 'events' && <Events communityId={communityId} activeTab={activeTab}/>}
 
+                {activeTab === 'projects' && <CommunityProjects communityId={communityId} />}
                 {/* {activeTab === 'events' && (
                     <div className="text-center py-12">
                         <Icon icon="mdi:calendar" className="w-16 h-16 text-gray-400 mx-auto mb-4" />

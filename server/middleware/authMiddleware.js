@@ -3,11 +3,7 @@ import User from '../models/User.js';
 
 export const authMiddleware = async (req, res, next) => {
     try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ error: 'No token provided' });
-        }
-        const token = authHeader.split(' ')[1];
+        const token = req.cookies?.session_token;
         if (!token) {
             return res.status(401).json({ error: 'No token provided' });
         }
@@ -33,11 +29,7 @@ export const authMiddleware = async (req, res, next) => {
 
 export const optionalAuth = async (req, res, next) => {
     try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return next();
-        }
-        const token = authHeader.split(' ')[1];
+        const token = req.cookies?.session_token;
         if (!token) {
             return next();
         }

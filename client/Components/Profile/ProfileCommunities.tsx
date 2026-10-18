@@ -3,64 +3,68 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import API from '../../Service/service';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 interface CommunitiesProps {
-    userId?: string;
+    userId: string;
     isOwnProfile?: boolean;
+    onLoadedCount?: (count: number) => void;
 }
 
-function Communities({ userId }: CommunitiesProps) {
-    const [communitiesData, setCommunitiesData] = useState([
-        {
-            name: '',
-            description: '',
-            createdBy: '',
-            icon: '',
-            color: '',
-            image: '',
-            memberCount: '',
-            id: '',
-            isOwner: false,
-            role: '',
-        },
-    ]);
-    const [UserId, setUserId] = useState('');
+interface ProfileCommunity {
+    id: string;
+    name: string;
+    icon?: string | null;
+    role: string;
+}
+
+function Communities({
+    userId,
+    isOwnProfile = false,
+    onLoadedCount,
+}: CommunitiesProps) {
+    const [communitiesData, setCommunitiesData] = useState<ProfileCommunity[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [communitiesValue, setcommunitiesValue] = useState(3);
     const [communitiesExpanded, setcommunitiesExpanded] = useState(false);
-    // const {userId} = useParams();
-    const isOwnProfile = !userId;
-    //Need to obtain community info
     const navigate = useNavigate();
+    const { t } = useLanguage();
+
     useEffect(() => {
-        const fetchusercommunities = async () => {
+        let active = true;
+        const fetchUserCommunities = async () => {
+            setLoading(true);
+            setError(null);
             try {
-                const user = await API.getCurrentUser();
-                if (!user) {
-                    console.log('No user is logged in');
-                    return;
-                }
-                const targetUserId = userId || user.userId;
-                setUserId(targetUserId);
-                const communityData =
-                    await API.getCommunitiesDataFromUser(targetUserId);
+                const communityData = await API.getCommunitiesDataFromUser(userId);
                 if (Array.isArray(communityData)) {
-                    setCommunitiesData(communityData);
+                    if (active) {
+                        setCommunitiesData(communityData);
+                        onLoadedCount?.(communityData.length);
+                    }
                 } else {
-                    console.error(
-                        'Received non-array community data',
-                        communityData,
-                    );
-                    setCommunitiesData([]);
+                    throw new Error('Invalid community response');
                 }
             } catch (error) {
-                console.log(error, 'error fetching user communities');
+                console.error('Failed to fetch user communities:', error);
+                if (active) {
+                    setCommunitiesData([]);
+                    onLoadedCount?.(0);
+                    setError(t('profile.communities.loadError'));
+                }
+            } finally {
+                if (active) setLoading(false);
             }
         };
 
-        fetchusercommunities();
-    }, [userId]);
+        fetchUserCommunities();
+        return () => {
+            active = false;
+        };
+    }, [onLoadedCount, userId, t]);
 
-    const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
     const ScrollIntoView = (itemKey: string) => {
         setTimeout(() => {
             const element = itemRefs.current[itemKey];
@@ -74,86 +78,60 @@ function Communities({ userId }: CommunitiesProps) {
     };
     
     return (
-        <div className="w-full max-w-2xl bg-white overflow-hidden sm:rounded-lg border- shadow-md mb-2 mt-2 mx-auto">
+        <div
+            id="profile-communities"
+            className="mx-auto mb-2 mt-2 w-full max-w-4xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+        >
             <div className="p-4 sm:p-6">
-                {/* Header */}
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-gray-800">
-                        Communities
-                    </h2>
+                <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-gray-800">{t('profile.communities.title')}</h2>
                 </div>
 
-                <div className="space-y-4 ">
-                    {communitiesData
-                        ?.slice(0, communitiesValue)
-                        .map((community) => (
-                            <div
-                                key={community.id}
-                                ref={(el) => {
-                                    itemRefs.current[String(community.id)] = el;
-                                }}
-                                className="flex  border-gray-100 rounded-xl pb-4 mt-2 hover:bg-gray-300"
-                            >
-                                {/* Community Logo */}
-                                <div className="flex-shrink-0 mr-6">
-                                    <Icon
-                                        icon={
-                                            community.icon ||
-                                            'mdi:account-group'
-                                        }
-                                        className="w-10 h-10 ml-4 rounded-full bg-gray-200 p-2 text-gray-600"
-                                        onClick={() =>
-                                            navigate(
-                                                `/community/${community.id}`,
-                                            )
-                                        }
-                                    />
-                                </div>
-
-                                {/* Community Info */}
-                                <div className="flex-1 overflow-hidden">
-                                    <div className="flex items-center">
-                                        <h3
-                                            className="font-medium text-gray-900 truncate text-xm"
-                                            onClick={() =>
-                                                navigate(
-                                                    `/community/${community.id}`,
-                                                )
-                                            }
-                                        >
-                                            {community.name}
-                                            
-                                        </h3>
-                                        {community.createdBy.toString() ==
-                                            UserId.toString() && (
-                                            <span className="ml-2 px-3 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                                Owner
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {/* <p className="text-gray-500 text-sm">
-                                {community.members.toLocaleString()} members
-                            </p> */}
-                                </div>
-
-                                {/* Actions */}
-                                <div className="flex-shrink-0">
-                                    <button className="text-slate-900 hover:text-gray-600 bordered-2xl">
-                                        <Icon
-                                            icon="mdi:dots-vertical"
-                                            className="w-5 h-6"
-                                        />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                </div>
-
-                <div className="mt-4 flex justify-between items-center">
-                    {communitiesData.length > 3 ? (
+                <div className="space-y-2">
+                    {loading ? (
+                        <p className="py-8 text-center text-gray-500" role="status">
+                            {t('profile.communities.loading')}
+                        </p>
+                    ) : error ? (
+                        <p className="py-8 text-center text-red-600" role="alert">{error}</p>
+                    ) : communitiesData.length === 0 ? (
+                        <p className="py-8 text-center text-gray-500">
+                            {isOwnProfile ? t('profile.communities.emptyOwn') : t('profile.communities.emptyOther')}
+                        </p>
+                    ) : communitiesData.slice(0, communitiesValue).map((community) => (
                         <button
-                            className="text-blue-600 font-medium text-sm hover:text-blue-800 flex items-center"
+                            key={community.id}
+                            type="button"
+                            ref={(el) => {
+                                itemRefs.current[String(community.id)] = el;
+                            }}
+                            onClick={() => navigate(`/community/${community.id}`)}
+                            className="flex min-h-[4.5rem] w-full items-center gap-4 rounded-lg border border-slate-200 px-3 py-2 text-left transition-colors hover:border-blue-200 hover:bg-blue-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        >
+                            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                                <Icon
+                                    icon={community.icon || 'mdi:account-group'}
+                                    className="h-6 w-6"
+                                />
+                            </span>
+                            <span className="min-w-0 flex-1 truncate font-medium text-gray-900">
+                                {community.name}
+                            </span>
+                            {community.role === 'owner' && (
+                                <span className="ml-auto flex-shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                                    {t('profile.communities.owner')}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                    {communitiesData.length > 3 && !loading && !error ? (
+                        <button
+                            type="button"
+                            className="flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
+                            aria-expanded={communitiesExpanded}
                             onClick={() => {
                                 if (communitiesExpanded) {
                                     setcommunitiesExpanded(false);
@@ -161,35 +139,26 @@ function Communities({ userId }: CommunitiesProps) {
                                 } else {
                                     setcommunitiesExpanded(true);
                                     setcommunitiesValue(communitiesData.length);
-                                    const lastCommunityId = String(
-                                        communitiesData[
-                                            communitiesData.length - 1
-                                        ].id,
-                                    );
-                                    ScrollIntoView(lastCommunityId);
+                                    ScrollIntoView(String(communitiesData[communitiesData.length - 1].id));
                                 }
                             }}
                         >
-                            Show all communities
+                            {communitiesExpanded ? t('profile.communities.showFewer') : t('profile.communities.showAll')}
                             <Icon
-                                icon="mdi:chevron-down"
-                                className="w-4 h-4 ml-1"
+                                icon={communitiesExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down'}
+                                className="ml-1 h-4 w-4"
                             />
                         </button>
-                    ) : (
-                        <h1></h1>
-                    )}
+                    ) : <span />}
 
                     {isOwnProfile && (
                         <button
-                            className="text-blue-600 font-medium text-sm hover:text-blue-800 flex items-center"
+                            type="button"
+                            className="flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
                             onClick={() => navigate('/communities')}
                         >
-                            Discover new
-                            <Icon
-                                icon="mdi:arrow-right"
-                                className="w-4 h-4 ml-1"
-                            />
+                            {t('profile.communities.discoverNew')}
+                            <Icon icon="mdi:arrow-right" className="ml-1 h-4 w-4" />
                         </button>
                     )}
                 </div>

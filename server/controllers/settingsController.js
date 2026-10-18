@@ -1,12 +1,13 @@
 import UserProfile from '../Models/UserProfile.js';
+import sequelize from '../config/database.js';
 import Session from '../models/Session.js';
 import User from '../models/User.js';
-import DisplaySettings from '../models/DisplaySettings.js';
-import GeneralPreferences from '../models/GeneralPreferences.js';
-import Privacy_Security from '../models/Privacy-Security.js';
+import DisplaySettings from '../Models/DisplaySettings.js';
+import GeneralPreferences from '../Models/GeneralPreferences.js';
+import Privacy_Security from '../Models/Privacy-Security.js';
 import stytch from '../config/stytch.js';
-import VisibilitySettings from '../models/VisibilitySettings.js';
-import Certifications from '../models/Certifications.js';
+import VisibilitySettings from '../Models/VisibilitySettings.js';
+import Certifications from '../Models/Certifications.js';
 
 //Profile Controller Get INFO
 export const getProfileSettings = async (req, res) => {
@@ -39,9 +40,15 @@ export const getProfileSettings = async (req, res) => {
             githubEmail: user?.githubEmail || null,
             githubUsername: user?.githubUsername || null,
             githubId: user?.githubId || null,
-            //Edit Profile
+            githubProfileVisible: !!user?.githubProfileVisible,
+            githubUrl: user?.githubProfileVisible && user?.githubUsername ? `https://github.com/${encodeURIComponent(user.githubUsername)}` : '',
+            githubUrl:
+                user?.githubProfileVisible && user?.githubUsername
+                    ? `https://github.com/${encodeURIComponent(user.githubUsername)}`
+                    : '',
             bio: profile?.bio || null,
             pfp: profile?.profileImageUrl || null,
+            bannerImageUrl: profile?.bannerImageUrl || null,
             career: profile?.career || null,
             school: profile?.school || null,
             certName: certification?.certName || null,
@@ -70,10 +77,17 @@ export const updateProfileSettings = async (req, res) => {
             career,
             school,
             bio,
+            pfp,
+            bannerImageUrl,
         } = req.body;
 
         // Validate required fields
-        if (!firstName || !lastName) {
+        if (
+            typeof firstName !== 'string' ||
+            !firstName.trim() ||
+            typeof lastName !== 'string' ||
+            !lastName.trim()
+        ) {
             return res
                 .status(400)
                 .json({ error: 'First name and last name are required' });
@@ -85,6 +99,28 @@ export const updateProfileSettings = async (req, res) => {
             !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)
         ) {
             return res.status(400).json({ error: 'Invalid email format' });
+        }
+        if (
+            bannerImageUrl !== undefined &&
+            bannerImageUrl !== null &&
+            (typeof bannerImageUrl !== 'string' ||
+                bannerImageUrl.length > 2048 ||
+                !/^https:\/\/[a-zA-Z0-9.-]+\.amazonaws\.com\/.+|^https?:\/\/[a-zA-Z0-9.-]+(:[0-9]+)?\/api\/upload\/images\/.+/.test(
+                    bannerImageUrl,
+                ))
+        ) {
+            return res.status(400).json({ error: 'Invalid banner image URL' });
+        }
+        if (
+            pfp !== undefined &&
+            pfp !== null &&
+            (typeof pfp !== 'string' ||
+                pfp.length > 2048 ||
+                !/^https:\/\/[a-zA-Z0-9.-]+\.amazonaws\.com\/.+|^https?:\/\/[a-zA-Z0-9.-]+(:[0-9]+)?\/api\/upload\/images\/.+/.test(
+                    pfp,
+                ))
+        ) {
+            return res.status(400).json({ error: 'Invalid profile image URL' });
         }
 
         // Validate age if provided
@@ -104,6 +140,12 @@ export const updateProfileSettings = async (req, res) => {
             career: career?.trim().substring(0, 100),
             school: school?.trim().substring(0, 100),
             bio: bio?.trim().substring(0, 500),
+            profileImageUrl:
+                pfp === undefined ? undefined : pfp || null,
+            bannerImageUrl:
+                bannerImageUrl === undefined
+                    ? undefined
+                    : bannerImageUrl || null,
         };
 
         const user = await User.findOne({
@@ -113,43 +155,45 @@ export const updateProfileSettings = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' }); //If can't find user through an error
         }
-        const [profile, created] = await UserProfile.findOrCreate({
-            //Find or create Profile
-            where: { userId: req.user.userId },
-            defaults: {
-                userId: req.user.userId,
-            },
-        });
-        await user.update({
-            firstName: sanitizedData.firstName,
-            lastName: sanitizedData.lastName,
-            email: sanitizedData.email,
-        });
-        await profile.update({
-            location: sanitizedData.location,
-            age: age,
-            gender: sanitizedData.gender,
-            career: sanitizedData.career,
-            school: sanitizedData.school,
-            bio: sanitizedData.bio,
-        });
-        if (req.body.certName) {
-            // Only if certification data is sent
-            const [certification, certCreated] =
-                await Certifications.findOrCreate({
+        await sequelize.transaction(async (transaction) => {
+            const [profile] = await UserProfile.findOrCreate({
+                where: { userId: req.user.userId },
+                defaults: { userId: req.user.userId },
+                transaction,
+            });
+            await user.update({
+                firstName: sanitizedData.firstName,
+                lastName: sanitizedData.lastName,
+                email: sanitizedData.email,
+            }, { transaction });
+            await profile.update({
+                location: sanitizedData.location,
+                age,
+                gender: sanitizedData.gender,
+                career: sanitizedData.career,
+                school: sanitizedData.school,
+                bio: sanitizedData.bio,
+                profileImageUrl: sanitizedData.profileImageUrl,
+                bannerImageUrl: sanitizedData.bannerImageUrl,
+            }, { transaction });
+
+            if (req.body.certName) {
+                const [certification] = await Certifications.findOrCreate({
                     where: { userId: req.user.userId },
                     defaults: { userId: req.user.userId },
+                    transaction,
                 });
 
-            await certification.update({
-                certName: req.body.certName, // Fixed field name
-                issuer: req.body.issuer,
-                dateEarned: req.body.dateEarned,
-                dateExpiration: req.body.dateExpiration,
-                credentialID: req.body.credentialID,
-                credentialURL: req.body.credentialURL,
-            });
-        }
+                await certification.update({
+                    certName: req.body.certName,
+                    issuer: req.body.issuer,
+                    dateEarned: req.body.dateEarned,
+                    dateExpiration: req.body.dateExpiration,
+                    credentialID: req.body.credentialID,
+                    credentialURL: req.body.credentialURL,
+                }, { transaction });
+            }
+        });
 
         res.json({ message: 'Profile updated successfully' });
     } catch (error) {
@@ -223,13 +267,26 @@ export const updateGeneralPreferences = async (req, res) => {
         const LanguageMap = {
             en: 'English',
             es: 'Spanish',
-            fr: 'French',
-            de: 'German',
-            ja: 'Japanese',
-            zh: 'Chinese',
+            English: 'English',
+            Spanish: 'Spanish',
+        };
+        const updates = {};
+        if (req.body.language !== undefined) {
+            const languageValue = LanguageMap[req.body.language];
+            if (!languageValue) {
+                return res.status(400).json({ error: 'Unsupported language' });
+            }
+            updates.language = languageValue;
         }
-        const languageValue = LanguageMap[req.body.language] || req.body.language;
         const timeZoneValue = req.body.time_zone || req.body.TimeZone;
+        if (timeZoneValue) {
+            try {
+                new Intl.DateTimeFormat('en-US', { timeZone: timeZoneValue });
+            } catch {
+                return res.status(400).json({ error: 'Invalid time zone' });
+            }
+            updates.time_zone = timeZoneValue;
+        }
         const [generalPrefs] = await GeneralPreferences.findOrCreate({
             //Find or create the General Preferences
             where: { userId: req.user.userId },
@@ -243,10 +300,7 @@ export const updateGeneralPreferences = async (req, res) => {
             .json({error: "Didn't find user"});
 
         }
-        await generalPrefs.update({
-            language: languageValue,
-            time_zone: timeZoneValue,
-        });
+        await generalPrefs.update(updates);
         res.json({
             language: generalPrefs.language ,
             time_zone: generalPrefs.time_zone,
@@ -378,46 +432,55 @@ export const confirmEmailChange = async (req, res) => {
 //Get Visibility Settings
 export const getVisibilitySettings = async (req, res) => {
     try {
-        const [visibility, created] = await VisibilitySettings.findOrCreate({
+        const [visibility] = await VisibilitySettings.findOrCreate({
             where: { userId: req.user.userId },
         });
-        if (!visibility) {
-            return res
-                .status(404)
-                .json({ error: 'Visibility settings not found' });
-        }
-        res.json({
-            Profile_Visibility: visibility?.Profile_Visibility || null,
-            Connections_Visibility: visibility?.Connections_Visibility || null,
-            Communities_Visibility: visibility?.Communities_Visibility || null,
+        return res.json({
+            profileVisibility: visibility.profileVisibility,
+            connectionsVisibility: visibility.connectionsVisibility,
+            communitiesVisibility: visibility.communitiesVisibility,
         });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to get visibility settings' });
+        console.error('Failed to get visibility settings:', error);
+        return res.status(500).json({ error: 'Failed to get visibility settings' });
     }
 };
 //Update Visibility Settings
 export const updateVisibilitySettings = async (req, res) => {
     try {
-        const [visibility, created] = await VisibilitySettings.findOrCreate({
+        const fields = [
+            'profileVisibility',
+            'connectionsVisibility',
+            'communitiesVisibility',
+        ];
+        const allowedValues = ['Everyone', 'ConnectionsOnly', 'OnlyMe'];
+        const updates = {};
+
+        for (const field of fields) {
+            const value = req.body[field];
+            if (value === undefined) continue;
+            if (!allowedValues.includes(value)) {
+                return res.status(400).json({ error: `Invalid ${field}` });
+            }
+            updates[field] = value;
+        }
+
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ error: 'No visibility settings provided' });
+        }
+
+        const [visibility] = await VisibilitySettings.findOrCreate({
             where: { userId: req.user.userId },
         });
-        if (!visibility) {
-            return res
-                .status(404)
-                .json({ error: 'Visibility settings not found' });
-        }
-        await visibility.update({
-            Profile_Visibility: req.body.Profile_Visibility,
-            Connections_Visibility: req.body.Connections_Visibility,
-            Communities_Visibility: req.body.Communities_Visibility,
-        });
-        res.json({
-            Profile_Visibility: visibility?.Profile_Visibility || null,
-            Connections_Visibility: visibility?.Connections_Visibility || null,
-            Communities_Visibility: visibility?.Communities_Visibility || null,
+        await visibility.update(updates);
+        return res.json({
+            profileVisibility: visibility.profileVisibility,
+            connectionsVisibility: visibility.connectionsVisibility,
+            communitiesVisibility: visibility.communitiesVisibility,
         });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to update visibility settings' });
+        console.error('Failed to update visibility settings:', error);
+        return res.status(500).json({ error: 'Failed to update visibility settings' });
     }
 };
 //Sign out
@@ -476,9 +539,29 @@ export const getGitHubConnection = async (req, res) => {
             isConnected: !!(user.githubId && user.githubUsername),
             githubUsername: user.githubUsername || null,
             githubEmail: user.githubEmail || null,
+            githubProfileVisible: !!user.githubProfileVisible,
         });
     } catch (error) {
         res.status(500).json({ error: 'Failed to get GitHub connection' });
+    }
+};
+//Show or hide the connected GitHub account on the user's profile
+export const updateGitHubVisibility = async (req, res) => {
+    try {
+        if (typeof req.body?.visible !== 'boolean') {
+            return res.status(400).json({ error: 'visible must be true or false' });
+        }
+        const user = await User.findOne({ where: { id: req.user.userId } });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        if (!user.githubId || !user.githubUsername) {
+            return res.status(400).json({ error: 'GitHub account is not connected' });
+        }
+        await user.update({ githubProfileVisible: req.body.visible });
+        res.json({ githubProfileVisible: user.githubProfileVisible });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update GitHub visibility' });
     }
 };
 //Get Github Information

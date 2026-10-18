@@ -12,6 +12,7 @@ const router = express.Router();
 
 
 //Connect to User 
+router.post('/connect/:userId', authMiddleware, connectToUser);
 router.post('/connect/:userId/to/:currentUserId', authMiddleware, connectToUser);
 //Get connection between users
 router.get('/obtain/connection/between/:currentUserId/to/:userId', authMiddleware, getrelevantconnection);

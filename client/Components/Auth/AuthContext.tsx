@@ -10,8 +10,8 @@ import { validateSession } from '../../Utils/Session';
 interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (sessionToken: string) => void;
-    logout: () => void;
+    login: () => void;
+    logout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -24,31 +24,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
-    const login = (sessionToken: string) => {
-        localStorage.setItem('session_token', sessionToken);
+    const login = () => {
         setIsAuthenticated(true);
     };
 
-    const logout = () => {
-        localStorage.removeItem('session_token');
-        setIsAuthenticated(false);
+    const logout = async () => {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+        try {
+            const response = await fetch(`${apiUrl}/session/destroy`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+            if (!response.ok) {
+                console.error('Server session revocation failed.');
+            }
+        } catch {
+            console.error('Could not reach the server to revoke the session.');
+        } finally {
+            setIsAuthenticated(false);
+        }
     };
 
     useEffect(() => {
         const checkSession = async () => {
-            const sessionToken = localStorage.getItem('session_token');
-
-            if (!sessionToken) {
-                setIsLoading(false);
-                return;
-            }
-
-            const isValid = await validateSession(sessionToken);
+            const isValid = await validateSession();
 
             if (isValid) {
                 setIsAuthenticated(true);
             } else {
-                logout();
+                setIsAuthenticated(false);
             }
 
             setIsLoading(false);

@@ -89,14 +89,10 @@ afterEach(() => {
 });
 
 //  2nd Test
-test('pops up John messages when searching for john', () => {
+test('renders the conversation results passed to the sidebar', () => {
     // Mock functions for required props
     const mockOnMessageSelect = jest.fn();
     const mockSelectedMessage = null;
-
-    const FilteredMessages = mockMessages.filter((msg) =>
-        msg.name.toLowerCase().includes('john')
-    );
     
     // Render the MessageSidebar component with required props
     render( //
@@ -105,12 +101,10 @@ test('pops up John messages when searching for john', () => {
                 onMessageSelect={mockOnMessageSelect}
                 selectedMessage={mockSelectedMessage}
                 onSearch={mockSearchMessages}
-                messages={FilteredMessages}
+                messages={mockMessages}
             />
         </TestWrapper>
     );
-    //  Let's see what's actually rendered
-    screen.debug(); // This will show you the entire DOM
 
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('Jane Smith')).toBeInTheDocument();

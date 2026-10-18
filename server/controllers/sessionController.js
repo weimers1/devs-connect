@@ -2,22 +2,36 @@ import stytchClient from '../config/stytch.js';
 
 export const destroySession = async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'No token provided' });
+        const token = req.cookies?.session_token;
+        if (!token) {
+            res.clearCookie('session_token', sessionCookieOptions());
+            return res.status(200).json({ message: 'Session destroyed' });
+        }
 
         await stytchClient.sessions.revoke({ session_token: token });
 
+        res.clearCookie('session_token', sessionCookieOptions());
         res.status(200).json({ message: 'Session destroyed' });
     } catch (error) {
-        console.error('Destroy session error:', error);
+        res.clearCookie('session_token', sessionCookieOptions());
+        console.error('Session revocation failed:', {
+            name: error.name,
+            status: error.status || error.status_code,
+        });
         res.status(500).json({ error: 'Failed to destroy session' });
     }
 };
 
+const sessionCookieOptions = () => ({
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+});
+
 export const getStytchSessionStatus = async (req, res) => {
-    // if the session is still valid in stytch, I guess we'll call it valid here too
     try {
-        const token = req.headers.authorization?.split(' ')[1];
+        const token = req.cookies?.session_token;
         if (!token) {
             return res
                 .status(401)
@@ -25,7 +39,7 @@ export const getStytchSessionStatus = async (req, res) => {
         }
 
         // Verify session with Stytch (example, adjust as needed)
-        const session = await stytchClient.sessions.authenticate({
+        await stytchClient.sessions.authenticate({
             session_token: token,
         });
         res.status(200).json({

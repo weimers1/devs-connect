@@ -14,11 +14,11 @@ import {
     getVisibilitySettings,
     getGitHubConnection,
     getGitHubInformation,
+    updateGitHubVisibility,
 } from '../controllers/settingsController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
-import { linkGitHub } from '../controllers/profileController.js';
 import { updateProfileImage } from '../controllers/uploadController.js';
-// import { getCertifications } from '../controllers/profileController.js';
+// import { getCertifications } from '../controllers/ProfileController.js';
 import { get } from 'http';
 
 
@@ -63,7 +63,6 @@ router.put('/profile-image', updateProfileImage);
 router.get('/github', getGitHubConnection);
 //Get GitHub Username
 router.get('/github-info', getGitHubInformation);
-//Link github account
-router.put('/link-github', linkGitHub);
-
+//Show or hide GitHub on the profile
+router.put('/github-visibility', updateGitHubVisibility);
 export default router;

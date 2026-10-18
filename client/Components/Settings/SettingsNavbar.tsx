@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { assets } from '../../assets/assets';
 // import { useTheme } from '../../src/ThemeContext';
 import API from '../../Service/service';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 function SettingsNavbar() {
+    const { t } = useLanguage();
     const [userProfile, setUserProfile] = useState('');
     const [loading, setLoading] = useState(true);
 
@@ -47,7 +49,7 @@ function SettingsNavbar() {
                                 <img
                                     src={assets.Logo}
                                     className="h-10 w-auto"
-                                    alt="DevConnect Logo"
+                                    alt={t('settings.navbar.logoAlt')}
                                     onError={(e) => {
                                         e.currentTarget.style.display = 'none';
                                     }}
@@ -56,7 +58,7 @@ function SettingsNavbar() {
                         </div>
                         <div className="ml-0.5 ">
                             <img
-                                alt="Profile"
+                                alt={t('settings.navbar.profileAlt')}
                                 src={userProfile || assets.Profile}
                                 className="w-8 h-8 rounded-3xl"
                                 onError={(e) => {

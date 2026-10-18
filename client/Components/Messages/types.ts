@@ -1,8 +1,9 @@
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
 // Type definitions for Messages components
 export interface Message {
   id: string;
+  userId?: string;
   name: string;
   timestamp: Date;
   avatar: string;
@@ -30,8 +31,10 @@ export interface MessageSidebarProps {
   className?: string;
   messages?: Message[];
   isLoading?: boolean;
+  error?: string | null;
   onSearch?: (query: string) => void;
- 
+  onRefresh?: () => void;
+  onStartConversation?: () => void;
 }
 
 export interface MessagesContentProps {
@@ -41,6 +44,9 @@ export interface MessagesContentProps {
   messages?: ChatMessage[];
   onSendMessage?: (content: string) => Promise<void>;
   isTyping?: boolean;
+  isLoading?: boolean;
+  error?: string | null;
+  onStartConversation?: () => void;
 }
 
 export interface MessagesState {
@@ -78,6 +84,7 @@ export interface UseMessagesReturn {
   messages: Message[];
   isLoading: boolean;
   error: string | null;
+  socket: Socket | null;
   searchMessages: (query: string) => void;
   refreshMessages: () => Promise<void>;
 }

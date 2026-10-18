@@ -2,41 +2,13 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import API from '../../../Service/service';
 // import { useTheme } from '../../../src/ThemeContext';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../src/i18n/LanguageContext';
 
-// Security utility functions - comprehensive XSS protection
+// React escapes displayed text, so keep profile text readable instead of HTML-encoding it.
 const sanitizeInput = (input: string): string => {
     if (typeof input !== 'string') return '';
-    return input
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#x27;')
-        .replace(/\//g, '&#x2F;')
-        .replace(/\(/g, '&#40;')
-        .replace(/\)/g, '&#41;')
-        .replace(/\{/g, '&#123;')
-        .replace(/\}/g, '&#125;')
-        .replace(/\[/g, '&#91;')
-        .replace(/\]/g, '&#93;')
-        .replace(/=/g, '&#61;')
-        .replace(/\+/g, '&#43;')
-        .replace(/`/g, '&#96;')
-        .replace(/~/g, '&#126;')
-        .replace(/!/g, '&#33;')
-        .replace(/#/g, '&#35;')
-        .replace(/\$/g, '&#36;')
-        .replace(/%/g, '&#37;')
-        .replace(/\^/g, '&#94;')
-        .replace(/\*/g, '&#42;')
-        .replace(/\|/g, '&#124;')
-        .replace(/\\/g, '&#92;')
-        .replace(/:/g, '&#58;')
-        .replace(/;/g, '&#59;')
-        .replace(/\?/g, '&#63;')
-        .trim()
-        .slice(0, 500);
+    return input.trim().slice(0, 500);
 };
 
 const validateEmail = (email: string): boolean => {
@@ -90,15 +62,19 @@ const INITIAL_PROFILE_DATA: ProfileData = {
 };
 
 function ProfileInfo() {
+    const { t } = useLanguage();
     const [openSetting, setOpenSetting] = useState<string | null>(null);
     // const { theme } = useTheme();
     const [loading, setLoading] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
     const [saveStatus, setSaveStatus] = useState('');
-    const [searchParams] = useSearchParams();
     const [githubConnected, setGithubConnected] = useState(false);
     const [githubEmail, setGithubEmail] = useState('');
     const [githubUsername, setGithubUsername] = useState('');
+    const [githubProfileVisible, setGithubProfileVisible] = useState(false);
+    const [githubVisibilitySaving, setGithubVisibilitySaving] = useState(false);
+    const [githubConnecting, setGithubConnecting] = useState(false);
+    const [githubError, setGithubError] = useState('');
     //const [value, setValue] = useState('');
     const navigate = useNavigate();
 
@@ -156,110 +132,36 @@ function ProfileInfo() {
        
         }
     }, []);
-    //Side Effect
     useEffect(() => {
-        if (API.getGitHubConnection != null) {
-            setGithubConnected(true);
-        } else {
-            return;
-        }
-        // Secure GitHub OAuth parameter handling with validation
-        const allowedParams = [
-            'github',
-            'githubId',
-            'githubEmail',
-            'githubUsername',
-        ];
-        const paramEntries = Array.from(searchParams.entries());
-
-        // Validate parameter names to prevent parameter pollution
-        const hasInvalidParams = paramEntries.some(
-            ([key]) => !allowedParams.includes(key)
-        );
-        if (hasInvalidParams) {
-            console.warn('Invalid URL parameters detected');
-            return;
-        }
-
-        const githubStatus = searchParams.get('github');
-        const githubId = searchParams.get('githubId');
-        const githubEmailParam = searchParams.get('githubEmail');
-        const githubUsernameParam = searchParams.get('githubUsername');
-
-        // Validate parameter values before processing
-        if (githubStatus && githubStatus !== 'success') {
-            return;
-        }
-        if (githubId && (githubId.length > 20 || !/^\d+$/.test(githubId))) {
-            return;
-        }
-        if (githubEmailParam && githubEmailParam.length > 254) {
-            return;
-        }
-        if (githubUsernameParam && githubUsernameParam.length > 39) {
-            return;
-        }
-
-        // Validate and sanitize GitHub parameters
-        if (
-            githubStatus === 'success' &&
-            githubId &&
-            githubEmailParam !== 'no-email' &&
-            githubEmailParam &&
-            githubUsernameParam
-        ) {
-            const sanitizedEmail = sanitizeInput(githubEmailParam);
-            const sanitizedUsername = sanitizeInput(githubUsernameParam);
-            const sanitizedId = sanitizeInput(githubId);
-
-            // Additional validation
-            if (
-                validateEmail(sanitizedEmail) &&
-                validateGitHubUsername(sanitizedUsername) &&
-                /^\d+$/.test(sanitizedId) // GitHub ID should be numeric
-            ) {
-                setGithubConnected(true);
-                setGithubEmail(sanitizedEmail);
-                setGithubUsername(sanitizedUsername);
-
-                // Save GitHub data and refresh profile
-                (async () => {
-                    await saveGitHubData(
-                        sanitizedId,
-                        sanitizedUsername,
-                        sanitizedEmail
-                    );
-                    const response = await API.getProfileInformation();
-                    setProfileSettings(response);
-                    setOriginalData(response);
-                })();
-
-                // Clear URL parameters securely
-                const newUrl = window.location.pathname;
-                window.history.replaceState({}, '', newUrl);
-            }
-        }
-
         const loadProfileData = async () => {
             try {
-                const response = await API.getProfileInformation();
-                const responseGitInfo = await API.getGitHubInfo();
+                const params = new URLSearchParams(window.location.search);
+                const githubStatus = params.get('github');
+                if (githubStatus === 'error') {
+                    const reason = params.get('reason');
+                    setGithubError(
+                        reason === 'already_linked'
+                            ? t('settings.profile.github.alreadyLinked')
+                            : t('settings.profile.github.connectFailed')
+                    );
+                }
+                if (githubStatus) {
+                    window.history.replaceState(
+                        {},
+                        '',
+                        window.location.pathname
+                    );
+                }
 
-                //Set both current form data and BACKUP
+                const response = await API.getProfileInformation();
                 setProfileSettings(response);
                 setOriginalData(response);
-
-                // Check GitHub connection from database
-                if (response.githubUsername && response.githubEmail) {
-                    setGithubConnected(true);
-                    setGithubEmail(responseGitInfo.githubEmail);
-                    setGithubUsername(response.githubUsername);
-                } else {
-                    setGithubConnected(false);
-                }
+                setGithubConnected(!!response.githubId && !!response.githubUsername);
+                setGithubEmail(response.githubEmail || '');
+                setGithubUsername(response.githubUsername || '');
+                setGithubProfileVisible(!!response.githubProfileVisible);
             } catch (error) {
                 console.error('Failed to load profile data:', error);
-                // Set safe fallback data
                 setProfileSettings(INITIAL_PROFILE_DATA);
                 setOriginalData(INITIAL_PROFILE_DATA);
             } finally {
@@ -267,7 +169,7 @@ function ProfileInfo() {
             }
         };
         loadProfileData();
-    }, [searchParams]);
+    }, []);
 
     // Secure form submission with validation
     const handleSave = useCallback(async () => {
@@ -314,97 +216,80 @@ function ProfileInfo() {
         setHasChanges(false);
     };
 
-    // Secure GitHub data saving with validation
-    const saveGitHubData = useCallback(
-
-        async (
-            githubId: string,
-            githubUsername: string,
-            githubEmail: string
-        ) => {
+    const changeGitHubVisibility = useCallback(
+        async (visible: boolean) => {
+            if (visible === githubProfileVisible) return;
+            setGithubVisibilitySaving(true);
+            setGithubError('');
             try {
-                // Validate inputs before sending
-         
-                if (
-                    !validateEmail(githubEmail) ||
-                    !validateGitHubUsername(githubUsername) ||
-                    !/^\d+$/.test(githubId)
-                ) {
-                    console.error('Invalid GitHub data provided');
-                    return;
-                }
-
-                const token = localStorage.getItem('session_token');
-                if (!token) {
-                    console.error('No authentication token found');
-                    return;
-                }
-
-                const baseUrl =
-                    import.meta.env.VITE_API_URL || 'http://localhost:6969';
-
-                // Validate base URL
-                if (
-                    !baseUrl.match(
-                        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/
-                    )
-                ) {
-                    console.error('Invalid API URL');
-                    return;
-                }
-
-                const response = await fetch(`${baseUrl}/api/settings/link-github`, {
-                    method: 'PUT',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({
-                        githubId: sanitizeInput(githubId),
-                        githubUsername: sanitizeInput(githubUsername),
-                        githubEmail: sanitizeInput(githubEmail),
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(
-                        `HTTP ${response.status}: ${response.statusText}`
-                    );
-                } else {
-                    console.log("success")
-                }
-            } catch (error) {
-                console.error('Error saving GitHub data:', error);
+                const result = await API.updateGitHubVisibility(visible);
+                setGithubProfileVisible(!!result.githubProfileVisible);
+            } catch {
+                setGithubError(t('settings.profile.github.visibilityFailed'));
+            } finally {
+                setGithubVisibilitySaving(false);
             }
         },
-        []
+        [githubProfileVisible, t]
     );
+
+    const startGitHubConnection = useCallback(async () => {
+        setGithubConnecting(true);
+        setGithubError('');
+        try {
+            const baseUrl =
+                import.meta.env.VITE_API_URL || 'http://localhost:6969';
+            const response = await fetch(`${baseUrl}/oauth/github/start`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+            if (!response.ok) {
+                throw new Error(t('settings.profile.github.startFailed'));
+            }
+
+            const { authorizationUrl } = await response.json();
+            const target = new URL(authorizationUrl);
+            if (
+                target.origin !== 'https://github.com' ||
+                target.pathname !== '/login/oauth/authorize'
+            ) {
+                throw new Error(t('settings.profile.github.invalidUrl'));
+            }
+            window.location.assign(target.toString());
+        } catch (error) {
+            setGithubError(
+                error instanceof Error
+                    ? error.message
+                    : t('settings.profile.github.startFailed')
+            );
+            setGithubConnecting(false);
+        }
+    }, [t]);
 
     const sections = useMemo(
         () => [
             {
                 id: 'name-location',
-                title: 'Name & Location',
-                description: 'Update your display name and location',
+                title: t('settings.profile.section.nameLocation.title'),
+                description: t('settings.profile.section.nameLocation.description'),
             },
             {
                 id: 'demographics',
-                title: 'Demographics',
-                description: 'Personal demographic information',
+                title: t('settings.profile.section.demographics.title'),
+                description: t('settings.profile.section.demographics.description'),
             },
             {
                 id: 'verifications',
-                title: 'Verifications',
-                description: 'Verify your identity and accounts',
+                title: t('settings.profile.section.verifications.title'),
+                description: t('settings.profile.section.verifications.description'),
             },
             {
                 id: 'edit-profile',
-                title: 'Edit Profile',
-                description: 'Update your profile picture and bio',
+                title: t('settings.profile.section.editProfile.title'),
+                description: t('settings.profile.section.editProfile.description'),
             },
         ],
-        []
+        [t]
     );
 
     return (
@@ -420,10 +305,10 @@ function ProfileInfo() {
                     `}
                 >
                     <h2 className="text-xl font-semibold">
-                        Profile Information
+                        {t('settings.profile.title')}
                     </h2>
                     <p className="text-sm">
-                        Manage your personal details and verification
+                        {t('settings.profile.subtitle')}
                     </p>
                 </div>
 
@@ -493,7 +378,7 @@ function ProfileInfo() {
                                                     `}
                                                 >
                                                     <label className="block text-sm font-medium  mb-2">
-                                                        First Name
+                                                        {t('settings.profile.firstName')}
                                                     </label>
                                                     <input
                                                         type="text"
@@ -508,7 +393,7 @@ function ProfileInfo() {
                                                         }
                                                         maxLength={50}
                                                         pattern="[a-zA-Z\s'-]+"
-                                                        title="Only letters, spaces, hyphens, and apostrophes allowed"
+                                                        title={t('settings.profile.nameTitle')}
                                                         className="w-full px-3 py-1.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                                     />
                                                 </div>
@@ -520,7 +405,7 @@ function ProfileInfo() {
                                                     `}
                                                 >
                                                     <label className="block text-sm font-medium  mb-2">
-                                                        Last Name
+                                                        {t('settings.profile.lastName')}
                                                     </label>
                                                     <input
                                                         type="text"
@@ -535,7 +420,7 @@ function ProfileInfo() {
                                                         }
                                                         maxLength={50}
                                                         pattern="[a-zA-Z\s'-]+"
-                                                        title="Only letters, spaces, hyphens, and apostrophes allowed"
+                                                        title={t('settings.profile.nameTitle')}
                                                         className="w-full px-3 py-1.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                                     />
                                                 </div>
@@ -548,7 +433,7 @@ function ProfileInfo() {
                                                 `}
                                             >
                                                 <label className="block text-sm font-medium  mb-2">
-                                                    Location
+                                                    {t('settings.profile.location')}
                                                 </label>
                                                 <input
                                                     type="text"
@@ -561,7 +446,7 @@ function ProfileInfo() {
                                                             e.target.value
                                                         )
                                                     }
-                                                    placeholder="Enter your location"
+                                                    placeholder={t('settings.profile.locationPlaceholder')}
                                                     maxLength={100}
                                                     className="w-full px-3 py-1.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                                 />
@@ -575,7 +460,7 @@ function ProfileInfo() {
                                                             handleCancel()
                                                         }
                                                     >
-                                                        Cancel
+                                                        {t('settings.common.cancel')}
                                                     </button>
                                                 </div>
                                                 <button
@@ -599,13 +484,13 @@ function ProfileInfo() {
                                                                 icon="mdi:loading"
                                                                 className="animate-spin w-4 h-4 mr-2"
                                                             />
-                                                            Saving...
+                                                            {t('settings.common.saving')}
                                                         </>
                                                     ) : saveStatus ===
                                                       'success' ? (
                                                         <>
                                                             <div className="flex justify-center">
-                                                                Saved!
+                                                                {t('settings.common.saved')}
                                                             </div>
                                                         </>
                                                     ) : saveStatus ===
@@ -615,10 +500,10 @@ function ProfileInfo() {
                                                                 icon="mdi:alert"
                                                                 className="w-4 h-4 mr-2"
                                                             />
-                                                            Error
+                                                            {t('settings.common.error')}
                                                         </>
                                                     ) : (
-                                                        'Save'
+                                                        t('settings.common.save')
                                                     )}
                                                 </button>
                                             </div>
@@ -636,11 +521,11 @@ function ProfileInfo() {
                                                     `}
                                                 >
                                                     <label className="block text-sm font-medium mb-2">
-                                                        Age
+                                                        {t('settings.profile.age')}
                                                     </label>
                                                     <input
                                                         type="number"
-                                                        placeholder="Enter your age"
+                                                        placeholder={t('settings.profile.agePlaceholder')}
                                                         value={
                                                             profileSettings.age
                                                         }
@@ -666,7 +551,7 @@ function ProfileInfo() {
                                                 >
                                                     <label className="block text-sm font-medium mb-2"
                                                     >
-                                                        Gender
+                                                        {t('settings.profile.gender')}
                                                     </label>
                                                     <select 
 
@@ -685,18 +570,18 @@ function ProfileInfo() {
                                                             )
                                                         }
                                                     >
-                                                          <option value="" disabled selected>-- Select a Gender --</option>
+                                                          <option value="" disabled                                                           selected>{t('settings.profile.gender.select')}</option>
                                                         <option value="prefer-not-to-say" className="bg-gray-300 text-black">
-                                                            Prefer not to say
+                                                                                                                      {t('settings.profile.gender.preferNotToSay')}
                                                         </option>
                                                         <option value="male" className="bg-gray-300 text-black">
-                                                            Male
+                                                                                                                      {t('settings.profile.gender.male')}
                                                         </option>
                                                         <option value="female" className="bg-gray-300 text-black">
-                                                            Female
+                                                                                                                      {t('settings.profile.gender.female')}
                                                         </option>
                                                         <option value="other" className="bg-gray-300 text-black">
-                                                            Other
+                                                                                                                      {t('settings.profile.gender.other')}
                                                         </option>
                                                      
                                                     </select>
@@ -712,7 +597,7 @@ function ProfileInfo() {
                                                             handleCancel()
                                                         }
                                                     >
-                                                        Cancel
+                                                        {t('settings.common.cancel')}
                                                     </button>
                                                 </div>
                                                 <button
@@ -736,13 +621,13 @@ function ProfileInfo() {
                                                                 icon="mdi:loading"
                                                                 className="animate-spin w-4 h-4 mr-2"
                                                             />
-                                                            Saving...
+                                                            {t('settings.common.saving')}
                                                         </>
                                                     ) : saveStatus ===
                                                       'success' ? (
                                                         <>
                                                             <div className="flex justify-center">
-                                                                Saved!
+                                                                {t('settings.common.saved')}
                                                             </div>
                                                         </>
                                                     ) : saveStatus ===
@@ -752,10 +637,10 @@ function ProfileInfo() {
                                                                 icon="mdi:alert"
                                                                 className="w-4 h-4 mr-2"
                                                             />
-                                                            Error
+                                                            {t('settings.common.error')}
                                                         </>
                                                     ) : (
-                                                        'Save'
+                                                        t('settings.common.save')
                                                     )}
                                                 </button>
                                                 </div>
@@ -765,8 +650,7 @@ function ProfileInfo() {
                                     {section.id === 'verifications' && (
                                         <div>
                                             <p className="text-sm text-gray-600 mb-4">
-                                                Verify your identity to build
-                                                trust in the community.
+                                                {t('settings.profile.verifyIntro')}
                                             </p>
                                             <div className="space-y-3">
                                                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-green-50">
@@ -777,10 +661,10 @@ function ProfileInfo() {
                                                         />
                                                         <div>
                                                             <span className="font-medium text-gray-900">
-                                                                Email Verified
+                                                                {t('settings.profile.emailVerified')}
                                                             </span>
                                                             <p className="text-sm text-gray-600">
-                                                                {profileSettings.email || 'No email found'}
+                                                                {profileSettings.email || t('settings.profile.noEmail')}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -814,12 +698,14 @@ function ProfileInfo() {
                                                                     //     : 'text-gray-900'
                                                                 }
                                                             >
-                                                                GitHub Account
+                                                                {t('settings.profile.github.account')}
                                                             </span>
                                                             <p className="text-sm text-gray-600">
                                                                 {githubConnected
-                                                                    ? `Connected: ${githubEmail} (@${githubUsername})`
-                                                                    : 'Connect your GitHub profile'}
+                                                                    ? githubEmail
+                                                                        ? t('settings.profile.github.connectedWithEmail', { email: githubEmail, username: githubUsername })
+                                                                        : t('settings.profile.github.connected', { username: githubUsername })
+                                                                    : t('settings.profile.github.connectPrompt')}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -830,30 +716,64 @@ function ProfileInfo() {
                                                         />
                                                     ) : (
                                                         <button
-                                                            onClick={() => {
-                                                                const baseUrl =
-
-                                                                         import.meta.env.VITE_API_URL || 'http://localhost:6969';
-
-                                                                // Validate URL before redirect
-                                                                if (
-                                                                    baseUrl.match(
-                                                                        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/
-                                                                    )
-                                                                ) {
-                                                                    window.location.href = `${baseUrl}/oauth/github`;
-                                                                } else {
-                                                                    console.error(
-                                                                        'Invalid OAuth URL'
-                                                                    );
-                                                                }
-                                                            }}
-                                                            className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                                                            onClick={startGitHubConnection}
+                                                            disabled={githubConnecting}
+                                                            className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50"
                                                         >
-                                                            Connect
+                                                            {githubConnecting
+                                                                ? t('settings.profile.github.connecting')
+                                                                : t('settings.profile.github.connect')}
                                                         </button>
                                                     )}
                                                 </div>
+                                                {githubConnected && (
+                                                    <div className="mt-3 rounded-lg border border-gray-200 p-4">
+                                                        <p className="text-sm font-medium text-gray-900">
+                                                            {t('settings.profile.github.visibilityTitle')}
+                                                        </p>
+                                                        <p className="mt-1 text-sm text-gray-600">
+                                                            {t('settings.profile.github.visibilityDescription')}
+                                                        </p>
+                                                        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label={t('settings.profile.github.visibilityTitle')}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => changeGitHubVisibility(true)}
+                                                                disabled={githubVisibilitySaving}
+                                                                aria-pressed={githubProfileVisible}
+                                                                className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition-colors disabled:opacity-50 ${
+                                                                    githubProfileVisible
+                                                                        ? 'border-blue-600 bg-blue-50 text-blue-700 font-medium'
+                                                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                                }`}
+                                                            >
+                                                                <Icon icon="mdi:link-variant" className="h-4 w-4" />
+                                                                {t('settings.profile.github.showOnProfile')}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => changeGitHubVisibility(false)}
+                                                                disabled={githubVisibilitySaving}
+                                                                aria-pressed={!githubProfileVisible}
+                                                                className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition-colors disabled:opacity-50 ${
+                                                                    !githubProfileVisible
+                                                                        ? 'border-blue-600 bg-blue-50 text-blue-700 font-medium'
+                                                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                                }`}
+                                                            >
+                                                                <Icon icon="mdi:eye-off-outline" className="h-4 w-4" />
+                                                                {t('settings.profile.github.hideFromProfile')}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {githubError && (
+                                                    <p
+                                                        className="mt-2 text-sm text-red-600"
+                                                        role="alert"
+                                                    >
+                                                        {githubError}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     )}

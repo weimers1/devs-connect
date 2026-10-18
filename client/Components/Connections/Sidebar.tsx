@@ -1,9 +1,11 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-import {useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDropdown } from '../DropDown/DropDownContext';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
 import {useUserConnections} from "./UserConnectionContext.tsx";
+import API from '../../Service/service';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
  export interface connectionData  {
     career: string;
@@ -11,16 +13,81 @@ import {useUserConnections} from "./UserConnectionContext.tsx";
     lastName: string;
     profileImageUrl: string;
     userId: string;
+    publicId: string;
+}
+
+interface CommunityRecommendation {
+    id: string;
+    name: string;
+    description?: string | null;
+    image?: string | null;
+    icon?: string | null;
+    memberCount?: number | null;
+    recommendationReason?: string | null;
 }
 
 function Sidebar() {
-    const {connections, handleConnect, handleDisconnect} = useUserConnections();
-    const {suggestionData} = useUserConnections();
+    const { t } = useLanguage();
+    const {
+        connections,
+        handleConnect,
+        suggestionData,
+        currentUser,
+        isLoadingConnections,
+        isLoadingSuggestions,
+        connectionError,
+        suggestionsError,
+        connectingUserId,
+    } = useUserConnections();
     const { isSidebarOpen, toggleSidebar } = useDropdown();
     // const [connectedUsers, setConnectedUsers] = useState<Set<string>>(new Set());
     const [dismissedUsers, setDismissedUsers] = useState<Set<string>>(new Set());
-   
+    const [communitySuggestions, setCommunitySuggestions] = useState<CommunityRecommendation[]>([]);
+    const [isLoadingCommunities, setIsLoadingCommunities] = useState(false);
+    const [communitySuggestionsError, setCommunitySuggestionsError] = useState<string | null>(null);
+
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!currentUser) {
+            setCommunitySuggestions([]);
+            setIsLoadingCommunities(false);
+            setCommunitySuggestionsError(null);
+            return;
+        }
+
+        let active = true;
+        setIsLoadingCommunities(true);
+        setCommunitySuggestionsError(null);
+        API.getSidebarCommunityRecommendations()
+            .then((response) => {
+                const recommendations = response?.CommunityRecommendations;
+                if (!Array.isArray(recommendations)) {
+                    throw new Error('Invalid community recommendations response');
+                }
+                if (active) setCommunitySuggestions(recommendations);
+            })
+            .catch((error: unknown) => {
+                console.error('Failed to load community recommendations:', error);
+                if (active) {
+                    setCommunitySuggestionsError(
+                        t('social.sidebar.communitiesUnavailable'),
+                    );
+                }
+            })
+            .finally(() => {
+                if (active) setIsLoadingCommunities(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [currentUser, t]);
+
+    const navigateFromSidebar = (path: string) => {
+        if (isSidebarOpen) toggleSidebar();
+        navigate(path);
+    };
 
     // const handleConnect = async (userId: string) => {
     //     try {
@@ -60,83 +127,98 @@ function Sidebar() {
         setDismissedUsers(prev => new Set([...prev, userId]));
     };
 
-    const filteredSuggestions = suggestionData?.filter(person => 
+    const filteredSuggestions = suggestionData.filter(person =>
         !dismissedUsers.has(person.userId)
-    ) || [];
+    );
    
     return (
-        <section className="overflow-hidden">
-            {/* buttons for collapsing/opening sidebar */}
-            <div
-                className={`fixed right-0 duration-400 ease-in ${
-                    isSidebarOpen ? 'translate-x-full' : 'translate-x-0'
-                }`}
-            >
+        <section>
+            {!isSidebarOpen && (
+                <div className="fixed right-0 top-[42%] z-30 -translate-y-1/2">
                 <button
                     type="button"
-                    className={`border border-gray-200 md:mt-63 mt-15 rounded-s-lg bg-white opacity-75 hover:opacity-100 ps-2 pe-1 py-2 lg:ps-3 lg:pe-2 lg:py-4 transition-all cursor-pointer flex `}
+                    aria-label={t('social.sidebar.open')}
+                    className="flex cursor-pointer items-center rounded-s-lg border border-gray-200 bg-white px-2 py-3 opacity-90 shadow-md transition-opacity hover:opacity-100 lg:px-3 lg:py-4"
                     onClick={toggleSidebar}
                 >
                     <Icon
                         icon="mdi:arrow-left"
-                        className="w-3 lg:w-4 h-3 lg:h-4 mt-2 text-blue-700"
+                        className="h-3 w-3 text-blue-700 lg:h-4 lg:w-4"
                     />
                     <Icon
                         icon="mdi:account-group-outline"
-                        className="w-6 h-6 lg:w-8 text-blue-700"
+                        className="h-6 w-6 text-blue-700 lg:w-8"
                     />
                 </button>
-            </div>
+                </div>
+            )}
             {isSidebarOpen && (
-                <div className="fixed left-0  w-screen h-screen bg-white  md:opacity-0  z-1  "></div>
+                <button
+                    type="button"
+                    aria-label={t('social.sidebar.close')}
+                    className="fixed inset-0 z-40 bg-black/40 lg:bg-black/20"
+                    onClick={toggleSidebar}
+                />
             )}
 
             <div
-                className={`fixed right-0 bottom-0 lg:top-20.5 top-29  md:rounded-lg shadow-md border border-gray-200 z-2 h-[90vh] lg:h-[92vh] w-full lg:w-100 overflow-y-scroll transition-all duration-300 ease-in ${
+                aria-hidden={!isSidebarOpen}
+                inert={!isSidebarOpen}
+                className={`fixed bottom-0 right-0 top-16 z-50 flex w-full max-w-full flex-col overflow-hidden border-l border-gray-200 bg-white shadow-xl transition-transform duration-300 ease-in sm:top-20 sm:w-96 lg:w-[25rem] ${
                     isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
-                <button
-                    type="button"
-                    className="cursor-pointer text-blue-700 p-3"
-                    onClick={toggleSidebar}
-                >
-                    <Icon
-                        icon="mdi:close"
-                        className="w-6 h-6 text-blue-700"
-                    />
-                </button>
+                <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3">
+                    <span className="font-semibold                     text-gray-900">{t('social.sidebar.yourNetwork')}</span>
+                    <button
+                        type="button"
+                                            aria-label={t('social.sidebar.close')}
+                        className="rounded-full p-2 text-blue-700 hover:bg-blue-50"
+                        onClick={toggleSidebar}
+                    >
+                        <Icon icon="mdi:close" className="h-6 w-6" />
+                    </button>
+                </div>
+                <div className="min-h-0 flex-1 overflow-hidden pb-[env(safe-area-inset-bottom)]">
 
                 {/* Your Network Section */}
-                <div className="p-4 border-b border-gray-100 ">
-                    <h3 className="font-semibold text-gray-900 flex items-center">
+                <div className="border-b border-gray-100 px-4 py-2">
+                    <h3 className="flex items-center text-sm font-semibold text-gray-900">
                         <Icon
                             icon="mdi:account-group"
-                            className="w-6 h-6 text-blue-700 me-2"
+                            className="me-2 h-5 w-5 text-blue-700"
                         />
-                        Fellow Collaborators
+                        {t('social.sidebar.yourConnections')}
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                        Manage your professional network
-                    </p>
                 </div>
 
-                <div className="p-4 border-b border-gray-100 h-[27vh] lg:h-[35vh]  overflow-y-scroll">
-                    <div className="space-y-4">
-                        {connections?.slice(0,5).map((connection, index) => (
+                <div className="border-b border-gray-100 px-4 py-2">
+                    <div className="space-y-1">
+                        {isLoadingConnections && (
+                            <p className="text-sm text-gray-500" role="status">
+                                {t('social.sidebar.loadingNetwork')}
+                            </p>
+                        )}
+                        {!isLoadingConnections && connections.length === 0 && (
+                            <p className="text-sm text-gray-500">
+                                {t('social.sidebar.noConnections')}
+                            </p>
+                        )}
+                        {connections.slice(0, 2).map((connection, index) => (
                             <div
-                                key={index}
-                                className="flex items-start space-x-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                                key={connection.userId}
+                                className={`flex items-center space-x-2 rounded-lg p-1 transition-colors hover:bg-gray-50 ${index > 0 ? 'hidden sm:flex' : ''}`}
                             >
                                 <div className="relative">
-                                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-sm font-semibold text-white">
                                <button
-                               onClick={() => navigate(`/profile/${connection.userId}`)}
+                               onClick={() => navigateFromSidebar(`/profile/${connection.publicId}`)}
                                >
                                     {connection.profileImageUrl ? (
                                         <img
                                 className="w-12 h-12 rounded-full object-cover"
                                 src={connection.profileImageUrl}
+                                alt={`${connection.firstName} ${connection.lastName}`}
                                 ></img>
                                     ) : (
                                         <span>{connection.firstName.charAt(0) + connection.lastName.charAt(0)}</span>
@@ -148,9 +230,9 @@ function Sidebar() {
                                     )} */}
                                 </div>
                                         
-                                <div className="flex-1 min-w-0">
+                                <div className="min-w-0 flex-1">
                                     <button
-                                     onClick={() => navigate(`/profile/${connection.userId}`)}
+                                     onClick={() => navigateFromSidebar(`/profile/${connection.publicId}`)}
                                     >
                                     <div className="flex items-center space-x-2">
                                         <h4 className="font-medium text-gray-900 text-sm truncate">
@@ -160,14 +242,9 @@ function Sidebar() {
                                             {connection.connectionType}
                                         </span> */}
                                     </div>
-                                    <div className="flex">
-                                    <p className="text-xs text-green-600 mt-1 mr-1">
-                                        Career Goal:
+                                    <p className="truncate text-xs text-gray-500">
+                                {connection.career || t('social.connections.developer')}
                                     </p>
-                                    <p className="text-xs text-grey-600 mt-1">
-                                         {connection.career}
-                                    </p>
-                                    </div>
                                     </button>
                                     {/* <p className="text-xs text-gray-500 mt-1">
                                         {connection.isOnline
@@ -177,50 +254,80 @@ function Sidebar() {
                                     </p> */}
                                 </div>
                              
-                                <button className="text-blue-600 hover:bg-blue-50 p-1 rounded text-xs"
-                                  onClick={() => navigate(`/messages?user=${connection.userId}`)}
+                                <button className="shrink-0 rounded p-1 text-xs text-blue-600 hover:bg-blue-50"
+                                  onClick={() => navigateFromSidebar(`/messages?user=${connection.userId}`)}
                                 >
-                                    Message
+                                    {t('social.connections.message')}
                                 </button>
                             </div>
                         ))}
                         {(connections?.length != null && connections?.length > 5) ? (
                             <button 
-                             onClick={() => navigate(`/connections`)}
-                            className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium md:block"
+                             onClick={() => navigateFromSidebar('/connections')}
+                            className="w-full text-center text-blue-600 hover:bg-blue-50 py-1 rounded-lg text-xs font-medium"
                             >
-                                View All Connections
+                                {t('social.sidebar.viewAllConnections')}
                             </button>
                         ) : (
                             <div></div>
                         )}
                         </div>
-                
+                    {connectionError && (
+                        <p className="mt-3 text-xs text-red-600" role="alert">
+                            {connectionError}
+                        </p>
+                    )}
                 </div>
 
                 {/* People You May Know Section */}
                 {/*@TODO create a separate component for Each Of The Cards */}
-                <div className="p-4 border-b border-gray-100">
-                    <h3 className="font-semibold text-gray-900 flex items-center mb-4">
-                        <span className="mr-2">🤝</span>
-                        People you may know
+                <div className="border-b border-gray-100 px-4 py-2">
+                    <h3 className="mb-1 flex items-center text-sm font-semibold text-gray-900">
+                        <Icon icon="mdi:handshake-outline" className="mr-2 h-5 w-5 text-blue-700" />
+                        {t('social.sidebar.fellowCollaborators')}
                     </h3>
+                    <p className="mb-2 text-xs text-gray-500">
+                        {t('social.sidebar.careerMatches')}
+                    </p>
 
-                    <div className="space-y-4 h-[30vh] lg:h-[35vh] overflow-y-scroll">
-                        {filteredSuggestions?.slice(0,4).map((person, index) => (
+                    <div className="space-y-1">
+                        {connectionError && (
+                            <p className="rounded-lg bg-red-50 p-2 text-xs text-red-700" role="alert">
+                                {connectionError}
+                            </p>
+                        )}
+                        {isLoadingSuggestions && (
+                            <p className="text-sm text-gray-500" role="status">
+                                {t('social.sidebar.findingDevelopers')}
+                            </p>
+                        )}
+                        {suggestionsError && (
+                            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">
+                                {suggestionsError}
+                            </div>
+                        )}
+                        {!isLoadingSuggestions && !suggestionsError && filteredSuggestions.length === 0 && (
+                            <p className="text-sm text-gray-500">
+                                {t('social.sidebar.noSuggestions')}
+                            </p>
+                        )}
+                        {filteredSuggestions.slice(0, 2).map((person, index) => (
                             <div
                                 key={person.userId}
-                                className="border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-shadow"
+                                className={`rounded-lg border border-gray-100 p-2 transition-shadow hover:shadow-sm ${index > 0 ? 'hidden sm:block' : ''}`}
                             >
                                 <div className="flex items-start space-x-3">
-                                    <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                         <button
-                                    onClick={() => navigate(`/profile/${person.userId}`)}
-                               >
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-600 text-sm font-semibold text-white">
+                                        <button
+                                            type="button"
+                                            aria-label={t('social.connections.viewProfileOf', { name: person.author })}
+                                            onClick={() => navigateFromSidebar(`/profile/${person.publicId}`)}
+                                        >
                                     {person.profileImageUrl ? (
                                         <img
                                 className="w-12 h-12 rounded-full object-cover"
                                 src={person.profileImageUrl}
+                                alt={person.author}
                                 ></img>
                                     ) : (
                                         <span>{`${person.author.charAt(0)}${person.author.charAt(person.author.length-1).toUpperCase()}`}</span>
@@ -232,40 +339,117 @@ function Sidebar() {
                                             {person.author}
                                         </h4>
 
-                                        <p className="text-xs text-gray-600 mt-1">
+                                        <p className="truncate text-xs text-gray-600">
                                             {person.career}
                                         </p>
+                                        {person.recommendationReason && (
+                                            <p className="mt-1 text-xs font-medium text-blue-700">
+                                                {person.recommendationReason}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="flex space-x-2 mt-3">
-                                  {connections?.some(conn => conn.userId === person.userId) ? (
-                                          <button className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
-                                    onClick={() => handleDisconnect(person.userId)}
+                                <div className="mt-2 flex gap-2">
+                                    <button
+                                        type="button"
+                                        disabled={connectingUserId === person.userId}
+                                        className="flex-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
+                                        onClick={() => void handleConnect(person.userId)}
                                     >
-                                        Connected
+                                        {connectingUserId === person.userId ? t('social.connections.connecting') : t('social.connections.connect')}
                                     </button>
-                                    ) : (
-                                         <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
-                                    onClick={() => handleConnect(person.userId)}
-                                    >
-                                        Connect
-                                    </button>
-                                    )}
                                    
-                                    <button className="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-50 transition-colors"
+                                    <button type="button" className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
                                         onClick={() => handleDismiss(person.userId)}
                                     >
-                                        Dismiss
+                                        {t('social.sidebar.dismiss')}
                                     </button>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    <button className="w-full mt-4 text-center text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium md:block">
-                        See all suggestions
+                    <button
+                        type="button"
+                        onClick={() => navigateFromSidebar('/connections')}
+                        className="w-full rounded-lg py-1 text-center text-xs font-medium text-blue-600 hover:bg-blue-50"
+                    >
+                        {t('social.sidebar.viewYourNetwork')}
                     </button>
+                </div>
+                <div className="border-b border-gray-100 px-4 py-2">
+                    <h3 className="mb-2 flex items-center text-sm font-semibold text-gray-900">
+                        <Icon icon="mdi:account-multiple-plus-outline" className="mr-2 h-5 w-5 text-blue-700" />
+                        {t('social.sidebar.recommendedCommunities')}
+                    </h3>
+                    <div className="space-y-1">
+                        {isLoadingCommunities && (
+                            <p className="text-sm text-gray-500" role="status">
+                                {t('social.sidebar.findingCommunities')}
+                            </p>
+                        )}
+                        {communitySuggestionsError && (
+                            <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">
+                                {communitySuggestionsError}
+                            </p>
+                        )}
+                        {!isLoadingCommunities && !communitySuggestionsError && communitySuggestions.length === 0 && (
+                            <p className="text-sm text-gray-500">
+                                {t('social.sidebar.noCommunities')}
+                            </p>
+                        )}
+                        {communitySuggestions.slice(0, 2).map((community, index) => (
+                            <article
+                                key={community.id}
+                                className={`flex items-center gap-2 rounded-lg border border-gray-100 p-2 transition-colors hover:bg-gray-50 ${index > 0 ? 'hidden sm:flex' : ''}`}
+                            >
+                                {community.image ? (
+                                    <img
+                                        src={community.image}
+                                        alt=""
+                                        className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                                    />
+                                ) : (
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                                        <Icon icon={community.icon || 'mdi:account-group-outline'} className="h-5 w-5" />
+                                    </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                    <button
+                                        type="button"
+                                        className="block max-w-full truncate text-left text-sm font-semibold text-gray-900 hover:text-blue-700"
+                                        onClick={() => navigateFromSidebar(`/community/${community.id}`)}
+                                    >
+                                        {community.name}
+                                    </button>
+                                    <p className="truncate text-xs text-gray-500">
+                                        {community.description || t('social.sidebar.memberCount', { count: Number(community.memberCount) || 0 })}
+                                    </p>
+                                    {community.recommendationReason && (
+                                        <p className="mt-1 text-xs font-medium text-blue-700">
+                                            {community.recommendationReason}
+                                        </p>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                                    onClick={() => navigateFromSidebar(`/community/${community.id}`)}
+                                >
+                                    {t('social.sidebar.view')}
+                                </button>
+                            </article>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() => navigateFromSidebar('/communities')}
+                            className="w-full rounded-lg py-1 text-center text-xs font-medium text-blue-600 hover:bg-blue-50"
+                        >
+                            {t('social.sidebar.exploreCommunities')}
+                        </button>
+                    </div>
+                </div>
                 </div>
             </div>
         </section>

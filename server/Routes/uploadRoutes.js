@@ -1,87 +1,81 @@
 import express from 'express';
-import AWS from 'aws-sdk';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+import s3Client from '../config/aws.js';
 import {
     uploadMiddleware,
     uploadProfileImage,
-    testS3,
     updateProfileImage,
     uploadCommunityImage,
     uploadCommunityMiddleware,
+    uploadProfileBanner,
+    uploadBannerMiddleware,
 } from '../controllers/uploadController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
-// Configure S3
-const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION || 'us-east-1'
-});
-
 const router = express.Router();
 
-/**
- * @route GET /test-s3
- * @description Test S3 connection
- * @access Public
- */
-router.get('/test-s3', testS3);
-
 // Upload image to S3
-router.post('/profile-image', uploadMiddleware, uploadProfileImage);
+router.post('/profile-image', authMiddleware, uploadMiddleware, uploadProfileImage);
+router.post('/profile-banner', authMiddleware, uploadBannerMiddleware, uploadProfileBanner);
 
 // Save image URL to database
 router.put('/profile-image', authMiddleware, updateProfileImage);
 
 // Upload community image
-router.post('/community-image', uploadCommunityMiddleware, uploadCommunityImage);
+router.post('/community-image', authMiddleware, uploadCommunityMiddleware, uploadCommunityImage);
 
 // Image proxy route - serve images through backend
 router.use('/images', async (req, res, next) => {
     try {
-        const imageKey = req.path.substring(1);
-        
-        if (!imageKey || imageKey.includes('..')) {
+        const imagePath = req.path.match(
+            /^\/(profile-images|profile-banners|community-images)\/([^/\\]+)$/
+        );
+        const extension = imagePath?.[2]
+            .match(/\.([a-z0-9]+)$/i)?.[1]
+            ?.toLowerCase();
+        const contentTypes = {
+            jpg: 'image/jpeg',
+            jpeg: 'image/jpeg',
+            png: 'image/png',
+            gif: 'image/gif',
+            webp: 'image/webp',
+        };
+        const contentType = extension ? contentTypes[extension] : null;
+
+        if (!imagePath || !contentType) {
             return res.status(400).json({ error: 'Invalid image key' });
         }
-        
-        // Get object from S3 and stream it
+        if (!process.env.AWS_BUCKET_NAME) {
+            return res
+                .status(503)
+                .json({ error: 'Image storage is unavailable' });
+        }
+
+        const imageKey = `${imagePath[1]}/${imagePath[2]}`;
         const params = {
-            Bucket: process.env.AWS_BUCKET_NAME || 'devsconnect',
-            Key: imageKey
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: imageKey,
         };
-        
-        const s3Object = s3.getObject(params);
-        const stream = s3Object.createReadStream();
-        
-        // Set appropriate headers
+
+        const s3Object = await s3Client.send(new GetObjectCommand(params));
+        if (!s3Object.Body) {
+            return res.status(404).json({ error: 'Image not found' });
+        }
         res.set({
-            'Content-Type': 'image/jpeg', // Default, will be overridden by S3 metadata
-            'Cache-Control': 'public, max-age=31536000' // Cache for 1 year
+            'Content-Type': contentType,
+            'X-Content-Type-Options': 'nosniff',
+            'Content-Security-Policy': "default-src 'none'; sandbox",
+            'Content-Disposition': 'inline; filename="image"',
+            'Cache-Control': 'public, max-age=31536000, immutable',
         });
-        
-        // Handle S3 response
-        s3Object.on('httpHeaders', (statusCode, headers) => {
-            if (headers['content-type']) {
-                res.set('Content-Type', headers['content-type']);
-            }
-            if (headers['content-length']) {
-                res.set('Content-Length', headers['content-length']);
-            }
-        });
-        
-        // Pipe the S3 stream to response
-        stream.pipe(res);
-        
-        stream.on('error', (error) => {
-            console.error('Stream error:', error);
-            if (!res.headersSent) {
-                res.status(404).json({ error: 'Image not found' });
-            }
-        });
-        
+
+        s3Object.Body.on('error', () => res.destroy());
+        s3Object.Body.pipe(res);
     } catch (error) {
-        console.error('Image proxy error:', error);
-        res.status(404).json({ error: 'Image not found' });
+        if (error?.name === 'NoSuchKey' || error?.name === 'NotFound') {
+            return res.status(404).json({ error: 'Image not found' });
+        }
+        next(error);
     }
 });
 

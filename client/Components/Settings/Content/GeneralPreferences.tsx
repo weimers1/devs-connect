@@ -1,6 +1,8 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import API from "../../../Service/service";
+import { useLanguage } from '../../../src/i18n/LanguageContext';
+import type { Language } from '../../../src/i18n/types';
 // import { useTheme } from '../../../src/ThemeContext';
 
 const TOGGLE_SWITCH_CLASSES =
@@ -13,12 +15,37 @@ interface GeneralPreferences {
     }
 
 const INITIAL_GENERAL_PREFERENCES: GeneralPreferences = {
-    language: '',
-    time_zone: '',
+    language: 'en',
+    time_zone: 'UTC',
 };
 
 
+const TIME_ZONE_CONFIRMED_KEY = 'devs-connect-timezone-confirmed';
+
+const detectedTimeZone = (() => {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    } catch {
+        return 'UTC';
+    }
+})();
+
+const allTimeZones: string[] = (() => {
+    try {
+        const zones = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] })
+            .supportedValuesOf?.('timeZone');
+        return zones && zones.length ? zones : [];
+    } catch {
+        return [];
+    }
+})();
+
+// Legacy saved values were abbreviations (EST, PST...) or the 'UTC' column default.
+const isUnsetTimeZone = (zone?: string | null) =>
+    !zone || zone === 'UTC' || !zone.includes('/');
+
 function GeneralPreferences() {
+    const { language, setLanguage, t } = useLanguage();
     const [openSetting, setOpenSetting] = useState<string | null>(null);
     const [GeneralPreferences, setGeneralPreferences] = useState<GeneralPreferences>(INITIAL_GENERAL_PREFERENCES);
     const [hasChanges, setHasChanges] = useState(false);
@@ -27,6 +54,47 @@ function GeneralPreferences() {
     const [saveStatus, setSaveStatus] = useState('');
    
     // const { theme } = useTheme();
+
+    const timeZoneOptions = useMemo(() => {
+        const zones = new Set<string>(allTimeZones.length ? allTimeZones : ['UTC']);
+        zones.add('UTC');
+        zones.add(detectedTimeZone);
+        if (GeneralPreferences.time_zone) zones.add(GeneralPreferences.time_zone);
+        return Array.from(zones).sort();
+    }, [GeneralPreferences.time_zone]);
+
+    useEffect(() => {
+        let active = true;
+        API.getGeneralPreferences()
+            .then((preferences) => {
+                if (!active) return;
+                let zone: string = preferences?.time_zone || 'UTC';
+                let confirmed = false;
+                try {
+                    confirmed = localStorage.getItem(TIME_ZONE_CONFIRMED_KEY) === 'true';
+                } catch {
+                    // Without storage we can't remember a manual choice.
+                }
+                // Use the user's local zone until they pick one themselves.
+                if (!confirmed && isUnsetTimeZone(zone) && detectedTimeZone !== zone) {
+                    zone = detectedTimeZone;
+                    API.updateGeneralPreferences({ time_zone: zone }).catch(() => undefined);
+                }
+                setGeneralPreferences((prev) => ({ ...prev, time_zone: zone }));
+                setOriginalData((prev) => ({ ...prev, time_zone: zone }));
+            })
+            .catch(() => undefined);
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    // Keep the pending selection in step with the active language until the user edits it.
+    useEffect(() => {
+        if (hasChanges) return;
+        setGeneralPreferences((prev) => ({ ...prev, language }));
+        setOriginalData((prev) => ({ ...prev, language }));
+    }, [language, hasChanges]);
 
     const handleChange = (feild: string, value: string) => {
              setGeneralPreferences((prevProfile) => ({
@@ -42,11 +110,17 @@ function GeneralPreferences() {
         try {
                 const generalPreferencesData =  {
                     ...GeneralPreferences,
-                    language: GeneralPreferences.language, 
-                    time_zone: GeneralPreferences.time_zone,
-                }
+                };
 
-                await API.updateGeneralPreferences(generalPreferencesData);
+                await API.updateGeneralPreferences({ time_zone: generalPreferencesData.time_zone });
+                    try {
+                        localStorage.setItem(TIME_ZONE_CONFIRMED_KEY, 'true');
+                    } catch {
+                        // Best effort.
+                    }
+                    if (generalPreferencesData.language !== language) {
+                        setLanguage(generalPreferencesData.language as Language);
+                    }
                     setOriginalData(generalPreferencesData);
                     setSaveStatus('success');
                     setHasChanges(false);
@@ -60,7 +134,7 @@ function GeneralPreferences() {
 
         }
      
-    }, [GeneralPreferences]) 
+    }, [GeneralPreferences, language, setLanguage]) 
 
     const handleSettingClick = (settingId: string) => {
         setOpenSetting(openSetting === settingId ? null : settingId);
@@ -73,13 +147,13 @@ function GeneralPreferences() {
     const Preferences = [
         {
             id: 'language',
-            name: 'Language',
-            description: 'Choose your preferred language',
+            name: t('language.label'),
+            description: t('language.description'),
         },
         {
             id: 'timezone',
-            name: 'Time Zone',
-            description: 'Set your local time zone',
+            name: t('timezone.label'),
+            description: t('timezone.description'),
         },
         // { WILL BE IN FUTURE ITERATION
         //   id: 'notifications',
@@ -112,10 +186,10 @@ function GeneralPreferences() {
                     `}
                 >
                     <h2 className="text-xl font-semibold ">
-                        General Preferences
+                        {t('general.title')}
                     </h2>
                     <p className="text-sm  mt-1">
-                        Customize your experience and preferences
+                        {t('general.subtitle')}
                     </p>
                 </div>
 
@@ -170,37 +244,24 @@ function GeneralPreferences() {
                                                 `}
                                             >
                                                 <label className="block text-sm font-medium mb-2">
-                                                    Language
+                                                    {t('language.label')}
                                                 </label>
                                             </div>
-                                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            <select
+                                                value={GeneralPreferences.language}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                                 onChange={(e) => {
-                                                          handleChange(
-                                                                'language',
-                                                                e.target.value
-                                                            
-                                                            )
+                                                    handleChange('language', e.target.value);
                                                 }}
                                             >
                                                 <option value="en">
-                                                    English
+                                                    {t('language.en')}
                                                 </option>
                                                 <option value="es">
-                                                    Spanish
-                                                </option>
-                                                <option value="fr">
-                                                    French
-                                                </option>
-                                                <option value="de">
-                                                    German
-                                                </option>
-                                                <option value="ja">
-                                                    Japanese
-                                                </option>
-                                                <option value="zh">
-                                                    Chinese
+                                                    {t('language.es')}
                                                 </option>
                                             </select>
+                                            <p className="text-xs text-gray-500 mt-2">{t('language.hint')}</p>
                                         </div>
                                     )}
 
@@ -214,10 +275,11 @@ function GeneralPreferences() {
                                                 `}
                                             >
                                                 <label className="block text-sm font-medium mb-2">
-                                                    Time Zone
+                                                    {t('timezone.label')}
                                                 </label>
                                             </div>
-                                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            <select value={GeneralPreferences.time_zone}
+                                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                                   onChange={(e) => {
                                                           handleChange(
                                                                 'time_zone',
@@ -225,29 +287,15 @@ function GeneralPreferences() {
                                                             )
                                                 }}
                                             >
-                                                <option value="UTC">
-                                                    UTC (Coordinated Universal
-                                                    Time)
-                                                </option>
-                                                <option value="EST">
-                                                    EST (Eastern Standard Time)
-                                                </option>
-                                                <option value="CST">
-                                                    CST (Central Standard Time)
-                                                </option>
-                                                <option value="MST">
-                                                    MST (Mountain Standard Time)
-                                                </option>
-                                                <option value="PST">
-                                                    PST (Pacific Standard Time)
-                                                </option>
-                                                <option value="GMT">
-                                                    GMT (Greenwich Mean Time)
-                                                </option>
-                                                <option value="JST">
-                                                    JST (Japan Standard Time)
-                                                </option>
+                                                {timeZoneOptions.map((zone) => (
+                                                    <option key={zone} value={zone}>
+                                                        {zone.replace(/_/g, ' ')}
+                                                    </option>
+                                                ))}
                                             </select>
+                                            <p className="text-xs text-gray-500 mt-2">
+                                                {t('timezone.detected', { zone: detectedTimeZone })}
+                                            </p>
                                         </div>
                                         
                                     )}
@@ -259,7 +307,7 @@ function GeneralPreferences() {
                                                                                                 handleCancel()
                                                                                             }
                                                                                         >
-                                                                                            Cancel
+                                                                                            {t('common.cancel')}
                                                                                         </button>
                                                                                     </div>
                                                                                     <button
@@ -283,13 +331,13 @@ function GeneralPreferences() {
                                                                                                     icon="mdi:loading"
                                                                                                     className="animate-spin w-4 h-4 mr-2"
                                                                                                 />
-                                                                                                Saving...
+                                                                                                {t('common.saving')}
                                                                                             </>
                                                                                         ) : saveStatus ===
                                                                                           'success' ? (
                                                                                             <>
                                                                                                 <div className="flex justify-center">
-                                                                                                    Saved!
+                                                                                                    {t('common.saved')}
                                                                                                 </div>
                                                                                             </>
                                                                                         ) : saveStatus ===
@@ -299,10 +347,10 @@ function GeneralPreferences() {
                                                                                                     icon="mdi:alert"
                                                                                                     className="w-4 h-4 mr-2"
                                                                                                 />
-                                                                                                Error
+                                                                                                {t('common.error')}
                                                                                             </>
                                                                                         ) : (
-                                                                                            'Save'
+                                                                                            t('common.save')
                                                                                         )}
                                                                                     </button>
                                                                                 </div>

@@ -11,6 +11,12 @@ const User = sequelize.define(
             autoIncrement: true,
             primaryKey: true,
         },
+        publicId: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            unique: true,
+            defaultValue: DataTypes.UUIDV4,
+        },
 
         //Not Allowed To Be Null After Signup if redirected  to a signup page
         firstName: {
@@ -64,10 +70,15 @@ const User = sequelize.define(
             type: DataTypes.STRING,
             allowNull: true,
         },
+        githubProfileVisible: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
         banned: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
-            defaulValue: false 
+            defaultValue: false,
         },
         stytchUserId: {
             type: DataTypes.STRING,

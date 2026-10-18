@@ -3,10 +3,59 @@ import UserCommunity from '../Models/UserCommunity.js';
 import Post from '../Models/Post.js';
 import PostLike from '../Models/PostLike.js';
 import PostComment from '../Models/PostComment.js';
+import SavedPost from '../Models/SavedPost.js';
 import sequelize from '../config/database.js';
+import { getFeedProjects } from './projectController.js';
 import User from '../models/User.js';
 import { json } from 'sequelize';
 import { randomUUID } from 'crypto';
+import {
+    canViewUserSetting,
+    isBlockedBetweenUsers,
+} from '../utils/userVisibility.js';
+
+const getCommunityViewerAccess = async (communityId, userId) => {
+    const community = await Community.findByPk(communityId, {
+        attributes: ['id', 'createdBy', 'isPrivate'],
+    });
+    if (!community) {
+        return { community: null, isOwner: false, isMember: false };
+    }
+
+    const membership = userId
+        ? await UserCommunity.findOne({ where: { communityId, userId } })
+        : null;
+    const isOwner = String(community.createdBy) === String(userId);
+    const isMember =
+        isOwner ||
+        (!!membership &&
+            membership.BanStatus !== true &&
+            membership.role !== 'banned');
+
+    return { community, isOwner, isMember };
+};
+
+const getCommunityModeratorRole = async (communityId, userId) => {
+    const access = await getCommunityViewerAccess(communityId, userId);
+    if (!access.community) return null;
+    if (access.isOwner) return 'owner';
+
+    const membership = await UserCommunity.findOne({
+        where: { communityId, userId, role: 'admin', BanStatus: false },
+        attributes: ['role'],
+    });
+    return membership ? 'admin' : null;
+};
+
+const getPostCommunityAccess = async (postId, userId) => {
+    const post = await Post.findByPk(postId, {
+        attributes: ['id', 'communityId'],
+    });
+    if (!post) return { post: null, community: null, isMember: false };
+
+    const access = await getCommunityViewerAccess(post.communityId, userId);
+    return { post, ...access };
+};
 
 export const createCommunity = async (req, res) => {
     try {
@@ -18,30 +67,33 @@ export const createCommunity = async (req, res) => {
                 .json({ error: 'Name and description are required' });
         }
 
-        const community = await Community.create({
-            name: name.trim(),
-            description: description.trim(),
-            createdBy: req.user.userId,
-            icon: icon || null,
-            color: color || null,
-            isPrivate: isPrivate || false,
-            isOwner: 1,
-            isMember: true,
-            id: randomUUID(), // Generate a UUID for the community
-        });
+        const community = await sequelize.transaction(async (transaction) => {
+            const createdCommunity = await Community.create({
+                name: name.trim(),
+                description: description.trim(),
+                createdBy: req.user.userId,
+                icon: icon || null,
+                color: color || null,
+                isPrivate: isPrivate || false,
+                isOwner: 1,
+                isMember: true,
+                id: randomUUID(),
+            }, { transaction });
 
-        // Add creator as admin member
-        const usercommunity = await UserCommunity.create({
-            userId: req.user.userId,
-            communityId: community.id,
-            role: 'owner',
-            joinedAt: new Date(),
+            await UserCommunity.create({
+                userId: req.user.userId,
+                communityId: createdCommunity.id,
+                role: 'owner',
+                joinedAt: new Date(),
+            }, { transaction });
+
+            return createdCommunity;
         });
 
         res.status(201).json({
             message: 'Community created successfully',
             community: {
-                id: usercommunity.communityId,
+                id: community.id,
                 name: community.name,
                 description: community.description,
             },
@@ -55,57 +107,77 @@ export const createCommunity = async (req, res) => {
 export const getCommunities = async (req, res) => {
     try {
         const userId = req.user?.userId || null;
+        const hasPagination = req.query.page !== undefined || req.query.limit !== undefined;
+        const page = Number(req.query.page ?? 1);
+        const limit = Number(req.query.limit ?? 12);
+        const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
 
-        let communities;
-
-        if (userId) {
-            // Logged-in user → exclude banned communities
-            communities = await sequelize.query(
-                `
-                SELECT 
-                    c.id,
-                    c.name,
-                    c.icon,
-                    c.memberCount,
-                    c.description,
-                    c.color,
-                    c.isPrivate
-                FROM communities c
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM usercommunities uc
-                    WHERE uc.communityId = c.id
-                    AND uc.userId = ?
-                    AND uc.role = 'banned'
-                )
-            `,
-                {
-                    replacements: [userId],
-                    type: sequelize.QueryTypes.SELECT,
-                },
-            );
-        } else {
-            // Not logged in → only show public communities
-            communities = await sequelize.query(
-                `
-                SELECT 
-                    id,
-                    name,
-                    icon,
-                    memberCount,
-                    description,
-                    color,
-                    isPrivate
-                FROM communities
-                WHERE isPrivate = false
-            `,
-                {
-                    type: sequelize.QueryTypes.SELECT,
-                },
-            );
+        if (
+            hasPagination &&
+            (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 50)
+        ) {
+            return res.status(400).json({ error: 'Invalid community page or page size' });
         }
 
-        res.json(communities);
+        const visibilityClause = userId
+            ? `NOT EXISTS (
+                   SELECT 1 FROM UserCommunities banned
+                   WHERE banned.communityId = c.id
+                   AND banned.userId = ?
+                   AND banned.role = 'banned'
+               )
+               AND (
+                   c.isPrivate = false
+                   OR EXISTS (
+                       SELECT 1 FROM UserCommunities member
+                       WHERE member.communityId = c.id
+                       AND member.userId = ?
+                       AND member.role != 'banned'
+                   )
+               )`
+            : 'c.isPrivate = false';
+        const visibilityReplacements = userId ? [userId, userId] : [];
+        const searchClause = search ? ' AND (c.name LIKE ? OR c.description LIKE ?)' : '';
+        const searchReplacements = search ? [`%${search}%`, `%${search}%`] : [];
+        const whereClause = `WHERE ${visibilityClause}${searchClause}`;
+        const queryReplacements = [...visibilityReplacements, ...searchReplacements];
+
+        const [communities, countResult] = await Promise.all([
+            sequelize.query(
+                `SELECT c.id, c.name, c.icon, c.memberCount, c.description, c.color, c.image, c.isPrivate
+                 FROM communities c
+                 ${whereClause}
+                 ORDER BY c.createdAt DESC, c.id ASC
+                 ${hasPagination ? 'LIMIT ? OFFSET ?' : ''}`,
+                {
+                    replacements: hasPagination
+                        ? [...queryReplacements, limit, (page - 1) * limit]
+                        : queryReplacements,
+                    type: sequelize.QueryTypes.SELECT,
+                },
+            ),
+            hasPagination
+                ? sequelize.query(
+                      `SELECT COUNT(*) AS total FROM communities c ${whereClause}`,
+                      {
+                          replacements: queryReplacements,
+                          type: sequelize.QueryTypes.SELECT,
+                      },
+                  )
+                : Promise.resolve(null),
+        ]);
+
+        if (!hasPagination) {
+            return res.json(communities);
+        }
+
+        const total = Number(countResult?.[0]?.total ?? 0);
+        return res.json({
+            communities,
+            page,
+            hasMore: page * limit < total,
+            total,
+        });
     } catch (error) {
         console.error('Error fetching communities:', error);
         res.status(500).json({ error: 'Failed to fetch communities' });
@@ -115,46 +187,30 @@ export const getCommunities = async (req, res) => {
 export const getCommunityById = async (req, res) => {
     try {
         const { id } = req.params;
-        const currentUserId = req.user?.userId; // Safely read user fallback string
-        //TODO MAKE SURE THE ID IS THE CORRECT ID ITS CURRENLTY PULLING THE ID FROM THE USERCOMMUNITY
-        // 1. Fetch community metadata directly from the main Communities table
-        const communityInstance = await Community.findByPk(id);
-
-        if (!communityInstance) {
+        const { community, isOwner, isMember } =
+            await getCommunityViewerAccess(id, req.user?.userId);
+        if (!community) {
             return res.status(404).json({ error: 'Community not found' });
         }
+        if (community.isPrivate && !isMember) {
+            return res.status(403).json({ error: 'Private community' });
+        }
 
-        // Convert Sequelize instance data to a clean, flat JSON object
-        const communityData = communityInstance.toJSON();
-
-        // 2. Run parallel queries for maximum performance efficiency
         const [memberCount, userMembership] = await Promise.all([
-            // Count total instances of this communityId in the junction table
-            UserCommunity.count({
-                where: { communityId: id },
-            }),
-            // Look up the specific viewer's relational row if they are logged in
-            currentUserId
+            UserCommunity.count({ where: { communityId: id } }),
+            req.user?.userId
                 ? UserCommunity.findOne({
-                      where: { communityId: id, userId: currentUserId },
+                      where: { communityId: id, userId: req.user.userId },
                   })
                 : null,
         ]);
 
-        // 3. Compute dynamic runtime logic statuses smoothly
-        const isOwner = currentUserId
-            ? communityData.createdBy === currentUserId
-            : false;
-        const isMember = !!userMembership && userMembership.BanStatus === false;
-        const userRole = userMembership ? userMembership.role : null;
-
-        // 4. Return combined dataset cleanly without .toJSON() mapping errors
         res.json({
-            ...communityData,
+            ...community.toJSON(),
             memberCount,
             isOwner,
             isMember,
-            userRole, // Helpful bonus to let frontend adjust UI for admins vs standard members
+            userRole: userMembership ? userMembership.role : null,
         });
     } catch (error) {
         // Check your backend terminal logs to read exact validation strings if this trips
@@ -180,11 +236,22 @@ export const updateCommunity = async (req, res) => {
             return res.status(404).json({ error: 'Community not found' });
         }
 
-        // Check if current user is the owner
-        if (community.createdBy !== req.user.userId) {
+        const isOwner =
+            String(community.createdBy) === String(req.user.userId);
+        const adminMembership = isOwner
+            ? null
+            : await UserCommunity.findOne({
+                  where: {
+                      communityId: id,
+                      userId: req.user.userId,
+                      role: 'admin',
+                      BanStatus: false,
+                  },
+              });
+        if (!isOwner && !adminMembership) {
             return res
                 .status(403)
-                .json({ error: 'Only community owners can edit' });
+                .json({ error: 'Only community owners and admins can edit' });
         }
 
         await community.update({
@@ -219,7 +286,7 @@ export const isCommunityOwner = async (req, res) => {
 
         const owner = await sequelize.query(
             `
-           SELECT * FROM dev_connect.communities WHERE createdBy = ? AND id = ?;
+           SELECT * FROM communities WHERE createdBy = ? AND id = ?;
             `,
             {
                 replacements: [createdBy, id],
@@ -243,20 +310,22 @@ export const getCommunityMemberShip = async (req, res) => {
         const { communityId } = req.params;
         const userId = req.user.userId;
 
-        const membership = await sequelize.query(
-            `SELECT * FROM dev_connect.usercommunities WHERE communityId = ? AND userId = ?`,
-            {
-                replacements: [communityId, userId],
-                type: sequelize.QueryTypes.SELECT,
-            },
-        );
-
-        if (!membership || membership.length === 0) {
-            console.log('No membership found');
-            return res.json({ isMember: false });
+        const [community, membership] = await Promise.all([
+            Community.findByPk(communityId, { attributes: ['createdBy'] }),
+            UserCommunity.findOne({ where: { communityId, userId } }),
+        ]);
+        if (!community) {
+            return res.status(404).json({ error: 'Community not found' });
         }
 
-        return res.json({ isMember: true });
+        const isOwner = String(community.createdBy) === String(userId);
+        const isMember =
+            isOwner ||
+            (!!membership &&
+                membership.BanStatus !== true &&
+                membership.role !== 'banned');
+
+        return res.json({ isMember, isOwner });
     } catch (error) {
         console.log('Error fetching community membership:', error);
         res.status(500).json({
@@ -269,9 +338,13 @@ export const getCommunityMemberShip = async (req, res) => {
 export const getCommunitiesFromUser = async (req, res) => {
     try {
         const { userId } = req.params;
+        if (String(userId) !== String(req.user.userId)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
 
         const communitiesfromuser = await sequelize.query(
-            `SELECT communityId FROM usercommunities WHERE userId = ?`,
+            `SELECT communityId FROM usercommunities
+             WHERE userId = ? AND role != 'banned' AND BanStatus = false`,
             {
                 replacements: [userId],
                 type: sequelize.QueryTypes.SELECT,
@@ -290,34 +363,78 @@ export const getCommunitiesFromUser = async (req, res) => {
 //Getting all of the communities a user is in but obtaining the data.
 export const getCommunitiesDataFromUser = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const userId = Number(req.params.userId);
+        if (!Number.isInteger(userId) || userId <= 0) {
+            return res.status(400).json({ error: 'Invalid user ID' });
+        }
+        if (
+            !(await canViewUserSetting(
+                userId,
+                req.user.userId,
+                'communitiesVisibility',
+            ))
+        ) {
+            return res.status(404).json({ error: 'Communities not found' });
+        }
 
         const communitiesDatafromuser = await sequelize.query(
-            `  SELECT
-              uc.id,
-                uc.name,
-                 uc.icon,
-                    uc.memberCount,
-                    uc.description,
-                    uc.color,
-                    uc.image,
-                    uc.isOwner,
-                    uc.createdBy
-                    FROM communities uc
-                    WHERE EXISTS (
-                        SELECT 1
-                        FROM usercommunities u
-                        WHERE u.communityId = uc.id
-                        AND u.userId = ?
-                        AND u.role != 'banned')
-             `,
+            `SELECT
+                c.id,
+                c.name,
+                c.icon,
+                c.memberCount,
+                c.description,
+                c.color,
+                c.image,
+                (
+                    SELECT targetMembership.role
+                    FROM UserCommunities targetMembership
+                    WHERE targetMembership.communityId = c.id
+                    AND targetMembership.userId = ?
+                    AND targetMembership.role != 'banned'
+                    AND targetMembership.BanStatus = false
+                    ORDER BY CASE targetMembership.role
+                        WHEN 'owner' THEN 1
+                        WHEN 'admin' THEN 2
+                        ELSE 3
+                    END
+                    LIMIT 1
+                ) AS role
+             FROM communities c
+             WHERE EXISTS (
+                    SELECT 1
+                    FROM UserCommunities membership
+                    WHERE membership.communityId = c.id
+                    AND membership.userId = ?
+                    AND membership.role != 'banned'
+                    AND membership.BanStatus = false
+                )
+                AND (
+                    c.isPrivate = false
+                    OR ? = ?
+                    OR EXISTS (
+                    SELECT 1
+                    FROM UserCommunities viewerMembership
+                    WHERE viewerMembership.communityId = c.id
+                    AND viewerMembership.userId = ?
+                    AND viewerMembership.role != 'banned'
+                    AND viewerMembership.BanStatus = false
+                    )
+                )
+             ORDER BY c.name ASC`,
             {
-                replacements: [userId],
+                replacements: [
+                    userId,
+                    userId,
+                    userId,
+                    req.user.userId,
+                    req.user.userId,
+                ],
                 type: sequelize.QueryTypes.SELECT,
             },
         );
 
-        res.json(communitiesDatafromuser);
+        return res.json(communitiesDatafromuser);
     } catch (queryError) {
         console.log('No Communities found for user:', queryError);
         res.status(500).json({
@@ -329,7 +446,16 @@ export const getCommunitiesDataFromUser = async (req, res) => {
 export const getCommunityMembers = async (req, res) => {
     try {
         const { id } = req.params;
-        // console.log('Fetching members for community:', id);
+        const { community, isMember } = await getCommunityViewerAccess(
+            id,
+            req.user?.userId,
+        );
+        if (!community) {
+            return res.status(404).json({ error: 'Community not found' });
+        }
+        if (community.isPrivate && !isMember) {
+            return res.status(403).json({ error: 'Private community' });
+        }
 
         if (!UserCommunity) {
             console.error('UserCommunity model not found');
@@ -340,7 +466,7 @@ export const getCommunityMembers = async (req, res) => {
         try {
             members = await sequelize.query(
                 `
-                SELECT uc.userId, uc.role, uc.joinedAt, u.firstName, u.lastName, up.profileImageUrl, uc.BanStatus
+                SELECT uc.userId, u.publicId, uc.role, uc.joinedAt, u.firstName, u.lastName, up.profileImageUrl, uc.BanStatus
                 FROM UserCommunities uc
                 LEFT JOIN Users u ON uc.userId = u.id
                 LEFT JOIN UserProfiles up ON u.id = up.userId
@@ -371,11 +497,27 @@ export const getCommunityMembers = async (req, res) => {
             }));
         }
 
+        if (req.user?.userId) {
+            const visibleMembers = await Promise.all(
+                members.map(async (member) => ({
+                    member,
+                    blocked: await isBlockedBetweenUsers(
+                        req.user.userId,
+                        member.userId,
+                    ),
+                })),
+            );
+            members = visibleMembers
+                .filter(({ blocked }) => !blocked)
+                .map(({ member }) => member);
+        }
+
         console.log('Raw members found:', members.length, members);
 
         const formattedMembers = Array.isArray(members)
             ? members.map((member) => ({
                   id: member.userId,
+                  publicId: member.publicId,
                   firstName: member.firstName || 'User',
                   lastName: member.lastName || '',
                   profileImageUrl: member.profileImageUrl,
@@ -386,7 +528,15 @@ export const getCommunityMembers = async (req, res) => {
               }))
             : [];
 
-        res.json(formattedMembers);
+        res.json(
+            formattedMembers.map((member) => ({
+                ...member,
+                role:
+                    String(member.userId) === String(community.createdBy)
+                        ? 'owner'
+                        : member.role,
+            })),
+        );
     } catch (error) {
         console.error(
             'Error fetching community members:',
@@ -400,29 +550,19 @@ export const getCommunityMembers = async (req, res) => {
 export const kickCommunityMember = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
-        const { userId, communityId, currentUserId } = req.params;
+        const { userId, communityId } = req.params;
         if (!userId || !communityId) {
+            await transaction.rollback();
             return res
                 .status(400)
                 .json({ error: 'need user and communityId to kick member' });
         }
-        const isadmin = await sequelize.query(
-            `    
-            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'
-             OR  userId = ? AND communityId = ? AND role='owner';
-            `,
-            {
-                replacements: [
-                    currentUserId,
-                    communityId,
-                    currentUserId,
-                    communityId,
-                ],
-                type: sequelize.QueryTypes.SELECT,
-                transaction,
-            },
+        const actingRole = await getCommunityModeratorRole(
+            communityId,
+            req.user.userId,
         );
-        if (!isadmin || isadmin.length === 0) {
+        if (!actingRole) {
+            await transaction.rollback();
             return res
                 .status(403)
                 .json({ error: 'User is not an admin of this community' });
@@ -430,17 +570,22 @@ export const kickCommunityMember = async (req, res) => {
         // First, find the record to get the primary key (id)
         const memberRecord = await sequelize.query(
             `
-            SELECT id FROM dev_connect.usercommunities 
-             WHERE userId = ? AND communityId = ? AND role = "member"
+            SELECT id FROM UserCommunities 
+             WHERE userId = ? AND communityId = ?
+               AND (role = "member" OR (role = "admin" AND ? = 'owner'))
+               AND userId != (
+                   SELECT createdBy FROM communities WHERE id = ?
+               )
         `,
             {
-                replacements: [userId, communityId],
+                replacements: [userId, communityId, actingRole, communityId],
                 type: sequelize.QueryTypes.SELECT,
                 transaction,
             },
         );
 
         if (!memberRecord || memberRecord.length === 0) {
+            await transaction.rollback();
             return res
                 .status(404)
                 .json({ error: 'Member not found or not a member' });
@@ -450,7 +595,7 @@ export const kickCommunityMember = async (req, res) => {
         // Now delete using the primary key
         const kickMember = await sequelize.query(
             `
-            DELETE FROM dev_connect.usercommunities 
+            DELETE FROM UserCommunities 
             WHERE id = ?
         `,
             {
@@ -461,7 +606,7 @@ export const kickCommunityMember = async (req, res) => {
         );
         await sequelize.query(
             `
-            UPDATE dev_connect.communities
+            UPDATE communities
             SET memberCount = GREATEST(memberCount - 1, 0)
             WHERE id = ?
         `,
@@ -485,7 +630,8 @@ export const kickCommunityMember = async (req, res) => {
 export const LeaveCommunity = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
-        const { userId, communityId } = req.params;
+        const { communityId } = req.params;
+        const userId = req.user.userId;
 
         if (!userId || !communityId) {
             await transaction.rollback();
@@ -494,58 +640,44 @@ export const LeaveCommunity = async (req, res) => {
             });
         }
 
-        // Find the record to get the primary key (id)
-        const memberRecord = await sequelize.query(
-            `
-            SELECT id FROM dev_connect.usercommunities 
-            WHERE userId = ? AND communityId = ?
-        `,
-            {
-                replacements: [userId, communityId],
-                type: sequelize.QueryTypes.SELECT,
-                transaction,
-            },
-        );
+        const community = await Community.findByPk(communityId, {
+            attributes: ['id', 'createdBy'],
+            transaction,
+        });
+        if (!community) {
+            await transaction.rollback();
+            return res.status(404).json({ error: 'Community not found' });
+        }
 
-        if (!memberRecord || memberRecord.length === 0) {
+        if (String(community.createdBy) === String(userId)) {
+            await transaction.rollback();
+            return res.status(409).json({
+                error: 'The community owner cannot leave their own community',
+            });
+        }
+
+        const membership = await UserCommunity.findOne({
+            where: { userId, communityId },
+            transaction,
+        });
+        if (!membership) {
             await transaction.rollback();
             return res
                 .status(404)
                 .json({ error: 'You are not a member of this community' });
         }
-        const primaryKeyId = memberRecord[0].id;
 
-        // Delete using the primary key
-        await sequelize.query(
-            `
-            DELETE FROM dev_connect.usercommunities 
-            WHERE id = ?
-        `,
-            {
-                replacements: [primaryKeyId],
-                type: sequelize.QueryTypes.DELETE,
-                transaction,
-            },
-        );
-
-        // Decrement memberCount (fast operation)
-        await sequelize.query(
-            `
-            UPDATE dev_connect.communities
-            SET memberCount = GREATEST(memberCount - 1, 0)
-            WHERE id = ?
-        `,
-            {
-                replacements: [communityId],
-                type: sequelize.QueryTypes.UPDATE,
-                transaction,
-            },
-        );
+        await membership.destroy({ transaction });
+        await Community.decrement('memberCount', {
+            by: 1,
+            where: { id: communityId },
+            transaction,
+        });
 
         await transaction.commit();
         res.json({ message: 'Successfully left the community', success: true });
     } catch (error) {
-        await transaction.rollback();
+        if (!transaction.finished) await transaction.rollback();
         console.log(error, "Can't leave community");
         res.status(500).json({ error: 'Failed to leave community' });
     }
@@ -565,7 +697,7 @@ export const getCommunityAdmins = async (req, res) => {
         const admins = await sequelize.query(
             `
                 
-            SELECT * from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'
+            SELECT * from UserCommunities WHERE userId = ? AND communityId = ? AND role='admin'
             OR userId = ? AND communityId = ? AND role='owner';`,
             {
                 replacements: [userId, communityId, userId, communityId],
@@ -589,30 +721,31 @@ export const getCommunityAdmins = async (req, res) => {
 
 export const demoteCommunityMember = async (req, res) => {
     try {
-        const { userId, communityId, currentUserId } = req.params;
+        const { userId, communityId } = req.params;
         if (!userId || !communityId) {
             return res
                 .status(400)
                 .json({ error: 'Missing required parameters' });
         }
-        const isadmin = await sequelize.query(
-            `    
-            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='owner'`,
-            {
-                replacements: [currentUserId, communityId],
-                type: sequelize.QueryTypes.SELECT,
-            },
+        const actingRole = await getCommunityModeratorRole(
+            communityId,
+            req.user.userId,
         );
-        if (!isadmin || isadmin.length === 0) {
+        if (actingRole !== 'owner') {
             return res
                 .status(403)
                 .json({ error: 'User is not an admin of this community' });
         }
         const demoteMember = await sequelize.query(
             `
-        UPDATE dev_connect.usercommunities SET role ="member" WHERE userId = ? AND communityId = ?`,
+        UPDATE UserCommunities
+        SET role = "member"
+        WHERE userId = ? AND communityId = ? AND role = 'admin'
+          AND userId != (
+              SELECT createdBy FROM communities WHERE id = ?
+          )`,
             {
-                replacements: [userId, communityId],
+                replacements: [userId, communityId, communityId],
                 type: sequelize.QueryTypes.UPDATE,
             },
         );
@@ -629,10 +762,15 @@ export const getCommunityPosts = async (req, res) => {
         const { id } = req.params;
         const { type } = req.query;
         const currentUserId = req.user ? req.user.userId : null;
-
-        const whereClause = { communityId: id };
-        if (type) {
-            whereClause.type = type;
+        const { community, isMember } = await getCommunityViewerAccess(
+            id,
+            currentUserId,
+        );
+        if (!community) {
+            return res.status(404).json({ error: 'Community not found' });
+        }
+        if (community.isPrivate && !isMember) {
+            return res.status(403).json({ error: 'Private community' });
         }
 
         const posts = await sequelize.query(
@@ -642,7 +780,12 @@ export const getCommunityPosts = async (req, res) => {
                 p.Time as eventTime,
                 u.firstName,
                 u.lastName,
-                up.profileImageUrl
+                u.publicId,
+                up.profileImageUrl,
+                EXISTS(
+                    SELECT 1 FROM SavedPosts saved
+                    WHERE saved.postId = p.id AND saved.userId = :currentUserId
+                ) AS isSaved
             FROM Posts p
             LEFT JOIN Users u ON p.userId = u.id
             LEFT JOIN UserProfiles up ON u.id = up.userId
@@ -652,14 +795,35 @@ export const getCommunityPosts = async (req, res) => {
             LIMIT 20
         `,
             {
-                replacements: { communityId: id, ...(type && { type }) },
+                replacements: {
+                    communityId: id,
+                    currentUserId,
+                    ...(type && { type }),
+                },
                 type: sequelize.QueryTypes.SELECT,
             },
         );
 
-        const formattedPosts = posts.map((post) => ({
+        const visiblePosts = currentUserId
+            ? (
+                  await Promise.all(
+                      posts.map(async (post) => ({
+                          post,
+                          blocked: await isBlockedBetweenUsers(
+                              currentUserId,
+                              post.userId,
+                          ),
+                      })),
+                  )
+              )
+                  .filter(({ blocked }) => !blocked)
+                  .map(({ post }) => post)
+            : posts;
+
+        const formattedPosts = visiblePosts.map((post) => ({
             id: post.id,
             userId: post.userId,
+            publicId: post.publicId,
             type: post.type,
             author:
                 post.firstName && post.lastName
@@ -681,6 +845,8 @@ export const getCommunityPosts = async (req, res) => {
             likes: post.likes,
             comments: post.comments,
             canDelete: post.userId === currentUserId,
+            canInteract: isMember,
+            isSaved: post.isSaved === true || Number(post.isSaved) === 1,
             Time: post.Time,
             DateOfEvent: post.DateOfEvent,
         }));
@@ -697,34 +863,34 @@ export const getCommunityPosts = async (req, res) => {
 export const PromoteCommunityMember = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
-        const { userId, communityId, currentUserId } = req.params; // Target user and community
-        if (!currentUserId || !userId || !communityId) {
+        const { userId, communityId } = req.params;
+        if (!userId || !communityId) {
+            await transaction.rollback();
             return res
                 .status(400)
                 .json({ error: 'Missing required parameters' });
         }
-        const isadmin = await sequelize.query(
-            `    
-            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='owner'`,
-            {
-                replacements: [currentUserId, communityId],
-                type: sequelize.QueryTypes.SELECT,
-                transaction,
-            },
+        const actingRole = await getCommunityModeratorRole(
+            communityId,
+            req.user.userId,
         );
-        if (!isadmin || isadmin.length === 0) {
+        if (actingRole !== 'owner') {
+            await transaction.rollback();
             return res
                 .status(403)
                 .json({ error: 'User is not an admin of this community' });
         }
         const PromoteMember = await sequelize.query(
             `
-            UPDATE dev_connect.usercommunities 
+            UPDATE UserCommunities 
             SET role = "admin" 
-            WHERE userId = ? AND communityId = ?
+            WHERE userId = ? AND communityId = ? AND role = 'member'
+              AND userId != (
+                  SELECT createdBy FROM communities WHERE id = ?
+              )
         `,
             {
-                replacements: [userId, communityId], // Target userId, not requester
+                replacements: [userId, communityId, communityId],
                 type: sequelize.QueryTypes.UPDATE,
                 transaction,
             },
@@ -740,10 +906,32 @@ export const PromoteCommunityMember = async (req, res) => {
 
 export const createCommunityPost = async (req, res) => {
     try {
-        //Need to check for only admins/Owners creating Event posts
         const { id } = req.params;
+        const community = await Community.findByPk(id, {
+            attributes: ['id', 'createdBy'],
+        });
+        if (!community) {
+            return res.status(404).json({ error: 'Community not found' });
+        }
 
-        //Check for Admin
+        const isOwner =
+            String(community.createdBy) === String(req.user.userId);
+        const membership = isOwner
+            ? null
+            : await UserCommunity.findOne({
+                  where: { communityId: id, userId: req.user.userId },
+              });
+        if (
+            !isOwner &&
+            (!membership ||
+                membership.BanStatus === true ||
+                membership.role === 'banned')
+        ) {
+            return res
+                .status(403)
+                .json({ error: 'You must be an active community member to post' });
+        }
+
         const {
             type,
             content,
@@ -806,7 +994,7 @@ export const createEventPost = async (req, res) => {
         //Check for Admin
         const isadmin = await sequelize.query(
             `    
-            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'
+            SELECT id from UserCommunities WHERE userId = ? AND communityId = ? AND role='admin'
              OR  userId = ? AND communityId = ? AND role='owner';
             `,
             {
@@ -861,44 +1049,62 @@ export const joinCommunity = async (req, res) => {
     try {
         const { communityId } = req.params;
         const userId = req.user.userId;
-        const user = await User.findByPk(userId);
-
-        if (!user) {
-            console.error('User not found:', userId);
+        const community = await Community.findByPk(communityId, {
+            attributes: ['id', 'isPrivate'],
+            transaction,
+        });
+        if (!community) {
+            await transaction.rollback();
+            return res.status(404).json({ error: 'Community not found' });
         }
-
         const existingMembership = await UserCommunity.findOne({
             where: { userId: userId, communityId: communityId },
+            transaction,
         });
 
         if (existingMembership) {
-            return res
-                .status(400)
-                .json({ error: 'Already a member of this community' });
+            await transaction.rollback();
+            if (
+                existingMembership.BanStatus === true ||
+                existingMembership.role === 'banned'
+            ) {
+                return res.status(403).json({
+                    error: 'You cannot join this community',
+                });
+            }
+            return res.json({ success: true, alreadyMember: true });
         }
 
-        await UserCommunity.create({
-            userId: userId,
-            communityId: communityId,
-            role: 'member',
+        if (community.isPrivate) {
+            await transaction.rollback();
+            return res.status(403).json({
+                error: 'Private communities require an invitation to join',
+            });
+        }
+
+        const user = await User.findByPk(userId, { transaction });
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        await UserCommunity.create(
+            {
+                userId,
+                communityId,
+                role: 'member',
+            },
+            { transaction },
+        );
+        await Community.increment('memberCount', {
+            by: 1,
+            where: { id: communityId },
             transaction,
         });
-        await sequelize.query(
-            `
-            UPDATE dev_connect.communities
-            SET memberCount = GREATEST(memberCount + 1, 0)
-            WHERE id = ?
-        `,
-            {
-                replacements: [communityId],
-                type: sequelize.QueryTypes.UPDATE,
-                transaction,
-            },
-        );
         await transaction.commit();
         res.json({ success: true });
     } catch (error) {
-        await transaction.rollback();
+        if (!transaction.finished) await transaction.rollback();
         console.error('Error joining community:', error);
         res.status(500).json({ error: 'Failed to join community' });
     }
@@ -916,7 +1122,7 @@ export const checkBanStatus = async (req, res) => {
 
         const result = await sequelize.query(
             `SELECT BanStatus 
-             FROM dev_connect.usercommunities
+             FROM UserCommunities
              WHERE userId = ? AND communityId = ?
              LIMIT 1
              ;`,
@@ -945,59 +1151,44 @@ export const checkBanStatus = async (req, res) => {
 export const BanCommunityMember = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
-        const { userId, communityId, currentUserId } = req.params;
+        const { userId, communityId } = req.params;
 
         if (!userId || !communityId) {
+            await transaction.rollback();
             return res
                 .status(400)
                 .json({ error: 'need user and communityId to ban member' });
         }
-        const isadmin = await sequelize.query(
-            `    
-            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`,
-            {
-                replacements: [currentUserId, communityId],
-                type: sequelize.QueryTypes.SELECT,
-                transaction,
-            },
+        const actingRole = await getCommunityModeratorRole(
+            communityId,
+            req.user.userId,
         );
-        const isOwner = await sequelize.query(
-            `    
-            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='owner'`,
-            {
-                replacements: [currentUserId, communityId],
-                type: sequelize.QueryTypes.SELECT,
-                transaction,
-            },
-        );
-
-        switch (isOwner && isadmin) {
-            case isOwner.length === 0 && isadmin.length === 0:
-                return res
-                    .status(403)
-                    .json({ error: 'User is not an admin of this community' });
-                break;
-            case !isOwner && !isadmin:
-                return res
-                    .status(403)
-                    .json({ error: 'User is not an admin of this community' });
-                break;
+        if (!actingRole) {
+            await transaction.rollback();
+            return res
+                .status(403)
+                .json({ error: 'User is not an admin of this community' });
         }
 
         // First, find the record to get the primary key (id)
         const memberRecord = await sequelize.query(
             `
-            SELECT id FROM dev_connect.usercommunities 
-            WHERE userId = ? AND communityId = ? AND role = "member"
+            SELECT id FROM UserCommunities 
+            WHERE userId = ? AND communityId = ?
+              AND (role = "member" OR (role = "admin" AND ? = 'owner'))
+              AND userId != (
+                  SELECT createdBy FROM communities WHERE id = ?
+              )
         `,
             {
-                replacements: [userId, communityId],
+                replacements: [userId, communityId, actingRole, communityId],
                 type: sequelize.QueryTypes.SELECT,
                 transaction,
             },
         );
 
         if (!memberRecord || memberRecord.length === 0) {
+            await transaction.rollback();
             return res
                 .status(404)
                 .json({ error: 'Member not found or not a member' });
@@ -1007,17 +1198,17 @@ export const BanCommunityMember = async (req, res) => {
         // Now delete using the primary key
         const BanMember = await sequelize.query(
             `
-           UPDATE dev_connect.usercommunities SET BanStatus = true, role='banned' WHERE id=?; 
+           UPDATE UserCommunities SET BanStatus = true, role='banned' WHERE id=?; 
         `,
             {
                 replacements: [primaryKeyId],
-                type: sequelize.QueryTypes.DELETE,
+                type: sequelize.QueryTypes.UPDATE,
                 transaction,
             },
         );
         await sequelize.query(
             `
-            UPDATE dev_connect.communities
+            UPDATE communities
             SET memberCount = GREATEST(memberCount - 1, 0)
             WHERE id = ?
         `,
@@ -1041,48 +1232,27 @@ export const BanCommunityMember = async (req, res) => {
 export const UnBanCommunityMember = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
-        const { userId, communityId, currentUserId } = req.params;
+        const { userId, communityId } = req.params;
 
         if (!userId || !communityId) {
+            await transaction.rollback();
             return res
                 .status(400)
                 .json({ error: 'need user and communityId to kick member' });
         }
-        const isadmin = await sequelize.query(
-            `    
-            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='admin'`,
-            {
-                replacements: [currentUserId, communityId],
-                type: sequelize.QueryTypes.SELECT,
-                transaction,
-            },
-        );
-        const isOwner = await sequelize.query(
-            `    
-            SELECT id from dev_connect.usercommunities WHERE userId = ? AND communityId = ? AND role='owner'`,
-            {
-                replacements: [currentUserId, communityId],
-                type: sequelize.QueryTypes.SELECT,
-                transaction,
-            },
-        );
-        switch (isOwner && isadmin) {
-            case isOwner.length === 0 && isadmin.length === 0:
-                return res
-                    .status(403)
-                    .json({ error: 'User is not an admin of this community' });
-                break;
-            case !isOwner && !isadmin:
-                return res
-                    .status(403)
-                    .json({ error: 'User is not an admin of this community' });
-                break;
+        if (
+            !(await getCommunityModeratorRole(communityId, req.user.userId))
+        ) {
+            await transaction.rollback();
+            return res
+                .status(403)
+                .json({ error: 'User is not an admin of this community' });
         }
 
         // First, find the record to get the primary key (id)
         const memberRecord = await sequelize.query(
             `
-            SELECT id FROM dev_connect.usercommunities 
+            SELECT id FROM UserCommunities 
             WHERE userId = ? AND communityId = ? AND role = "banned"
         `,
             {
@@ -1093,6 +1263,7 @@ export const UnBanCommunityMember = async (req, res) => {
         );
 
         if (!memberRecord || memberRecord.length === 0) {
+            await transaction.rollback();
             return res
                 .status(404)
                 .json({ error: 'Member not found or not a member' });
@@ -1102,17 +1273,17 @@ export const UnBanCommunityMember = async (req, res) => {
         // Now delete using the primary key
         const UnBanMember = await sequelize.query(
             `
-                        UPDATE dev_connect.usercommunities SET BanStatus = false, role='member' WHERE id=?; 
+                        UPDATE UserCommunities SET BanStatus = false, role='member' WHERE id=?; 
         `,
             {
                 replacements: [primaryKeyId],
-                type: sequelize.QueryTypes.DELETE,
+                type: sequelize.QueryTypes.UPDATE,
                 transaction,
             },
         );
         await sequelize.query(
             `
-            UPDATE dev_connect.communities
+            UPDATE communities
             SET memberCount = GREATEST(memberCount + 1, 0)
             WHERE id = ?
         `,
@@ -1136,6 +1307,16 @@ export const likePost = async (req, res) => {
     try {
         const { postId } = req.params;
         const userId = req.user.userId;
+        const { post, community, isMember } = await getPostCommunityAccess(
+            postId,
+            userId,
+        );
+        if (!post) return res.status(404).json({ error: 'Post not found' });
+        if (!isMember && community?.isPrivate) {
+            return res
+                .status(403)
+                .json({ error: 'Join this private community to like posts' });
+        }
 
         // Check if table exists, if not create it
         try {
@@ -1176,8 +1357,16 @@ export const getLikes = async (req, res) => {
         if (!postId) {
             return res.status(400).json({ error: 'Post ID is required' });
         }
+        const { post, community, isMember } = await getPostCommunityAccess(
+            postId,
+            req.user.userId,
+        );
+        if (!post) return res.status(404).json({ error: 'Post not found' });
+        if (community?.isPrivate && !isMember) {
+            return res.status(403).json({ error: 'Private community' });
+        }
         const like = await sequelize.query(
-            'SELECT COUNT(*) FROM dev_connect.postlikes WHERE postId=?;',
+            'SELECT COUNT(*) FROM PostLikes WHERE postId=?;',
             {
                 replacements: [postId],
                 type: sequelize.QueryTypes.SELECT,
@@ -1200,9 +1389,17 @@ export const getLikeStatus = async (req, res) => {
                 .status(400)
                 .json({ error: 'post Id is not found or not logged in' });
         }
+        const { post, community, isMember } = await getPostCommunityAccess(
+            postId,
+            userId,
+        );
+        if (!post) return res.status(404).json({ error: 'Post not found' });
+        if (community?.isPrivate && !isMember) {
+            return res.status(403).json({ error: 'Private community' });
+        }
 
         const result = await sequelize.query(
-            'SELECT * FROM dev_connect.postlikes WHERE postId=? && userId=?;',
+            'SELECT * FROM PostLikes WHERE postId=? && userId=?;',
             {
                 replacements: [postId, userId],
                 type: sequelize.QueryTypes.SELECT,
@@ -1216,7 +1413,8 @@ export const getLikeStatus = async (req, res) => {
 
         res.json({ postLiked: true });
     } catch (error) {
-        res.json('Error fetching user like status:', error);
+        console.error('Error fetching user like status:', error);
+        res.status(500).json({ error: 'Failed to fetch like status' });
     }
 };
 
@@ -1225,6 +1423,14 @@ export const commentOnPost = async (req, res) => {
         const { postId } = req.params;
         const { content } = req.body;
         const userId = req.user.userId;
+        const { post, community, isMember } = await getPostCommunityAccess(
+            postId,
+            userId,
+        );
+        if (!post) return res.status(404).json({ error: 'Post not found' });
+        if (community?.isPrivate && !isMember) {
+            return res.status(403).json({ error: 'Private community' });
+        }
 
         if (!content?.trim()) {
             return res
@@ -1259,9 +1465,151 @@ export const commentOnPost = async (req, res) => {
     }
 };
 
+export const toggleSavedPost = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.user.userId;
+        const { post, community, isMember } = await getPostCommunityAccess(
+            postId,
+            userId,
+        );
+        if (!post) return res.status(404).json({ error: 'Post not found' });
+        if (!isMember && community?.isPrivate) {
+            return res.status(403).json({ error: 'Private community' });
+        }
+
+        const existingSave = await SavedPost.findOne({
+            where: { postId, userId },
+        });
+        if (existingSave) {
+            await existingSave.destroy();
+            return res.json({ saved: false });
+        }
+
+        await SavedPost.create({ postId, userId });
+        return res.json({ saved: true });
+    } catch (error) {
+        console.error('Error saving post:', error);
+        return res.status(500).json({ error: 'Failed to save post' });
+    }
+};
+
+export const getSavedPosts = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const posts = await sequelize.query(
+            `
+            SELECT
+                p.*,
+                u.firstName,
+                u.lastName,
+                u.publicId,
+                up.profileImageUrl,
+                c.name AS communityName,
+                s.createdAt AS savedAt,
+                EXISTS(
+                    SELECT 1 FROM PostLikes liked
+                    WHERE liked.postId = p.id AND liked.userId = :userId
+                ) AS isLiked,
+                (
+                    SELECT COUNT(*) FROM PostLikes
+                    WHERE postId = p.id
+                ) AS likeCount,
+                (
+                    SELECT COUNT(*) FROM PostComments
+                    WHERE postId = p.id
+                ) AS commentCount,
+                (
+                    c.createdBy = :userId OR EXISTS(
+                        SELECT 1 FROM UserCommunities membership
+                        WHERE membership.communityId = c.id
+                          AND membership.userId = :userId
+                          AND membership.role != 'banned'
+                          AND membership.BanStatus = false
+                    )
+                ) AS canInteract
+            FROM SavedPosts s
+            JOIN Posts p ON p.id = s.postId
+            JOIN communities c ON c.id = p.communityId
+            LEFT JOIN Users u ON u.id = p.userId
+            LEFT JOIN UserProfiles up ON up.userId = u.id
+            WHERE s.userId = :userId
+              AND (
+                    c.isPrivate = false OR c.createdBy = :userId OR EXISTS(
+                        SELECT 1 FROM UserCommunities membership
+                        WHERE membership.communityId = c.id
+                          AND membership.userId = :userId
+                          AND membership.role != 'banned'
+                          AND membership.BanStatus = false
+                    )
+              )
+              AND NOT EXISTS (
+                    SELECT 1 FROM BlockedUsers blocked
+                    WHERE (blocked.blockerId = :userId
+                           AND blocked.blockedUserId = p.userId)
+                       OR (blocked.blockerId = p.userId
+                           AND blocked.blockedUserId = :userId)
+              )
+            ORDER BY s.createdAt DESC
+            LIMIT 100
+            `,
+            {
+                replacements: { userId },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        res.json(
+            posts.map((post) => ({
+                id: post.id,
+                userId: post.userId,
+                publicId: post.publicId,
+                type: post.type,
+                author:
+                    post.firstName && post.lastName
+                        ? `${post.firstName} ${post.lastName}`
+                        : 'Unknown User',
+                avatar: post.profileImageUrl || null,
+                timestamp: new Date(post.createdAt).toLocaleDateString(),
+                content: post.content,
+                title: post.title,
+                codeSnippet: post.codeSnippet,
+                language: post.language,
+                projectType: post.projectType,
+                skillsNeeded: post.skillsNeeded,
+                duration: post.duration,
+                question: post.question,
+                isAnswered: post.isAnswered,
+                bestAnswer: post.bestAnswer,
+                tags: post.tags || [],
+                likes: Number(post.likeCount) || 0,
+                comments: Number(post.commentCount) || 0,
+                communityId: post.communityId,
+                communityName: post.communityName,
+                isLiked: post.isLiked === true || Number(post.isLiked) === 1,
+                isSaved: true,
+                canInteract: post.canInteract === true || Number(post.canInteract) === 1,
+                Time: post.Time,
+                DateOfEvent: post.DateOfEvent,
+            })),
+        );
+    } catch (error) {
+        console.error('Error fetching saved posts:', error);
+        res.status(500).json({ error: 'Failed to fetch saved posts' });
+    }
+};
+
 export const getPostComments = async (req, res) => {
     try {
         const { postId } = req.params;
+        const { post, community, isMember } = await getPostCommunityAccess(
+            postId,
+            req.user.userId,
+        );
+        if (!post) return res.status(404).json({ error: 'Post not found' });
+        if (community?.isPrivate && !isMember) {
+            return res.status(403).json({ error: 'Private community' });
+        }
 
         const comments = await sequelize.query(
             `
@@ -1274,10 +1622,17 @@ export const getPostComments = async (req, res) => {
             LEFT JOIN Users u ON pc.userId = u.id
             LEFT JOIN UserProfiles up ON u.id = up.userId
             WHERE pc.postId = :postId
+              AND NOT EXISTS (
+                    SELECT 1 FROM BlockedUsers blocked
+                    WHERE (blocked.blockerId = :viewerId
+                           AND blocked.blockedUserId = pc.userId)
+                       OR (blocked.blockerId = pc.userId
+                           AND blocked.blockedUserId = :viewerId)
+              )
             ORDER BY pc.createdAt ASC
         `,
             {
-                replacements: { postId },
+                replacements: { postId, viewerId: req.user.userId },
                 type: sequelize.QueryTypes.SELECT,
             },
         );
@@ -1304,6 +1659,14 @@ export const expressInterest = async (req, res) => {
     try {
         const { postId } = req.params;
         const userId = req.user.userId;
+        const { post, community, isMember } = await getPostCommunityAccess(
+            postId,
+            userId,
+        );
+        if (!post) return res.status(404).json({ error: 'Post not found' });
+        if (community?.isPrivate && !isMember) {
+            return res.status(403).json({ error: 'Private community' });
+        }
 
         // Check if table exists, if not create it
         try {
@@ -1352,6 +1715,7 @@ export const deletePost = async (req, res) => {
         // Delete related records first
         await PostLike.destroy({ where: { postId } });
         await PostComment.destroy({ where: { postId } });
+        await SavedPost.destroy({ where: { postId } });
 
         // Then delete the post
         await post.destroy();
@@ -1363,92 +1727,153 @@ export const deletePost = async (req, res) => {
     }
 };
 
-//Get Home Feed - Get posts from communities the user is a member of + suggested posts
+const rankHomeFeedPosts = (posts, userId, limit) => {
+    const now = Date.now();
+    const rankedPosts = posts.map((post) => {
+        const createdAt = new Date(post.createdAt).getTime();
+        const ageHours = Number.isFinite(createdAt)
+            ? Math.max(0, (now - createdAt) / (60 * 60 * 1000))
+            : Number.POSITIVE_INFINITY;
+        const likes = Number(post.likeCount) || 0;
+        const comments = Number(post.commentCount) || 0;
+        const isConnectedAuthor = Boolean(Number(post.isConnectedAuthor));
+        const isOwnPost = String(post.userId) === String(userId);
+
+        const score =
+            8 * Math.exp(-ageHours / 30) +
+            2 * Math.log1p(likes) +
+            3 * Math.log1p(comments) +
+            (isConnectedAuthor ? 2.5 : 0) +
+            (isOwnPost ? 0.5 : 0);
+
+        return { post, score, createdAt };
+    });
+
+    return rankedPosts
+        .sort(
+            (left, right) =>
+                right.score - left.score || right.createdAt - left.createdAt,
+        )
+        .slice(0, limit)
+        .map(({ post, score }) => ({ ...post, feedScore: score }));
+};
+
+// Rank community and public discovery posts by freshness, discussion, and network relevance.
 export const getHomeFeed = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const isGuest = !req.user?.userId;
+        // No user has ID 0, so guests only match public-community discovery posts.
+        const userId = isGuest ? 0 : req.user.userId;
 
-        const userCommunityIds = await sequelize.query(
-            `SELECT communityId FROM usercommunities WHERE userId = ?`,
-            {
-                replacements: [userId],
-                type: sequelize.QueryTypes.SELECT,
-            },
+        const selectFeedPosts = `
+            SELECT
+                p.id, p.content, p.title, p.type, p.createdAt, p.userId, p.tags,
+                p.codeSnippet, p.language, p.projectType, p.skillsNeeded, p.duration,
+                c.name AS communityName, c.id AS communityId,
+                u.publicId, u.firstName, u.lastName, up.profileImageUrl,
+                (SELECT COUNT(*) FROM PostLikes WHERE postId = p.id) AS likeCount,
+                (SELECT COUNT(*) FROM PostComments WHERE postId = p.id) AS commentCount,
+                EXISTS(
+                    SELECT 1 FROM PostLikes
+                    WHERE postId = p.id AND userId = :userId
+                ) AS isLiked,
+                EXISTS(
+                    SELECT 1 FROM SavedPosts
+                    WHERE postId = p.id AND userId = :userId
+                ) AS isSaved,
+                EXISTS(
+                    SELECT 1 FROM connections conn
+                    WHERE (
+                        conn.user1_id = :userId
+                        AND conn.user2_id = p.userId
+                    ) OR (
+                        conn.user2_id = :userId
+                        AND conn.user1_id = p.userId
+                    )
+                ) AS isConnectedAuthor
+            FROM Posts p
+            JOIN communities c ON p.communityId = c.id
+            JOIN Users u ON p.userId = u.id
+            LEFT JOIN UserProfiles up ON u.id = up.userId
+        `;
+
+        const [communityPostCandidates, discoveryPostCandidates] =
+            await Promise.all([
+                sequelize.query(
+                    `${selectFeedPosts}
+                    WHERE (
+                        c.createdBy = :userId
+                        OR EXISTS (
+                            SELECT 1 FROM UserCommunities membership
+                            WHERE membership.communityId = c.id
+                              AND membership.userId = :userId
+                              AND membership.role != 'banned'
+                              AND membership.BanStatus = false
+                        )
+                    )
+                    AND NOT EXISTS (
+                        SELECT 1 FROM BlockedUsers blocked
+                        WHERE (blocked.blockerId = :userId
+                               AND blocked.blockedUserId = p.userId)
+                           OR (blocked.blockerId = p.userId
+                               AND blocked.blockedUserId = :userId)
+                    )
+                    ORDER BY p.createdAt DESC, p.id DESC
+                    LIMIT 64`,
+                    {
+                        replacements: { userId },
+                        type: sequelize.QueryTypes.SELECT,
+                    },
+                ),
+                sequelize.query(
+                    `${selectFeedPosts}
+                    WHERE c.isPrivate = false
+                      AND c.createdBy != :userId
+                      AND NOT EXISTS (
+                          SELECT 1 FROM UserCommunities membership
+                          WHERE membership.communityId = c.id
+                            AND membership.userId = :userId
+                            AND membership.role != 'banned'
+                            AND membership.BanStatus = false
+                      )
+                      AND NOT EXISTS (
+                          SELECT 1 FROM UserCommunities banned
+                          WHERE banned.communityId = c.id
+                            AND banned.userId = :userId
+                            AND (
+                                banned.role = 'banned'
+                                OR banned.BanStatus = true
+                            )
+                      )
+                      AND NOT EXISTS (
+                          SELECT 1 FROM BlockedUsers blocked
+                          WHERE (blocked.blockerId = :userId
+                                 AND blocked.blockedUserId = p.userId)
+                             OR (blocked.blockerId = p.userId
+                                 AND blocked.blockedUserId = :userId)
+                      )
+                    ORDER BY p.createdAt DESC, p.id DESC
+                    LIMIT 32`,
+                    {
+                        replacements: { userId },
+                        type: sequelize.QueryTypes.SELECT,
+                    },
+                ),
+            ]);
+
+        const userPosts = rankHomeFeedPosts(
+            isGuest ? discoveryPostCandidates : communityPostCandidates,
+            userId,
+            16,
         );
-
-        const communityIds = userCommunityIds.map((uc) => uc.communityId);
-
-        let userPosts = [];
-
-        if (communityIds.length > 0) {
-            userPosts = await sequelize.query(
-                `SELECT 
-                    p.id, p.content, p.title, p.type, p.createdAt, p.userId, p.tags,
-                    p.codeSnippet, p.language, p.projectType, p.skillsNeeded, p.duration,
-                    c.name as communityName, c.id as communityId,
-                    u.firstName, u.lastName, up.profileImageUrl,
-                    (SELECT COUNT(*) FROM postlikes WHERE postId = p.id) as likeCount,
-                    (SELECT COUNT(*) FROM postcomments WHERE postId = p.id) as commentCount,
-                    EXISTS(SELECT 1 FROM postlikes WHERE postId = p.id AND userId = :userId) as isLiked
-                FROM Posts p
-                JOIN Communities c ON p.communityId = c.id
-                JOIN Users u ON p.userId = u.id
-                LEFT JOIN UserProfiles up ON u.id = up.userId
-                WHERE p.communityId IN (:communityIds)
-                ORDER BY p.createdAt DESC
-                LIMIT 16`,
-                {
-                    replacements: { communityIds, userId },
-                    type: sequelize.QueryTypes.SELECT,
-                },
-            );
-        }
-
-        let suggestedQuery = '';
-        let suggestedReplacements = {};
-        //Check if a user is in communities and exclude them
-        if (communityIds.length > 0) {
-            suggestedQuery = `SELECT 
-                p.id, p.content, p.title, p.type, p.createdAt, p.userId, p.tags,
-                p.codeSnippet, p.language, p.projectType, p.skillsNeeded, p.duration,
-                c.name as communityName, c.id as communityId,
-                u.firstName, u.lastName, up.profileImageUrl,
-                (SELECT COUNT(*) FROM postlikes WHERE postId = p.id) as likeCount,
-                (SELECT COUNT(*) FROM postcomments WHERE postId = p.id) as commentCount
-            FROM Posts p
-            JOIN Communities c ON p.communityId = c.id
-            JOIN Users u ON p.userId = u.id
-            LEFT JOIN UserProfiles up ON u.id = up.userId
-            WHERE p.communityId NOT IN (:communityIds) AND c.isPrivate = false
-            ORDER BY c.memberCount DESC, p.createdAt DESC
-            LIMIT 4`;
-            suggestedReplacements = { communityIds };
-        } else {
-            //if a user is in no communities.
-            suggestedQuery = `SELECT 
-                p.id, p.content, p.title, p.type, p.createdAt, p.userId, p.tags,
-                p.codeSnippet, p.language, p.projectType, p.skillsNeeded, p.duration,
-                c.name as communityName, c.id as communityId,
-                u.firstName, u.lastName, up.profileImageUrl,
-                (SELECT COUNT(*) FROM postlikes WHERE postId = p.id) as likeCount,
-                (SELECT COUNT(*) FROM postcomments WHERE postId = p.id) as commentCount
-            FROM Posts p
-            JOIN Communities c ON p.communityId = c.id
-            JOIN Users u ON p.userId = u.id
-            LEFT JOIN UserProfiles up ON u.id = up.userId
-            WHERE c.isPrivate = false
-            ORDER BY c.memberCount DESC, p.createdAt DESC
-            LIMIT 4`;
-        }
-
-        const suggestedPosts = await sequelize.query(suggestedQuery, {
-            replacements: suggestedReplacements,
-            type: sequelize.QueryTypes.SELECT,
-        });
+        const suggestedPosts = isGuest
+            ? []
+            : rankHomeFeedPosts(discoveryPostCandidates, userId, 4);
 
         const formatPost = (post) => ({
             id: post.id,
             userId: post.userId,
+            publicId: post.publicId,
             type: post.type,
             author: `${post.firstName} ${post.lastName}`,
             avatar: post.profileImageUrl || null,
@@ -1463,14 +1888,37 @@ export const getHomeFeed = async (req, res) => {
             tags: post.tags || [],
             communityName: post.communityName,
             communityId: post.communityId,
-            likes: post.likeCount || 0,
-            comments: post.commentCount || 0,
-            isLiked: Boolean(post.isLiked),
+            likes: Number(post.likeCount) || 0,
+            comments: Number(post.commentCount) || 0,
+            isLiked: post.isLiked === true || Number(post.isLiked) === 1,
+            isSaved: post.isSaved === true || Number(post.isSaved) === 1,
         });
+
+        let projectCandidates = [];
+        if (!isGuest) {
+            try {
+                projectCandidates = await getFeedProjects(userId, 4);
+            } catch (projectError) {
+                console.error('Error loading feed projects:', projectError);
+            }
+        }
+        const feed = [
+            ...userPosts.map((post) => ({
+                kind: 'post',
+                score: post.feedScore,
+                post: formatPost(post),
+            })),
+            ...projectCandidates.map((project) => ({
+                kind: 'project',
+                score: project.feedScore,
+                project,
+            })),
+        ].sort((left, right) => right.score - left.score);
 
         res.json({
             userPosts: userPosts.map(formatPost),
             suggestedPosts: suggestedPosts.map(formatPost),
+            feed,
         });
     } catch (error) {
         console.error('Error fetching home feed:', error);
@@ -1481,29 +1929,92 @@ export const getSideBarRecommendations = async (req, res) => {
     try {
         const userId = req.user.userId;
         if (!userId) {
-            res.json('There is not user currently logged in');
-            return;
+            return res.status(401).json({ error: 'Authentication required' });
         }
 
-        //User Connections Pull
-        let UserRecommendations = [];
-
-        UserRecommendations = await sequelize.query(
+        const UserRecommendations = await sequelize.query(
             `
-            SELECT u.firstName, u.lastName, u.isActive, u.id, up.userId, up.age, up.profileImageUrl, 
-            up.career, up.school FROM dev_connect.users u
-            LEFT JOIN dev_connect.userprofiles up ON u.id = up.userId 
-            WHERE u.id <> ? 
-		    AND NOT EXISTS (
-		    SELECT 1 FROM dev_connect.connections c
-            WHERE (c.user1_id = ? AND c.user2_id = u.id)
-            OR 
-			(c.user1_id = u.id AND c.user2_id = ?)
-            LIMIT 4
-        )      
+            SELECT
+                u.publicId,
+                u.firstName,
+                u.lastName,
+                u.id,
+                up.age,
+                up.profileImageUrl,
+                up.career,
+                up.school,
+                CASE
+                    WHEN NULLIF(TRIM(viewerProfile.career), '') IS NOT NULL
+                         AND LOWER(TRIM(up.career)) = LOWER(TRIM(viewerProfile.career))
+                        THEN 'Same career goal'
+                    WHEN NULLIF(TRIM(viewerProfile.career), '') IS NOT NULL
+                         AND (
+                             LOWER(TRIM(up.career)) LIKE
+                                 CONCAT('%', LOWER(TRIM(viewerProfile.career)), '%')
+                             OR LOWER(TRIM(viewerProfile.career)) LIKE
+                                 CONCAT('%', LOWER(TRIM(up.career)), '%')
+                         )
+                        THEN 'Related career goal'
+                    ELSE NULL
+                END AS recommendationReason
+            FROM Users u
+            LEFT JOIN UserProfiles up ON u.id = up.userId
+            LEFT JOIN UserProfiles viewerProfile ON viewerProfile.userId = ?
+            LEFT JOIN VisibilitySettings visibility ON visibility.userId = u.id
+            WHERE u.id <> ?
+              AND u.isActive = true
+              AND COALESCE(u.isDeleted, false) = false
+              AND (
+                    COALESCE(visibility.profileVisibility, 'Everyone') = 'Everyone'
+                    OR (
+                        COALESCE(visibility.profileVisibility, 'Everyone') = 'ConnectionsOnly'
+                        AND EXISTS (
+                            SELECT 1 FROM connections c
+                            WHERE (c.user1_id = ? AND c.user2_id = u.id)
+                               OR (c.user2_id = ? AND c.user1_id = u.id)
+                        )
+                    )
+              )
+              AND NOT EXISTS (
+                    SELECT 1 FROM connections c
+                    WHERE (c.user1_id = ? AND c.user2_id = u.id)
+                       OR (c.user1_id = u.id AND c.user2_id = ?)
+              )
+              AND NOT EXISTS (
+                    SELECT 1 FROM BlockedUsers b
+                    WHERE (b.blockerId = ? AND b.blockedUserId = u.id)
+                       OR (b.blockerId = u.id AND b.blockedUserId = ?)
+              )
+            ORDER BY
+                CASE
+                    WHEN NULLIF(TRIM(viewerProfile.career), '') IS NOT NULL
+                         AND LOWER(TRIM(up.career)) = LOWER(TRIM(viewerProfile.career))
+                        THEN 0
+                    WHEN NULLIF(TRIM(viewerProfile.career), '') IS NOT NULL
+                         AND (
+                             LOWER(TRIM(up.career)) LIKE
+                                 CONCAT('%', LOWER(TRIM(viewerProfile.career)), '%')
+                             OR LOWER(TRIM(viewerProfile.career)) LIKE
+                                 CONCAT('%', LOWER(TRIM(up.career)), '%')
+                         )
+                        THEN 1
+                    WHEN NULLIF(TRIM(up.career), '') IS NOT NULL THEN 2
+                    ELSE 3
+                END,
+                u.id DESC
+            LIMIT 12
             `,
             {
-                replacements: [userId, userId, userId],
+                replacements: [
+                    userId,
+                    userId,
+                    userId,
+                    userId,
+                    userId,
+                    userId,
+                    userId,
+                    userId,
+                ],
                 type: sequelize.QueryTypes.SELECT,
             },
         );
@@ -1512,10 +2023,12 @@ export const getSideBarRecommendations = async (req, res) => {
             isActive: user.isActive,
             author: `${user.firstName} ${user.lastName}`,
             userId: user.id,
+            publicId: user.publicId,
             age: user.age,
             profileImageUrl: user.profileImageUrl,
             career: user.career,
             school: user.school,
+            recommendationReason: user.recommendationReason,
         });
 
         res.json({
@@ -1523,7 +2036,67 @@ export const getSideBarRecommendations = async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching sidebar recommendations:', error);
-        res.json('Failed to fetch sidebar recommendations');
+        res.status(500).json({ error: 'Failed to fetch sidebar recommendations' });
+    }
+};
+
+export const getSidebarCommunityRecommendations = async (req, res) => {
+    try {
+        const userId = req.user?.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        const recommendations = await sequelize.query(
+            `
+            SELECT
+                c.id,
+                c.name,
+                c.description,
+                c.image,
+                c.icon,
+                c.color,
+                c.memberCount,
+                CASE
+                    WHEN NULLIF(TRIM(profile.career), '') IS NOT NULL
+                         AND LOWER(CONCAT(' ', c.name, ' ', COALESCE(c.description, ''), ' '))
+                             LIKE CONCAT('%', LOWER(TRIM(profile.career)), '%')
+                        THEN 'Matches your career goal'
+                    ELSE NULL
+                END AS recommendationReason
+            FROM communities c
+            LEFT JOIN UserProfiles profile ON profile.userId = ?
+            WHERE COALESCE(c.isPrivate, false) = false
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM UserCommunities membership
+                    WHERE membership.communityId = c.id
+                      AND membership.userId = ?
+              )
+            ORDER BY
+                CASE
+                    WHEN NULLIF(TRIM(profile.career), '') IS NOT NULL
+                         AND LOWER(CONCAT(' ', c.name, ' ', COALESCE(c.description, ''), ' '))
+                             LIKE CONCAT('%', LOWER(TRIM(profile.career)), '%')
+                        THEN 0
+                    ELSE 1
+                END,
+                COALESCE(c.memberCount, 0) DESC,
+                c.createdAt DESC
+            LIMIT 6
+            `,
+            {
+                replacements: [userId, userId],
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        return res.json({ CommunityRecommendations: recommendations });
+    } catch (error) {
+        console.error('Error fetching sidebar community recommendations:', error);
+        return res.status(500).json({
+            error: 'Failed to fetch sidebar community recommendations',
+        });
     }
 };
 
@@ -1538,7 +2111,7 @@ export const handleReviewSubmit = async (req, res) => {
 
         const review = await sequelize.query(
             `
-            UPDATE dev_connect.usercommunities SET Review = ? where userId = ? AND communityId = ?;
+            UPDATE UserCommunities SET Review = ? where userId = ? AND communityId = ?;
             
             `,
             {
@@ -1563,7 +2136,7 @@ export const getReview = async (req, res) => {
         const userId = req.user.userId;
 
         const reviewValued = await sequelize.query(
-            `SELECT Review FROM dev_connect.usercommunities WHERE communityId = ? AND userId = ?;`,
+            `SELECT Review FROM UserCommunities WHERE communityId = ? AND userId = ?;`,
             {
                 replacements: [communityId, userId],
                 type: sequelize.QueryTypes.SELECT,

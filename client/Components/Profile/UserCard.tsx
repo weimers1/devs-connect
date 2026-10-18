@@ -3,15 +3,29 @@ import { Icon } from '@iconify/react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../Service/service';
 import React, { useState, useEffect } from 'react';
-import {useUserConnections} from "/Components/Connections/UserConnectionContext";
+import {useUserConnections} from "../Connections/UserConnectionContext";
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 
 
 interface UserCardProps {
     userId: string;
+    publicId: string;
     isOwnProfile: boolean;
-    profileData: any;
+    profileData: {
+        firstName: string;
+        lastName: string;
+        bio?: string | null;
+        location?: string | null;
+        career?: string | null;
+        school?: string | null;
+        pfp?: string | null;
+        bannerImageUrl?: string | null;
+        githubUrl?: string | null;
+    };
     currentUserId: string;
+    onEditProfile: () => void;
+    communityCount: number;
 }
 //Connection Data
  interface connectionData  {
@@ -22,12 +36,19 @@ interface UserCardProps {
     userId: string;
 }
 
-function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCardProps) {
+function UserCard({ userId, publicId, isOwnProfile, profileData, currentUserId, onEditProfile, communityCount }: UserCardProps) {
         // const [imageUploading, setImageUploading] = useState(false);
         const navigate = useNavigate();
+        const { t } = useLanguage();
         // const [currentProfileImage, setCurrentProfileImage] = useState('');
-        const {connections, handleConnect, handleDisconnect, connectStatus, setconnectStatus} = useUserConnections();
+        const {connections, handleConnect, handleDisconnect, handleBlockUser, connectStatus, setconnectStatus} = useUserConnections();
         const [otherConnections, setOtherConnections] = useState<connectionData[] | null>(null);
+        const [isUpdatingConnection, setIsUpdatingConnection] = useState(false);
+        const [connectionActionError, setConnectionActionError] = useState('');
+        const [isBlocked, setIsBlocked] = useState(false);
+        const [blockStatusLoading, setBlockStatusLoading] = useState(true);
+        const [isUpdatingBlock, setIsUpdatingBlock] = useState(false);
+        const [showBlockConfirmation, setShowBlockConfirmation] = useState(false);
     
     //Validate Image URL to prevent SSRF attacks
     //  const validateImageUrl = (url: string) => {
@@ -46,8 +67,7 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
     // };
 //  console.log(userId);
     function handleClick() {
-       navigate("/profile?showProfModal=true");
-       window.location.reload();
+       onEditProfile();
     }
 
     // const handleConnect = async () => {
@@ -165,176 +185,369 @@ function UserCard({ userId, isOwnProfile, profileData, currentUserId }: UserCard
 //  console.log("other userS ID:", userId);
 
     useEffect(() => {
-        //No need to check connection status if user is viewing their own profile
-        const getOtherUserConnections = async(userId: string) => {
-            try  {
-               const getOtheruserConnections = await API.getOtherUserConnections(userId);
-               if(!getOtheruserConnections) {
-                console.log("error getting other user connections");
-            }   
-            setOtherConnections(getOtheruserConnections);
-            } catch(error) {
-                console.log("error fetching other user connections", error);
-            }
-        }
-            if (!userId || !currentUserId) return;
-        // setCurrentProfileImage(profileData.pfp);
-        const getConnection = async () => {
+        if (isOwnProfile || !userId || !currentUserId) return;
+        let active = true;
+        const loadConnectionData = async () => {
             try {
-                const getconnection = await API.getrelevantconnection(userId.toString(), currentUserId.toString());
-                if(getconnection.success === true) {
-                 
-                    setconnectStatus(true); //if there a connection set this to true
-                } else if(getconnection.success === false) {
-                    setconnectStatus(false);   //else set this to false
-                }
-            } catch(error){
-                console.log("there was an error in trying to obtain the connection", error);
+                const [userConnections, connection] = await Promise.all([
+                    API.getOtherUserConnections(publicId),
+                    API.getrelevantconnection(userId, currentUserId),
+                ]);
+                if (!active) return;
+                setOtherConnections(userConnections);
+                setconnectStatus(connection.success === true);
+            } catch (error) {
+                console.error('Failed to load profile connections:', error);
             }
+        };
+
+        void loadConnectionData();
+        return () => {
+            active = false;
+        };
+    }, [userId, publicId, currentUserId, isOwnProfile, setconnectStatus]);
+
+    useEffect(() => {
+        if (isOwnProfile || !userId) {
+            setBlockStatusLoading(false);
+            return;
         }
-        getOtherUserConnections(userId);
-        getConnection();
-    }, [profileData, connections]);
-    function handleImageClick() {
-        navigate('/profile?showProfModal=true');
-        window.location.reload();
-    }
-  
+        let active = true;
+        setBlockStatusLoading(true);
+
+        API.getBlockedUsers()
+            .then((blockedUsers: { id: number }[]) => {
+                if (active) {
+                    setIsBlocked(
+                        blockedUsers.some(
+                            (blockedUser) => String(blockedUser.id) === userId,
+                        ),
+                    );
+                }
+            })
+            .catch((error) => {
+                console.error('Failed to check blocked profile status:', error);
+                if (active) {
+                    setConnectionActionError(
+                        t('profile.userCard.blockStatusError'),
+                    );
+                }
+            })
+            .finally(() => {
+                if (active) setBlockStatusLoading(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [isOwnProfile, userId, t]);
+
+    const handleConnectionAction = async () => {
+        setIsUpdatingConnection(true);
+        setConnectionActionError('');
+        try {
+            const succeeded = connectStatus
+                ? await handleDisconnect(userId)
+                : await handleConnect(userId);
+            if (!succeeded) {
+                setConnectionActionError(
+                    t('profile.userCard.connectionUpdateError'),
+                );
+            }
+        } finally {
+            setIsUpdatingConnection(false);
+        }
+    };
+
+    const handleBlockAction = async () => {
+        setIsUpdatingBlock(true);
+        setConnectionActionError('');
+        try {
+            if (isBlocked) {
+                await API.unblockUser(Number(userId));
+                setIsBlocked(false);
+                setShowBlockConfirmation(false);
+                return;
+            }
+            const succeeded = await handleBlockUser(userId);
+            if (!succeeded) {
+                throw new Error(t('profile.userCard.blockError'));
+            }
+            setIsBlocked(true);
+            setconnectStatus(false);
+            setShowBlockConfirmation(false);
+        } catch (error) {
+            console.error('Failed to update blocked profile status:', error);
+            setConnectionActionError(
+                error instanceof Error
+                    ? error.message
+                    : t('profile.userCard.blockUpdateError'),
+            );
+        } finally {
+            setIsUpdatingBlock(false);
+        }
+    };
+
     return (
-        <div className="w-full max-w-2xl bg-gray-100 overflow-hidden sm:rounded-lg shadow-md mb-2 mt-2 mx-auto">
-            {/* Banner - Full width on mobile */}
-            <div className="relative">
-                <div className="w-full">
-                    <img
-                        className="w-full h-28 sm:h-36 md:h-42 object-cover"
-                        src={assets.Banner}
-                        alt="Profile Banner"
-                    />
-                </div>
-
-                <div className="absolute -bottom-10 sm:-bottom-12 md:-bottom-16 left-4 sm:left-6 md:left-8">
-                    <img
-                        src={profileData.pfp || assets.Profile}
-                        alt="Profile"
-                        className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg object-cover"
-                        onClick={handleImageClick}
-                        onError={(e) => {
-                            (e.target as HTMLImageElement).src = assets.Profile;
-                        }}
-                    />     
-                </div>
+        <>
+        <section className="mx-auto mb-5 mt-5 w-full max-w-4xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="h-32 overflow-hidden bg-slate-200 sm:h-44">
+                <img
+                    src={profileData.bannerImageUrl || assets.Banner}
+                    alt=""
+                    className="h-full w-full object-cover"
+                />
             </div>
+            <div className="px-5 pb-7 sm:px-8 sm:pb-8">
+                <div className="grid gap-4 sm:gap-0">
+                    <div className="relative -mt-20 mb-2 flex justify-start sm:-mt-24">
+                        <button
+                            type="button"
+                            onClick={() => isOwnProfile && onEditProfile()}
+                            disabled={!isOwnProfile}
+                            aria-label={
+                                isOwnProfile ? t('profile.userCard.editPhoto') : undefined
+                            }
+                            className={`h-28 w-28 overflow-hidden rounded-full bg-slate-100 ring-4 ring-white shadow-md sm:h-36 sm:w-36 ${
+                                isOwnProfile
+                                    ? 'cursor-pointer focus-visible:outline-none focus-visible:ring-blue-300'
+                                    : 'cursor-default'
+                            }`}
+                        >
+                            <img
+                                src={profileData.pfp || assets.Profile}
+                                alt={`${profileData.firstName} ${profileData.lastName}`}
+                                onError={(event) => {
+                                    event.currentTarget.src = assets.Profile;
+                                }}
+                                className="h-full w-full object-cover"
+                            />
+                        </button>
+                    </div>
 
-            {/* Profile Info Section - Full width on mobile */}
-            <div className="bg-white pt-12 sm:pt-16 md:pt-20 pb-4 sm:pb-6 px-4 sm:px-6 md:px-8">
-                {/* Mobile: Stacked layout, Desktop: Side-by-side layout */}
-                <div className="flex flex-col md:flex-row md:justify-between">
-                    {/* Left Column - Basic Info */}
-                    <div className="md:pr-8">
-                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-                            {profileData.firstName + ' ' + profileData.lastName}
-                        </h1>
-                        <p className="text-gray-600 text-sm md:text-base">
-                            Student At {profileData.school}
-                        </p>
-                        <p className="text-gray-500 text-xs sm:text-sm">
-                            {profileData.location}
-                        </p>
+                    <div className="min-w-0">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                            <h1 className="truncate text-2xl font-normal tracking-tight text-slate-900">
+                                {profileData.firstName} {profileData.lastName}
+                            </h1>
+                            {isOwnProfile ? (
+                                <button
+                                    type="button"
+                                    onClick={handleClick}
+                                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                >
+                                    <Icon
+                                        icon="mdi:pencil-outline"
+                                        className="h-4 w-4"
+                                    />
+                                    {t('profile.userCard.editProfile')}
+                                </button>
+                            ) : (
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        disabled={
+                                            isUpdatingConnection ||
+                                            blockStatusLoading ||
+                                            isBlocked
+                                        }
+                                        onClick={() =>
+                                            void handleConnectionAction()
+                                        }
+                                        className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                            connectStatus
+                                                ? 'bg-slate-700 hover:bg-slate-800'
+                                                : 'bg-blue-600 hover:bg-blue-700'
+                                        }`}
+                                    >
+                                        <Icon
+                                            icon={
+                                                connectStatus
+                                                    ? 'mdi:account-check'
+                                                    : 'mdi:account-plus'
+                                            }
+                                            className="h-4 w-4"
+                                        />
+                                        {blockStatusLoading
+                                            ? t('profile.userCard.loading')
+                                            : isUpdatingConnection
+                                            ? t('profile.userCard.updating')
+                                            : connectStatus
+                                              ? t('profile.userCard.connected')
+                                              : isBlocked
+                                                ? t('profile.userCard.blocked')
+                                                : t('profile.userCard.connect')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            navigate(`/messages?user=${userId}`)
+                                        }
+                                        disabled={blockStatusLoading || isBlocked}
+                                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <Icon
+                                            icon="mdi:message-outline"
+                                            className="h-4 w-4"
+                                        />
+                                        {t('profile.userCard.message')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={blockStatusLoading}
+                                        onClick={() => {
+                                            setConnectionActionError('');
+                                            setShowBlockConfirmation(true);
+                                        }}
+                                        className="inline-flex items-center justify-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                        aria-label={
+                                            isBlocked ? t('profile.userCard.unblockUser') : t('profile.userCard.blockUser')
+                                        }
+                                    >
+                                        <Icon
+                                            icon="mdi:dots-horizontal"
+                                            className="h-5 w-5"
+                                        />
+                                        {t('profile.userCard.more')}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
 
-                        {/* Connections */}
-                        <div className="mt-2 flex items-center">
-                            <button className="text-blue-600 text-xs sm:text-sm font-medium"
-                            onClick={() => isOwnProfile ? navigate('/connections') : navigate(`/connections/${userId}`)}  
+                        <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 border-y border-slate-100 py-4 text-sm text-slate-700">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    isOwnProfile
+                                        ? navigate('/connections')
+                                        : navigate(`/connections/${publicId}`)
+                                }
+                                className="rounded-sm hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                             >
-                              {isOwnProfile ? `${connections?.length ?? 0} Connections` : `${otherConnections?.length ?? 0} Connections`}
-
+                                <strong className="font-semibold text-slate-900">
+                                    {isOwnProfile
+                                        ? connections?.length ?? 0
+                                        : otherConnections?.length ?? 0}
+                                </strong>{' '}
+                                {t('profile.userCard.connections')}
                             </button>
-                            <span className="mx-2 text-gray-400">•</span>
-                            <span className="text-blue-600 text-xs sm:text-sm font-medium">
-                                Contact info
+                            <span>
+                                <strong className="font-semibold text-slate-900">
+                                    {communityCount}
+                                </strong>{' '}
+                                {t('profile.userCard.communities')}
                             </span>
                         </div>
 
-                        {/* Action Buttons - Only show for other users */}
-                        {!isOwnProfile && (
-                            <div className="flex flex-col sm:flex-row mt-3 sm:mt-4 sm:space-x-2 space-y-2 sm:space-y-0">
-                                <button className="w-full sm:w-auto rounded-full bg-blue-600 text-white px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-blue-700 "
-                                onClick={() => connectStatus  ? handleDisconnect(userId) : handleConnect(userId)}
-                                
-                                >
-                                    
-                                    {connectStatus ? (
-                                         <span className="font-medium text-sm">
-                                        Connected
-                                    </span>
-                                    ) : (<>
-                                      <Icon
-                                        icon="mdi:account-plus"
-                                        className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5"
-                                    />
-                                    <span className="font-medium text-sm">
-                                        Connect
-                                    </span>
-                                  
-                                    </>
-                                    )}
-                                    
-                                </button>
-                                <button 
-                                    onClick={() => navigate(`/messages?user=${userId}`)}
-                                    className="w-full sm:w-auto rounded-full bg-white border border-gray-400 text-gray-700 px-4 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-gray-50"
-                                >
-                                    <Icon
-                                        icon="mdi:message-reply-text"
-                                        className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5"
-                                    />
-                                    <span className="font-medium text-sm">
-                                        Message
-                                    </span>
-                                </button>
-                                <button className="w-full sm:w-auto rounded-full bg-white border border-gray-400 text-gray-700 px-3 py-1.5 flex items-center justify-center transition-all duration-200 hover:bg-gray-50">
-                                    <span className="font-medium text-sm">
-                                        More
-                                    </span>
-                                </button>
-                            </div>
-                        )}
                     </div>
+                </div>
 
-                    {/* Right Column - Career Goal (Moves below on mobile) */}
-                    <div className="mt-4 md:mt-0 md:ml-4 md:flex-shrink-0">
-                        <div className="bg-blue-50 px-3 py-2 rounded-lg">
-                            <p className="font-semibold text-sm">Career goal</p>
-                            <p className="text-blue-600 text-sm">
-                                {profileData.career}
-                            </p>
+                {showBlockConfirmation && !isOwnProfile && (
+                    <div
+                        className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4"
+                        role="alertdialog"
+                        aria-labelledby="profile-block-title"
+                        aria-describedby="profile-block-description"
+                    >
+                        <p
+                            id="profile-block-title"
+                            className="font-semibold text-slate-900"
+                        >
+                            {isBlocked ? t('profile.userCard.unblockTitle') : t('profile.userCard.blockTitle')}
+                        </p>
+                        <p
+                            id="profile-block-description"
+                            className="mt-1 text-sm text-slate-600"
+                        >
+                            {isBlocked
+                                ? t('profile.userCard.unblockDescription')
+                                : t('profile.userCard.blockDescription')}
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                onClick={() => void handleBlockAction()}
+                                disabled={isUpdatingBlock}
+                                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                            >
+                                {isUpdatingBlock
+                                    ? t('profile.userCard.updating')
+                                    : isBlocked
+                                      ? t('profile.userCard.unblock')
+                                      : t('profile.userCard.block')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setShowBlockConfirmation(false)
+                                }
+                                disabled={isUpdatingBlock}
+                                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                                {t('profile.userCard.cancel')}
+                            </button>
                         </div>
                     </div>
-                </div>
+                )}
 
-                {/*  section divider */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-gray-900">
-                            About
-                        </p>
-                        {isOwnProfile && (
-                            <button className="text-gray-400"
-                            onClick={handleClick}
-                            >
-                                <Icon
-                                    icon="mdi:pencil"
-                                    className="w-5 h-5"
-                                />
-                            </button>
-                        )}
-                    </div>
-                    <p className="mt-2 text-sm text-gray-600">
+                {connectionActionError && (
+                    <p
+                        className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                        role="alert"
+                    >
+                        {connectionActionError}
+                    </p>
+                )}
+            </div>
+        </section>
+        <section className="mx-auto mb-5 w-full max-w-4xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="p-5 sm:p-8">
+                <h2 className="text-xl font-                semibold text-slate-900">{t('profile.userCard.about')}</h2>
+                <p className="mt-3 font-semibold text-slate-900">
+                                    {profileData.career || t('profile.userCard.defaultCareer')}
+                                    {profileData.school ? ` ${t('profile.userCard.atSchool', { school: profileData.school })}` : ''}
+                </p>
+                {profileData.bio && (
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                         {profileData.bio}
                     </p>
+                )}
+                {!profileData.bio && (
+                    <p className="mt-2 text-sm text-slate-500">
+                        {t('profile.userCard.noIntro')}
+                    </p>
+                )}
+                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600">
+                    {profileData.career && (
+                        <span className="inline-flex items-center gap-1.5">
+                            <Icon icon="mdi:code-braces" className="h-4 w-4" />
+                            {profileData.career}
+                        </span>
+                    )}
+                    {profileData.location && (
+                        <span className="inline-flex items-center gap-1.5">
+                            <Icon
+                                icon="mdi:map-marker-outline"
+                                className="h-4 w-4"
+                            />
+                            {profileData.location}
+                        </span>
+                    )}
+                    {profileData.githubUrl && (
+                        <a
+                            href={profileData.githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-blue-700 hover:underline"
+                        >
+                            <Icon icon="mdi:github" className="h-4 w-4" />
+                            {t('profile.userCard.github')}
+                        </a>
+                    )}
                 </div>
             </div>
-        </div>
+        </section>
+        </>
     );
 }
 

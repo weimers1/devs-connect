@@ -7,49 +7,60 @@ export const loginOrSignup = async (req, res) => {
         // grab the user's email
         const { email } = req.body;
 
-        // idk how but if they didn't enter one, that's a problem
-        if (!email) {
-            throw Object.assign(new Error('Email required'), { status: 400 });
+        if (typeof email !== 'string' || !email.trim()) {
+            return res.status(400).json({
+                error: { status_code: 400, error_message: 'Email required' },
+            });
+        }
+        const normalizedEmail = email.trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+            return res.status(400).json({
+                error: { status_code: 400, error_message: 'Invalid email address' },
+            });
         }
 
-        // assume they're just logging in
-        let message = 'A login link has been sent to your email.';
-
-        // find the user based on their email
-        let user = await User.findOne({ where: { email } });
+        const message = 'If the email can receive a sign-in link, one will be sent.';
+        let user = await User.findOne({ where: { email: normalizedEmail } });
         if (!user) {
-            // if they didn't exist, create a record for them in the database with temp name data
             user = await User.create({
-                email,
+                email: normalizedEmail,
                 firstName: 'User',
                 lastName: uuidv4(),
             });
-
-            // they're actually signing up
-            message = 'A sign up link has been sent to your email.';
         }
 
         // Send the magic link email via Stytch
-        const baseUrl = process.env.CLIENT_URL || 'http://localhost:80';
+        const baseUrl =
+            process.env.CLIENT_URL ||
+            (process.env.NODE_ENV === 'production'
+                ? null
+                : 'http://localhost:80');
+        if (!baseUrl) {
+            return res.status(500).json({ error: 'Authentication is unavailable' });
+        }
         await stytchClient.magicLinks.email.send({
-            email: email,
+            email: normalizedEmail,
             login_magic_link_url: `${baseUrl}/authenticate`,
             signup_magic_link_url: `${baseUrl}/authenticate`,
         });
 
         res.status(200).json({ response: message });
     } catch (error) {
-        // general error catch
+        console.error('Sign-in link could not be sent:', {
+            name: error.name,
+            status: error.status || error.status_code,
+        });
         res.status(error.status || 500).json({
             error: {
                 status_code: error.status || 500,
-                error_message: error.message || 'Login failed',
+                error_message: 'Unable to send a sign-in link. Please try again.',
             },
         });
     }
 };
 
 export const verifyMagicLink = async (req, res) => {
+    let verificationStage = 'Stytch magic-link authentication';
     try {
         // grab the token
         const { token } = req.query;
@@ -62,9 +73,10 @@ export const verifyMagicLink = async (req, res) => {
         // authenticate the magic link with stytch and create a session within stytch
         const session = await stytchClient.magicLinks.authenticate({
             token: token,
-            session_duration_minutes: 10080,
+            session_duration_minutes: 60,
         });
 
+        verificationStage = 'validating Stytch session';
         // grab their email from the created stytch session
         if (
             !session.user ||
@@ -78,10 +90,12 @@ export const verifyMagicLink = async (req, res) => {
         }
         const email = session.user.emails[0].email;
 
+        verificationStage = 'looking up user in database';
         // find or create the user with that email in the database
         let user = await User.findOne({ where: { email } });
 
         if (!user) {
+            verificationStage = 'creating user in database';
             // Create user if they don't exist (Stytch created them)
             user = await User.create({
                 email,
@@ -91,6 +105,7 @@ export const verifyMagicLink = async (req, res) => {
         }
 
         if (user.stytchUserId !== session.user_id) {
+            verificationStage = 'updating Stytch user ID in database';
             await user.update({ stytchUserId: session.user_id });
         }
 
@@ -108,13 +123,25 @@ export const verifyMagicLink = async (req, res) => {
             await user.save();
         }
 
-        res.status(200).json({ isNewUser, session_token: session.session_token });
+        res.cookie('session_token', session.session_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 1000,
+            path: '/',
+        });
+        res.status(200).json({ isNewUser });
     } catch (error) {
-        // general error catch
+        console.error('Magic-link verification failed:', {
+            stage: verificationStage,
+            name: error.name,
+            code: error.code,
+            status: error.status || error.status_code,
+        });
         res.status(error.status || error.status_code || 500).json({
             error: {
                 status_code: error.status || error.status_code || 500,
-                error_message: error.message || 'Verification failed',
+                error_message: 'Verification failed',
             },
         });
     }

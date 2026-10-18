@@ -6,6 +6,9 @@ import Communities from '../Components/Communities/Communities';
 import Settings from '../Components/Settings/Settings';
 import Create from '../Components/Create';
 import Connections from '../Components/Connections/Connections';
+import SavedPosts from '../Components/Communities/SavedPosts';
+import HelpAndSupport from '../Components/HelpAndSupport';
+import Projects from '../Components/Projects/Projects';
 
 export interface RouteConfig {
     path: string;
@@ -45,6 +48,30 @@ export const defaultRoutes: RouteConfig[] = [
 ];
 
 export const protectedRoutes: RouteConfig[] = [
+    {
+        path: '/projects',
+        component: Projects,
+        title: 'Projects',
+        icon: 'mdi:rocket-launch-outline',
+        alt: 'Projects',
+        showInNav: true,
+    },
+    {
+        path: '/help',
+        component: HelpAndSupport,
+        title: 'Help & Support',
+        icon: 'mdi:help-circle',
+        alt: 'Help and support',
+        showInNav: false,
+    },
+    {
+        path: '/saved-posts',
+        component: SavedPosts,
+        title: 'Saved Posts',
+        icon: 'mdi:bookmark-outline',
+        alt: 'Saved posts',
+        showInNav: false,
+    },
     {
         path: '/messages',
         component: Messages,

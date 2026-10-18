@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import API from '../../Service/service';
-import Profile from '/assets/images/Nav-Profile.png';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 
 interface CommunityMember {
@@ -15,8 +15,11 @@ interface CommunityMember {
   BanStatus?: boolean;
 }
 
+const DEFAULT_PROFILE_IMAGE = '/assets/images/Nav-Profile.png';
+
 const CommunityMembers: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
+  const { t } = useLanguage();
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [editUsers, setEditUsers] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -24,12 +27,14 @@ const CommunityMembers: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [errorstate, seterrorstate] = useState(false);
   const [currentUser, setCurrentUser] = useState('');
+  const isOwner = ownerId !== null && String(ownerId) === String(currentUser);
+  const canModerate = isAdmin || isOwner;
   const [rightvalue, setrightvalue] = useState(13);
   const [leftvalue, setleftvalue] = useState(0);
 
   // const Temppfp = Profile;
 const navigate = useNavigate();
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     if (!communityId) return;
     try {
       const fetchedMembers = await API.getCommunityMembers(communityId);
@@ -37,32 +42,37 @@ const navigate = useNavigate();
     } catch (error) {
       console.error('Error fetching members', error);
     }
-  };
+  }, [communityId]);
 
-  const fetchAdminStatus = async () => {
+  const fetchAdminStatus = useCallback(async () => {
     if (!communityId) return;
     try {
       const user = await API.getCurrentUser();
-      if(!user) {
+      if (!user) {
         navigate('/login');
+        return;
       }
-      const adminStatus = await API.getCommunityAdmins(communityId, user.userId);
-      setIsAdmin(adminStatus.admin);
       setCurrentUser(user.userId);
+      try {
+        const adminStatus = await API.getCommunityAdmins(communityId, user.userId);
+        setIsAdmin(!!adminStatus?.admin);
+      } catch {
+        setIsAdmin(false);
+      }
 
       const communityData = await API.getCommunityById(communityId);
       if (communityData && communityData.createdBy) setOwnerId(communityData.createdBy);
     } catch (error) {
       console.error('Error fetching admin status', error);
     }
-  };
+  }, [communityId, navigate]);
 
 
 
   useEffect(() => {
     fetchMembers();
     fetchAdminStatus();
-  }, []);
+  }, [fetchAdminStatus, fetchMembers]);
  
   const handleClick = (userId: string) => {
     if (selectedUserId === userId) {
@@ -77,8 +87,9 @@ const navigate = useNavigate();
   const handleAction = async (action: string, member: CommunityMember) => {
     if (!communityId || !member.id) return;
     const currentUser = await API.getCurrentUser();
-    if(!currentUser) {
-        navigate('/login');
+    if (!currentUser) {
+      navigate('/login');
+      return;
     }
     try {
       if (action === 'kick') await API.kickCommunityMember(communityId, member.id, currentUser.userId);
@@ -125,7 +136,7 @@ const navigate = useNavigate();
   
     
     <h1 className="text-2xl font-bold text-center flex-1">
-      Members
+      {t('communities.members.title')}
     </h1>
     {members.length > 10 ? (
       <button
@@ -140,13 +151,13 @@ const navigate = useNavigate();
       {/* Active Members */}
       <div className="space-y-3">
         {members
-          .filter((m) => !m.BanStatus && m.id != ownerId)
+          .filter((m) => !m.BanStatus)
           .slice(leftvalue,rightvalue).map((member) => (
             <div key={member.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg relative">
               <div className="flex items-center space-x-3">
                 <div className="relative">
                   <img
-                    src={member.profileImageUrl || Temppfp}
+                    src={member.profileImageUrl || DEFAULT_PROFILE_IMAGE}
                     alt={`${member.firstName} ${member.lastName}`}
                     className="w-10 h-10 rounded-full object-cover"
                   />
@@ -158,16 +169,23 @@ const navigate = useNavigate();
                 </div>
                 <div>
                   <p className="font-medium">{member.firstName.substring(0,15) || 'John'} {member.lastName.substring(0,15) || 'Doe'}</p>
-                  <p className="text-xs text-gray-500">{member.isOnline ? 'Online' : 'Offline'}</p>
+                  <p className="text-xs text-gray-500">{member.isOnline ? t('communities.members.online') : t('communities.members.offline')}</p>
                 </div>
                 {member.role === 'admin' && (
-                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 mr-2 rounded">Admin</span>
+                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 mr-2 rounded">{t('communities.members.admin')}</span>
+                )}
+                {(member.role === 'owner' || String(member.id) === String(ownerId)) && (
+                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 mr-2 rounded">{t('communities.members.owner')}</span>
                 )}
               </div>
 
               {/* Hamburger Menu */}
               <div className="relative">
-                {member.id != currentUser && !(isAdmin && member.role === 'admin' && currentUser !== ownerId)  && (
+                {member.role !== 'owner' &&
+                  canModerate &&
+                  String(member.id) !== String(ownerId) &&
+                  String(member.id) !== String(currentUser) &&
+                  !(isAdmin && !isOwner && member.role === 'admin') && (
                 <button
                   onClick={() => handleClick(member.id)}
                   className={`p-1 rounded hover:bg-gray-200 transition-colors ${
@@ -178,22 +196,22 @@ const navigate = useNavigate();
                 </button>
                 )}
                 {/* Popover */}
-                {editUsers && selectedUserId === member.id && (isAdmin || ownerId === currentUser) && (
+                {editUsers && selectedUserId === member.id && canModerate && (
                   <div className="absolute right-0 mt-2 w-36 bg-white shadow-lg rounded-lg border z-50 transition ease-out duration-150 transform scale-95 origin-top-right">
-                    {currentUser == ownerId && (
+                    {isOwner && (
                          member.role === 'admin' ? (
                       <button
                         className="w-full text-left px-3 py-2 hover:bg-gray-100"
                         onClick={() => handleAction('demote', member)}
                       >
-                        Demote
+                        {t('communities.members.demote')}
                       </button>
                     ) : (
                       <button
                         className="w-full text-left px-3 py-2 hover:bg-gray-100"
                         onClick={() => handleAction('promote', member)}
                       >
-                        Promote
+                        {t('communities.members.promote')}
                       </button>
                     )
                 )}
@@ -202,13 +220,13 @@ const navigate = useNavigate();
                       className="w-full text-left px-3 py-2 hover:bg-gray-100 text-red-600"
                       onClick={() => handleAction('kick', member)}
                     >
-                      Kick
+                      {t('communities.members.kick')}
                     </button>
                     <button
                       className="w-full text-left px-3 py-2 hover:bg-gray-100 text-red-800"
                       onClick={() => handleAction('ban', member)}
                     >
-                      Ban
+                      {t('communities.members.ban')}
                     </button>
                   </div>
                 )}
@@ -220,20 +238,20 @@ const navigate = useNavigate();
       {/* Banned Members */}
       {members.some((m) => m.BanStatus) && (
         <div className="mt-6">
-          <h2 className="text-lg font-semibold mb-2">Banned Members</h2>
+          <h2 className="text-lg font-semibold mb-2">{t('communities.members.bannedTitle')}</h2>
           {members
             .filter((m) => m.BanStatus)
             .map((member) => (
               <div key={member.id} className="flex items-center p-3 bg-gray-100 rounded-lg mb-2">
                 <img
-                  src={member.profileImageUrl || Temppfp}
+                  src={member.profileImageUrl || DEFAULT_PROFILE_IMAGE}
                   alt={`${member.firstName} ${member.lastName}`}
                   className="w-10 h-10 rounded-full object-cover opacity-50"
                 />
                      {/* Hamburger Menu */}
                 <div className="ml-3">
                   <p className="font-medium line-through">{member.firstName} {member.lastName.substring(0,20)}</p>
-                  <p className="text-xs text-gray-500">Banned</p>
+                  <p className="text-xs text-gray-500">{t('communities.members.banned')}</p>
                 </div>
                       <div className="relative">
                 <button
@@ -248,7 +266,7 @@ const navigate = useNavigate();
                
         <div className="bg-white rounded-xl mb-12 p-6  md:w-90 mx-4">
               <Icon icon="streamline-plump-color:sad-face-flat" className="mb-2 mx-auto" width="72" height="72" />
-            <h2 className="text-2xl font-bold mb-6 text-center">{`You Are Unable To Perform That Action At This Time`}</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center">{t('communities.members.actionUnavailable')}</h2>
             <div className="flex flex-col gap-3">
             </div>
         </div> 
@@ -258,14 +276,14 @@ const navigate = useNavigate();
                     )}
                   <Icon icon="mdi:account-remove" className="w-5 h-5" />
                 </button>
-                {editUsers && selectedUserId === member.id && isAdmin && (
+                {editUsers && selectedUserId === member.id && canModerate && (
                   <div className="absolute right-0 mt-2 w-36 bg-white shadow-lg rounded-lg border z-50 transition ease-out duration-150 transform scale-95 origin-top-right">
                     {member.role === 'banned' && (
                       <button
                         className="w-full text-left px-3 py-2 hover:bg-red-grey text-red-800 hover:bg-gray-100"
                         onClick={() => handleAction('unban', member)}
                       >
-                        unBan
+                        {t('communities.members.unban')}
                       </button>
                     )}
                   </div>

@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import getCsrfToken from '../Utils/Csrf';
 import Modal from '../Decal/Modal';
 import Layout from '../Layout';
 import Typeahead from '../Utils/Typeahead';
@@ -27,9 +26,11 @@ const Authenticate: React.FC = () => {
     } | null>(null);
 
     const [isNewUser, setIsNewUser] = useState(false);
+    const [isVerifying, setIsVerifying] = useState(false);
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [careerId, setCareerId] = useState(-1);
+    const [careerGoal, setCareerGoal] = useState('');
     const [shouldNavigateOnClose, setShouldNavigateOnClose] = useState(false);
 
     const closeModal = () => setModalInfo(null);
@@ -39,7 +40,12 @@ const Authenticate: React.FC = () => {
     const handleAccountSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!firstName.trim() || !lastName.trim() || careerId === -1) {
+        if (
+            !firstName.trim() ||
+            !lastName.trim() ||
+            careerId === -1 ||
+            !careerGoal
+        ) {
             showModal({
                 icon: 'mdi-emoticon-frown-outline',
                 title: 'Missing Info',
@@ -50,43 +56,32 @@ const Authenticate: React.FC = () => {
         }
 
         try {
-            const sessionToken = localStorage.getItem('session_token');
-            if (!sessionToken) {
-                throw new Error('No authentication token found');
-            }
-            
-            const csrfToken = await getCsrfToken();
-            const response = await fetch(`${baseUrl}/user/profile`, {
+            const response = await fetch(`${baseUrl}/api/settings/profile`, {
                 method: 'PUT',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    // amazonq-ignore-next-line
-                    'X-CSRF-Token': csrfToken,
-                    Authorization: `Bearer ${sessionToken}`,
                 },
                 body: JSON.stringify({
                     firstName: firstName.trim(),
                     lastName: lastName.trim(),
-                    careerId,
+                    career: careerGoal,
                 }),
             });
 
-            let data;
+            let data: { error?: string; message?: string };
             try {
                 data = await response.json();
-            } catch (jsonError) {
-                throw new Error('Invalid response from server');
+            } catch {
+                throw new Error('The server returned an invalid profile response.');
             }
 
-            if (data.status !== 200) {
-                showModal({
-                    icon: 'mdi-emoticon-frown-outline',
-                    title: 'Oops!',
-                    message: data.message,
-                    allowClose: true,
-                });
-                return;
+            if (!response.ok) {
+                throw new Error(
+                    data.error ||
+                        data.message ||
+                        `Profile update failed (${response.status}).`,
+                );
             }
 
             setShouldNavigateOnClose(true);
@@ -101,112 +96,133 @@ const Authenticate: React.FC = () => {
             showModal({
                 icon: 'mdi-emoticon-frown-outline',
                 title: 'Our Bad...',
-                message:
-                    "Something went wrong on our end. We'll try to fix this shortly.",
+                message: error instanceof Error
+                    ? error.message
+                    : "Something went wrong on our end. We'll try to fix this shortly.",
                 allowClose: true,
             });
         }
     };
 
-    useEffect(() => {
-        if (!token) {
-            navigate('/login');
-            return;
-        }
-
-        // avoid duplicate calls
-        if (calledVerify.current) return;
+    const verifyToken = async () => {
+        if (!token || calledVerify.current) return;
         calledVerify.current = true;
+        setIsVerifying(true);
 
-        const verifyToken = async () => {
-            try {
-                const response = await fetch(
-                    `${baseUrl}/auth/verify?token=${token}`,
-                    {
-                        method: 'GET',
-                        credentials: 'include',
-                    }
-                );
-
-                const data = await response.json();
-
-                if (data.error) {
-                    const errorObject =
-                        typeof data.error === 'object'
-                            ? data.error
-                            : JSON.parse(data.error);
-                    const errorMessages = {
-                        400: {
-                            title: 'Invalid Request',
-                            message: 'The request was invalid.',
-                        },
-                        401: {
-                            title: 'Expired Link',
-                            message:
-                                'The link you used is outdated. Please try signing in again.',
-                        },
-                        403: {
-                            title: 'Access Denied',
-                            message: 'Access denied for this link.',
-                        },
-                        500: {
-                            title: 'Our Bad...',
-                            message:
-                                "Something went wrong on our end. We'll try to fix this shortly.",
-                        },
-                    };
-
-                    const error = errorMessages[
-                        errorObject.status_code as keyof typeof errorMessages
-                    ] || {
-                        title: 'Error',
-                        message: 'An unexpected error occurred.',
-                    };
-
-                    showModal({
-                        icon: 'mdi-emoticon-frown-outline',
-                        title: error.title,
-                        message: error.message,
-                        allowClose: false,
-                    });
-                    return;
+        try {
+            const query = new URLSearchParams({ token });
+            const response = await fetch(
+                `${baseUrl}/auth/verify?${query.toString()}`,
+                {
+                    method: 'GET',
+                    credentials: 'include',
                 }
+            );
 
-                login(data.session_token);
+            const data = await response.json();
 
-                // Load user's theme preference after successful authentication
-                // await loadUserTheme();
-
-                if (data.isNewUser) {
-                    showModal({
-                        icon: 'mdi-emoticon-smile-outline',
-                        title: 'Welcome New User!',
+            if (data.error) {
+                const errorObject =
+                    typeof data.error === 'object'
+                        ? data.error
+                        : JSON.parse(data.error);
+                const errorMessages = {
+                    400: {
+                        title: 'Invalid Request',
+                        message: 'The request was invalid.',
+                    },
+                    401: {
+                        title: 'Expired Link',
                         message:
-                            'Please take a few seconds to finish filling out some details.',
-                        allowClose: true,
-                    });
-                    setIsNewUser(true);
-                } else {
-                    // BUG FIX: Navigate to root path '/' instead of '/home' since that's the actual home route
-                    navigate('/');
-                }
-            } catch (error) {
-                console.error('Authentication failed:', error);
+                            'The link you used is outdated. Please request a new sign-in link.',
+                    },
+                    403: {
+                        title: 'Access Denied',
+                        message: 'Access denied for this link.',
+                    },
+                    500: {
+                        title: 'Our Bad...',
+                        message:
+                            "Something went wrong on our end. We'll try to fix this shortly.",
+                    },
+                };
+
+                const error = errorMessages[
+                    errorObject.status_code as keyof typeof errorMessages
+                ] || {
+                    title: 'Error',
+                    message: 'An unexpected error occurred.',
+                };
+
                 showModal({
                     icon: 'mdi-emoticon-frown-outline',
-                    title: 'Our Bad...',
-                    message:
-                        "Something went wrong on our end. We'll try to fix this shortly.",
+                    title: error.title,
+                    message: error.message,
                     allowClose: false,
                 });
+                return;
             }
-        };
 
-        verifyToken();
+            login();
+
+            // Load user's theme preference after successful authentication
+            // await loadUserTheme();
+
+            if (data.isNewUser) {
+                showModal({
+                    icon: 'mdi-emoticon-smile-outline',
+                    title: 'Welcome New User!',
+                    message:
+                        'Please take a few seconds to finish filling out some details.',
+                    allowClose: true,
+                });
+                setIsNewUser(true);
+            } else {
+                // BUG FIX: Navigate to root path '/' instead of '/home' since that's the actual home route
+                navigate('/');
+            }
+        } catch (error) {
+            console.error('Authentication failed:', error);
+            showModal({
+                icon: 'mdi-emoticon-frown-outline',
+                title: 'Our Bad...',
+                message:
+                    "Something went wrong on our end. We'll try to fix this shortly.",
+                allowClose: false,
+            });
+        } finally {
+            setIsVerifying(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!token) navigate('/login');
     }, [token, navigate]);
 
     return (
         <Layout>
+            {token && !isNewUser && !modalInfo && (
+                <section className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
+                    <div className="rounded-lg border border-blue-200 bg-white p-8 shadow-lg">
+                        <h1 className="mb-3 text-2xl font-bold text-blue-700">
+                            Verify your sign-in
+                        </h1>
+                        <p className="mb-6 text-slate-700">
+                            Continue to securely sign in to your account.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={verifyToken}
+                            disabled={isVerifying}
+                            className="rounded-md bg-blue-700 px-5 py-2 text-white transition-colors hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60"
+                        >
+                            {isVerifying
+                                ? 'Signing you in...'
+                                : 'Continue signing in'}
+                        </button>
+                    </div>
+                </section>
+            )}
             {modalInfo && (
                 <Modal
                     title={modalInfo.title}
@@ -293,6 +309,9 @@ const Authenticate: React.FC = () => {
                                     inputClasses="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     placeHolder="Search career goals..."
                                     inheritedOnChange={setCareerId}
+                                    onSelect={(result) =>
+                                        setCareerGoal(result.text)
+                                    }
                                 />
                             </div>
                         </div>

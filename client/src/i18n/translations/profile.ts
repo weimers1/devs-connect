@@ -1,0 +1,216 @@
+import type { AreaTranslations } from '../types';
+
+const profile: AreaTranslations = {
+    en: {
+        'profile.card.add': 'Add {title}',
+
+        'profile.communities.title': 'Communities',
+        'profile.communities.loading': 'Loading communities...',
+        'profile.communities.loadError': 'Communities could not be loaded.',
+        'profile.communities.emptyOwn': 'You have not joined any communities yet.',
+        'profile.communities.emptyOther': 'No communities to show.',
+        'profile.communities.owner': 'Owner',
+        'profile.communities.showAll': 'Show all communities',
+        'profile.communities.showFewer': 'Show fewer communities',
+        'profile.communities.discoverNew': 'Discover new',
+
+        'profile.create.title': 'Create Something New',
+        'profile.create.subtitle': "Choose what you'd like to create",
+        'profile.create.community.title': 'Create Community',
+        'profile.create.community.description':
+            'Start a new community for developers to connect and collaborate',
+        'profile.create.post.title': 'Create Post',
+        'profile.create.post.description':
+            'Share code, ask questions, or find collaborators in a community',
+
+        'profile.modal.defaultTitle': 'Attention',
+        'profile.tag.trending': 'Trending',
+        'profile.tag.new': 'New',
+        'profile.tag.exclusive': 'Exclusive',
+
+        'profile.page.loading': 'Loading profile',
+        'profile.page.loadingEllipsis': 'Loading profile...',
+        'profile.page.loadError': 'Profile could not be loaded. Please try again later.',
+
+        'profile.edit.title': 'Edit profile',
+        'profile.edit.subtitle': 'Update how you appear to your community.',
+        'profile.edit.close': 'Close edit profile',
+        'profile.edit.coverPhoto': 'Cover photo',
+        'profile.edit.coverHint':
+            'Use a wide image that represents your work. Maximum size 5MB.',
+        'profile.edit.coverPreviewAlt': 'Profile cover preview',
+        'profile.edit.chooseCover': 'Choose cover photo',
+        'profile.edit.changeCover': 'Change cover',
+        'profile.edit.coverSelected':
+            'Cover photo selected. It will upload when you save changes.',
+        'profile.edit.photoPreviewAlt': 'Profile photo preview',
+        'profile.edit.profilePhoto': 'Profile photo',
+        'profile.edit.photoHint': 'JPG, PNG, or GIF. Maximum size 5MB.',
+        'profile.edit.changePhoto': 'Change photo',
+        'profile.edit.photoSelected':
+            'Profile photo selected. It will upload when you save changes.',
+        'profile.edit.imageTypeError': 'Please select a JPEG, PNG, GIF, or WebP image.',
+        'profile.edit.imageSizeError': 'File size must be less than 5MB.',
+        'profile.edit.basicInfo': 'Basic information',
+        'profile.edit.basicInfoHint': 'Add a clear headline and a short introduction.',
+        'profile.edit.firstName': 'First Name',
+        'profile.edit.lastName': 'Last Name',
+        'profile.edit.location': 'Location',
+        'profile.edit.locationPlaceholder': 'City, State',
+        'profile.edit.careerGoal': 'Career Goal',
+        'profile.edit.careerPlaceholder': 'Software Engineer',
+        'profile.edit.school': 'School',
+        'profile.edit.schoolPlaceholder': 'University Name',
+        'profile.edit.bio': 'Bio',
+        'profile.edit.bioPlaceholder': 'Tell others about yourself...',
+        'profile.edit.saveError': 'Your profile could not be saved. Please try again.',
+        'profile.edit.cancel': 'Cancel',
+        'profile.edit.saving': 'Saving...',
+        'profile.edit.saved': 'Saved!',
+        'profile.edit.error': 'Error',
+        'profile.edit.saveChanges': 'Save Changes',
+
+        'profile.userCard.editPhoto': 'Edit profile photo',
+        'profile.userCard.editProfile': 'Edit profile',
+        'profile.userCard.loading': 'Loading...',
+        'profile.userCard.updating': 'Updating...',
+        'profile.userCard.connected': 'Connected',
+        'profile.userCard.blocked': 'Blocked',
+        'profile.userCard.connect': 'Connect',
+        'profile.userCard.message': 'Message',
+        'profile.userCard.more': 'More',
+        'profile.userCard.blockUser': 'Block user',
+        'profile.userCard.unblockUser': 'Unblock user',
+        'profile.userCard.connections': 'connections',
+        'profile.userCard.communities': 'communities',
+        'profile.userCard.blockTitle': 'Block this user?',
+        'profile.userCard.unblockTitle': 'Unblock this user?',
+        'profile.userCard.blockDescription':
+            'This removes your connection and prevents direct messages.',
+        'profile.userCard.unblockDescription':
+            'They will be able to connect and message you again.',
+        'profile.userCard.block': 'Block',
+        'profile.userCard.unblock': 'Unblock',
+        'profile.userCard.cancel': 'Cancel',
+        'profile.userCard.blockStatusError':
+            'Block status could not be checked. You can still use the block control.',
+        'profile.userCard.connectionUpdateError':
+            'The connection could not be updated. Please try again.',
+        'profile.userCard.blockError': 'Could not block this user. Please try again.',
+        'profile.userCard.blockUpdateError':
+            'Could not update this block. Please try again.',
+        'profile.userCard.about': 'About',
+        'profile.userCard.github': 'GitHub',
+        'profile.userCard.defaultCareer': 'Software Developer',
+        'profile.userCard.atSchool': 'at {school}',
+        'profile.userCard.noIntro': 'No introduction has been added yet.',
+    },
+    es: {
+        'profile.card.add': 'Añadir {title}',
+
+        'profile.communities.title': 'Comunidades',
+        'profile.communities.loading': 'Cargando comunidades...',
+        'profile.communities.loadError': 'No se pudieron cargar las comunidades.',
+        'profile.communities.emptyOwn': 'Aún no te has unido a ninguna comunidad.',
+        'profile.communities.emptyOther': 'No hay comunidades que mostrar.',
+        'profile.communities.owner': 'Propietario',
+        'profile.communities.showAll': 'Mostrar todas las comunidades',
+        'profile.communities.showFewer': 'Mostrar menos comunidades',
+        'profile.communities.discoverNew': 'Descubrir nuevas',
+
+        'profile.create.title': 'Crea algo nuevo',
+        'profile.create.subtitle': 'Elige lo que te gustaría crear',
+        'profile.create.community.title': 'Crear comunidad',
+        'profile.create.community.description':
+            'Inicia una nueva comunidad para que los desarrolladores se conecten y colaboren',
+        'profile.create.post.title': 'Crear publicación',
+        'profile.create.post.description':
+            'Comparte código, haz preguntas o encuentra colaboradores en una comunidad',
+
+        'profile.modal.defaultTitle': 'Atención',
+        'profile.tag.trending': 'Tendencia',
+        'profile.tag.new': 'Nuevo',
+        'profile.tag.exclusive': 'Exclusivo',
+
+        'profile.page.loading': 'Cargando perfil',
+        'profile.page.loadingEllipsis': 'Cargando perfil...',
+        'profile.page.loadError':
+            'No se pudo cargar el perfil. Inténtalo de nuevo más tarde.',
+
+        'profile.edit.title': 'Editar perfil',
+        'profile.edit.subtitle': 'Actualiza cómo te ve tu comunidad.',
+        'profile.edit.close': 'Cerrar edición de perfil',
+        'profile.edit.coverPhoto': 'Foto de portada',
+        'profile.edit.coverHint':
+            'Usa una imagen panorámica que represente tu trabajo. Tamaño máximo 5 MB.',
+        'profile.edit.coverPreviewAlt': 'Vista previa de la portada del perfil',
+        'profile.edit.chooseCover': 'Elegir foto de portada',
+        'profile.edit.changeCover': 'Cambiar portada',
+        'profile.edit.coverSelected':
+            'Foto de portada seleccionada. Se subirá cuando guardes los cambios.',
+        'profile.edit.photoPreviewAlt': 'Vista previa de la foto de perfil',
+        'profile.edit.profilePhoto': 'Foto de perfil',
+        'profile.edit.photoHint': 'JPG, PNG o GIF. Tamaño máximo 5 MB.',
+        'profile.edit.changePhoto': 'Cambiar foto',
+        'profile.edit.photoSelected':
+            'Foto de perfil seleccionada. Se subirá cuando guardes los cambios.',
+        'profile.edit.imageTypeError': 'Selecciona una imagen JPEG, PNG, GIF o WebP.',
+        'profile.edit.imageSizeError': 'El tamaño del archivo debe ser menor de 5 MB.',
+        'profile.edit.basicInfo': 'Información básica',
+        'profile.edit.basicInfoHint': 'Añade un titular claro y una breve presentación.',
+        'profile.edit.firstName': 'Nombre',
+        'profile.edit.lastName': 'Apellidos',
+        'profile.edit.location': 'Ubicación',
+        'profile.edit.locationPlaceholder': 'Ciudad, Estado',
+        'profile.edit.careerGoal': 'Objetivo profesional',
+        'profile.edit.careerPlaceholder': 'Ingeniero de software',
+        'profile.edit.school': 'Centro de estudios',
+        'profile.edit.schoolPlaceholder': 'Nombre de la universidad',
+        'profile.edit.bio': 'Biografía',
+        'profile.edit.bioPlaceholder': 'Cuéntales a los demás sobre ti...',
+        'profile.edit.saveError': 'No se pudo guardar tu perfil. Inténtalo de nuevo.',
+        'profile.edit.cancel': 'Cancelar',
+        'profile.edit.saving': 'Guardando...',
+        'profile.edit.saved': '¡Guardado!',
+        'profile.edit.error': 'Error',
+        'profile.edit.saveChanges': 'Guardar cambios',
+
+        'profile.userCard.editPhoto': 'Editar foto de perfil',
+        'profile.userCard.editProfile': 'Editar perfil',
+        'profile.userCard.loading': 'Cargando...',
+        'profile.userCard.updating': 'Actualizando...',
+        'profile.userCard.connected': 'Conectado',
+        'profile.userCard.blocked': 'Bloqueado',
+        'profile.userCard.connect': 'Conectar',
+        'profile.userCard.message': 'Mensaje',
+        'profile.userCard.more': 'Más',
+        'profile.userCard.blockUser': 'Bloquear usuario',
+        'profile.userCard.unblockUser': 'Desbloquear usuario',
+        'profile.userCard.connections': 'conexiones',
+        'profile.userCard.communities': 'comunidades',
+        'profile.userCard.blockTitle': '¿Bloquear a este usuario?',
+        'profile.userCard.unblockTitle': '¿Desbloquear a este usuario?',
+        'profile.userCard.blockDescription':
+            'Esto elimina tu conexión e impide los mensajes directos.',
+        'profile.userCard.unblockDescription':
+            'Podrá volver a conectarse contigo y enviarte mensajes.',
+        'profile.userCard.block': 'Bloquear',
+        'profile.userCard.unblock': 'Desbloquear',
+        'profile.userCard.cancel': 'Cancelar',
+        'profile.userCard.blockStatusError':
+            'No se pudo comprobar el estado de bloqueo. Aún puedes usar el control de bloqueo.',
+        'profile.userCard.connectionUpdateError':
+            'No se pudo actualizar la conexión. Inténtalo de nuevo.',
+        'profile.userCard.blockError':
+            'No se pudo bloquear a este usuario. Inténtalo de nuevo.',
+        'profile.userCard.blockUpdateError':
+            'No se pudo actualizar este bloqueo. Inténtalo de nuevo.',
+        'profile.userCard.about': 'Acerca de',
+        'profile.userCard.github': 'GitHub',
+        'profile.userCard.defaultCareer': 'Desarrollador de software',
+        'profile.userCard.atSchool': 'en {school}',
+        'profile.userCard.noIntro': 'Aún no se ha añadido una presentación.',
+    },
+};
+
+export default profile;

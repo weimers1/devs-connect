@@ -1,234 +1,278 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import type { MessagesContentProps } from './types';
-//
+import { useLanguage } from '../../src/i18n/LanguageContext';
+
+const formatTime = (date: Date, locale: string) => {
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
+};
+
+const formatDay = (
+    date: Date,
+    locale: string,
+    labels: { today: string; yesterday: string },
+) => {
+    if (Number.isNaN(date.getTime())) return '';
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    if (date.toDateString() === today.toDateString()) return labels.today;
+    if (date.toDateString() === yesterday.toDateString()) return labels.yesterday;
+    return date.toLocaleDateString(locale, {
+        month: 'long',
+        day: 'numeric',
+        year: date.getFullYear() === today.getFullYear() ? undefined : 'numeric',
+    });
+};
+
 const MessagesContent: React.FC<MessagesContentProps> = ({
-    selectedMessage, //current conversation data
-    onBackToList, // Function to return to sidebar (mobile)
-    messages = [], // Array of chat messages
-    onSendMessage, // Function to send new messages (calls parent's sendmessage)
-    isTyping = false, //Indicator when other person is typing | unsure if this works since we only have 1 test acc
+    selectedMessage,
+    onBackToList,
+    messages = [],
+    onSendMessage,
+    isTyping = false,
+    isLoading = false,
+    error = null,
+    onStartConversation,
     className = '',
 }) => {
-    const [newMessage, setNewMessage] = useState(''); //Stores the text user is currently typing
-    const messagesEndRef = useRef<HTMLDivElement>(null); //Reference to invisible div at bottom of messages | Autoscroll to show newest messages
-    const inputRef = useRef<HTMLTextAreaElement>(null); //Reference to the message input textarea | Purpose: to focus management and potential future features
-    const scrollToBottom = useCallback(() => {
-        messagesEndRef.current?.scrollIntoView  ({ behavior: 'smooth' });
-    }, []);
+    const { t, language } = useLanguage();
+    const locale = language === 'es' ? 'es-ES' : 'en-US';
+    const [newMessage, setNewMessage] = useState('');
+    const [sendError, setSendError] = useState('');
+    const [isSending, setIsSending] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
-
-    // UX FIX: Prevent auto-scroll when clicking on conversations
-    // Only scroll when new messages are added, not when loading existing messages
-    const prevMessagesLength = useRef(0);
-    const isInitialLoad = useRef(true);
     useEffect(() => {
-        if (isInitialLoad.current) {
-            isInitialLoad.current = false;
-            prevMessagesLength.current = messages.length;
-            return;
-        }
-
-        if (messages.length > prevMessagesLength.current) {
-            scrollToBottom();
-        }
-        prevMessagesLength.current = messages.length;
-    }, [messages, scrollToBottom]);
-
-    // Reset initial load flag when conversation changes
-    useEffect(() => {
-        isInitialLoad.current = true;
-    }, [selectedMessage?.id]);
-    //Handles sending new messages  | User types -> presses send -> clears input -> calls API
-    const handleSendMessage = useCallback(async () => {
-        if (!newMessage.trim() || !selectedMessage || !onSendMessage) return;
-
-        const content = newMessage.trim();
         setNewMessage('');
+        setSendError('');
+    }, [selectedMessage?.id]);
 
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView?.({ behavior: 'smooth' });
+    }, [messages.length, isTyping]);
+
+    const handleSendMessage = useCallback(async () => {
+        const content = newMessage.trim();
+        if (!content || !selectedMessage || !onSendMessage || isSending) return;
+        setIsSending(true);
+        setSendError('');
         try {
             await onSendMessage(content);
-        } catch (error) {
-            console.error('Failed to send message:', error);
-            // In production, show user-friendly error message
+            setNewMessage('');
+            if (inputRef.current) inputRef.current.style.height = 'auto';
+            inputRef.current?.focus();
+        } catch (sendFailure) {
+            setSendError(
+                sendFailure instanceof Error
+                    ? sendFailure.message
+                    : t('social.messages.sendFailed'),
+            );
+        } finally {
+            setIsSending(false);
         }
-    }, [newMessage, selectedMessage, onSendMessage]);
+    }, [isSending, newMessage, onSendMessage, selectedMessage, t]);
 
-    const handleKeyPress = useCallback(
-        (e: React.KeyboardEvent) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
+    const handleKeyDown = useCallback(
+        (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                void handleSendMessage();
             }
         },
-        [handleSendMessage]
+        [handleSendMessage],
     );
-    //Converts timestamp to regular time format
-    const formatTime = useCallback((date: Date) => {
-        return date.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    }, []);
-    
+
     if (!selectedMessage) {
         return (
-            <div
-                className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}
-            >
-                <div className="text-center">
-                    <Icon
-                        icon="mdi:message-outline"
-                        className="w-16 h-16 text-gray-300 mx-auto mb-4"
-                    />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        Select a conversation
-                    </h3>
-                    <p className="text-gray-500">
-                        Choose a message from the sidebar to start chatting
+            <section className={`flex flex-1 items-center justify-center bg-slate-50 px-6 ${className}`}>
+                <div className="max-w-sm text-center">
+                    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
+                        <Icon icon="mdi:message-text-outline" className="h-8 w-8" />
+                    </div>
+                    <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+                        {t('social.messages.emptyTitle')}
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                        {t('social.messages.emptyDesc')}
                     </p>
+                    <button
+                        type="button"
+                        onClick={onStartConversation}
+                        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                        <Icon icon="mdi:account-search-outline" className="h-5 w-5" />
+                        {t('social.messages.findPeople')}
+                    </button>
                 </div>
-            </div>
+            </section>
         );
     }
 
-    return (
-        <div className={`flex-1 flex flex-col bg-white ${className}`}>
-            {/* UI CLEANUP: Simplified header, removed unnecessary call/video buttons */}
-            <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200">
-                <div className="flex items-center space-x-3">
-                    <button
-                        onClick={onBackToList}
-                        className="md:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                        aria-label="Back to messages"
-                    >
-                        <Icon
-                            icon="mdi:arrow-left"
-                            className="w-5 h-5"
-                        />
-                    </button>
+    const initials = selectedMessage.name
+        .split(/\s+/)
+        .map((part) => part[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase();
 
-                    <div className="relative">
+    return (
+        <section className={`flex min-h-0 min-w-0 flex-1 flex-col bg-slate-50 ${className}`}>
+            <header className="flex shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-3 py-3 sm:gap-3 sm:px-6 sm:py-4">
+                <button
+                    type="button"
+                    onClick={onBackToList}
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+                    aria-label={t('social.messages.backToConversations')}
+                >
+                    <Icon icon="mdi:arrow-left" className="h-5 w-5" />
+                </button>
+                <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-semibold text-white">
+                    {selectedMessage.avatar ? (
                         <img
                             src={selectedMessage.avatar}
-                            alt={selectedMessage.name}
-                            className="w-10 h-10 rounded-full object-cover"
+                            alt=""
+                            className="h-full w-full object-cover"
                         />
-                        {selectedMessage.isOnline && (
-                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
-                        )}
-                    </div>
-
-                    <div className="flex-1">
-                        <h2 className="text-base font-semibold text-gray-900">
-                            {selectedMessage.name}
-                        </h2>
-                        <p className="text-xs text-gray-500">
-                            {selectedMessage.isOnline
-                                ? 'Active now'
-                                : 'Last seen recently'}
-                        </p>
-                    </div>
+                    ) : (
+                        initials
+                    )}
+                    {selectedMessage.isOnline && (
+                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
+                    )}
                 </div>
-            </div>
+                <div className="min-w-0 flex-1">
+                    <h2 className="truncate text-sm font-semibold text-slate-900">
+                        {selectedMessage.name}
+                    </h2>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                        <span className={`h-1.5 w-1.5 rounded-full ${selectedMessage.isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                        {selectedMessage.isOnline ? t('social.messages.activeNow') : t('social.messages.directConversation')}
+                    </p>
+                </div>
+                <div className="hidden items-center gap-1 text-xs text-slate-400 sm:flex">
+                    <Icon icon="mdi:lock-outline" className="h-4 w-4" />
+                    {t('social.messages.private')}                </div>
+            </header>
 
-            {/* UI CLEANUP: Improved message bubble styling and spacing */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-                {messages.map((message) => (
-                    <div
-                        key={message.id}
-                        className={`flex ${
-                            message.isOwn ? 'justify-end' : 'justify-start'
-                        }`}
-                    >
-            
-                        <div
-                            className={`max-w-xs lg:max-w-md px-3 py-2 rounded-2xl ${
-                                message.isOwn
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-gray-100 text-gray-900'
-                            }`}
-                        >
-                            <p className="text-sm">{message.content}</p>
-                            <div
-                                className={`flex items-center justify-end mt-1 space-x-1 ${
-                                    message.isOwn
-                                        ? 'text-blue-100'
-                                        : 'text-gray-500'
-                                }`}
-                            >
-                                <span className="text-xs">
-                                    {formatTime(message.timestamp)}
-                                </span>
-                                {message.isOwn && (
-                                    <Icon
-                                        icon={
-                                            message.status === 'read'
-                                                ? 'mdi:check-all'
-                                                : 'mdi:check'
-                                        }
-                                        className="w-3 h-3"
-                                    />
-                                )}
-                            </div>
-                        </div>
+            {error && !sendError && (
+                <div className="mx-4 mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:mx-6" role="alert">
+                    {error}
+                </div>
+            )}
+
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 py-4 sm:px-6 sm:py-6">
+                {isLoading ? (
+                    <div className="space-y-5" role="status" aria-label={t('social.messages.loadingMessages')}>
+                        <div className="h-12 w-2/3 animate-pulse rounded-2xl bg-white shadow-sm" />
+                        <div className="ml-auto h-16 w-3/4 animate-pulse rounded-2xl bg-blue-100" />
+                        <div className="h-14 w-1/2 animate-pulse rounded-2xl bg-white shadow-sm" />
                     </div>
-                ))}
-                   
+                ) : messages.length === 0 ? (
+                    <div className="flex h-full min-h-56 flex-col items-center justify-center text-center">
+                        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-blue-600 shadow-sm">
+                            <Icon icon="mdi:hand-wave-outline" className="h-6 w-6" />
+                        </div>
+                        <p className="font-medium text-slate-800">                        {t('social.messages.sayHello', { name: selectedMessage.name.split(' ')[0] })}</p>
+                                                <p className="mt-1 text-sm text-slate-500">{t('social.messages.startOfConversation')}</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="flex justify-center">
+                            <span className="rounded-full bg-white px-3 py-1 text-[11px] font-medium text-slate-500 shadow-sm">
+                                {formatDay(messages[0].timestamp, locale, { today: t('social.messages.today'), yesterday: t('social.messages.yesterday') })}
+                            </span>
+                        </div>
+                        {messages.map((message) => (
+                            <div
+                                key={message.id}
+                                className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
+                            >
+                                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 shadow-sm sm:max-w-[72%] ${
+                                    message.isOwn
+                                        ? 'rounded-br-md bg-blue-600 text-white'
+                                        : 'rounded-bl-md border border-slate-200 bg-white text-slate-800'
+                                }`}>
+                                    <p className="whitespace-pre-wrap break-words text-sm leading-6">
+                                        {message.content}
+                                    </p>
+                                    <div className={`mt-1 flex items-center justify-end gap-1.5 ${
+                                        message.isOwn ? 'text-blue-100' : 'text-slate-400'
+                                    }`}>
+                                        <span className="text-[10px]">{formatTime(message.timestamp, locale)}</span>
+                                        {message.isOwn && (
+                                            <Icon
+                                                icon={message.status === 'read' ? 'mdi:check-all' : 'mdi:check'}
+                                                className="h-3.5 w-3.5"
+                                                aria-label={t(`social.messages.status.${message.status || 'sent'}`)}
+                                            />
+                                        )}
+                                        {message.status === 'failed' && (
+                                            <span className="text-[10px] font-medium text-red-600">{t('social.messages.notSent')}</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </>
+                )}
+
                 {isTyping && (
                     <div className="flex justify-start">
-                        <div className="bg-gray-100 rounded-r-2xl rounded-tl-2xl rounded-bl-md px-4 py-2">
-                            <div className="flex space-x-1">
-                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                                <div
-                                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                    style={{ animationDelay: '0.1s' }}
-                                ></div>
-                                <div
-                                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                    style={{ animationDelay: '0.2s' }}
-                                ></div>
-                            </div>
+                        <div className="flex gap-1 rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-3 shadow-sm" aria-label={t('social.messages.typing')}>
+                            {[0, 1, 2].map((dot) => (
+                                <span
+                                    key={dot}
+                                    className="h-2 w-2 animate-bounce rounded-full bg-slate-400"
+                                    style={{ animationDelay: `${dot * 0.12}s` }}
+                                />
+                            ))}
                         </div>
                     </div>
                 )}
-
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* UI CLEANUP: Simplified input area, removed attachment button  Made it simpler for user interaction*/}
-            <div className="flex-shrink-0 p-4 border-t border-gray-200">
-                <div className="flex items-center space-x-3">
-                    <div className="flex-1">
-                        <textarea
-                            ref={inputRef}
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyPress={handleKeyPress}
-                            placeholder="Type a message..."
-                            rows={1}
-                            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-full resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                            style={{ minHeight: '40px', maxHeight: '120px' }}
-                        />
-                    </div>
+            <footer className="shrink-0 border-t border-slate-200 bg-white px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
+                {sendError && (
+                    <p className="mb-2 text-xs text-red-600" role="alert">
+                        {sendError}
+                    </p>
+                )}
+                <div className="flex items-end gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-2 focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-500/10">
+                    <textarea
+                        ref={inputRef}
+                        value={newMessage}
+                        onChange={(event) => {
+                            setNewMessage(event.target.value);
+                            event.currentTarget.style.height = 'auto';
+                            event.currentTarget.style.height = `${Math.min(event.currentTarget.scrollHeight, 120)}px`;
+                        }}
+                        onKeyDown={handleKeyDown}
+                        placeholder={t('social.messages.typeMessagePlaceholder')}
+                        aria-label={t('social.messages.typeMessage')}
+                        maxLength={1000}
+                        rows={1}
+                        className="max-h-[120px] min-h-10 flex-1 resize-none bg-transparent px-3 py-2 text-base leading-6 text-slate-900 outline-none placeholder:text-slate-400 sm:text-sm"
+                    />
                     <button
                         data-testid="send-button"
-                        onClick={handleSendMessage}
-                        disabled={!newMessage.trim()}
-                        className={`p-2 rounded-full transition-all ${
-                            newMessage.trim()
-                                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        }`}
+                        type="button"
+                        onClick={() => void handleSendMessage()}
+                        disabled={!newMessage.trim() || isSending}
+                        aria-label={t('social.messages.sendMessage')}
+                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
                     >
-                        <Icon
-                            icon="mdi:send"
-                            className="w-4 h-4"
-                        />
+                        <Icon icon={isSending ? 'mdi:loading' : 'mdi:send'} className={`h-5 w-5 ${isSending ? 'animate-spin' : ''}`} />
                     </button>
                 </div>
-            </div>
-        </div>
+                <p className="mt-2 hidden text-center text-[11px] text-slate-400 sm:block">
+                    {t('social.messages.sendHint')}
+                </p>
+            </footer>
+        </section>
     );
 };
 

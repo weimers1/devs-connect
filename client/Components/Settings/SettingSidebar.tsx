@@ -2,6 +2,7 @@ import React from 'react';
 import { assets } from '../../assets/assets';
 import { Icon } from '@iconify/react/dist/iconify.js';
 // import SettingSidebarProps from './SettingProps';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 // import { useTheme } from '../../src/ThemeContext';
 
 interface SettingSidebarProps {
@@ -13,23 +14,24 @@ function SettingSidebar({
     activeSection,
     onSelectionClick,
 }: SettingSidebarProps) {
+    const { t } = useLanguage();
     // const { theme } = useTheme();
 
     const SettingsOptions = [
         {
             id: 'Profile-Information',
             icon: 'mdi:account-card',
-            title: 'Account Preferences',
+            title: t('settings.sidebar.accountPreferences'),
         },
         {
             id: 'Privacy',
             icon: 'dashicons:privacy',
-            title: 'Account Privacy',
+            title: t('settings.sidebar.accountPrivacy'),
         },
         {
             id: 'Visibility',
             icon: 'material-symbols:visibility-outline',
-            title: 'Visibility',
+            title: t('settings.sidebar.visibility'),
         },
         //  { WILL ADD EVENTUALLY
         //     id: 'Billing',
@@ -39,49 +41,49 @@ function SettingSidebar({
         {
             id: 'Management',
             icon: 'mdi:account-outline',
-            title: 'Account Management',
+            title:             t('settings.sidebar.accountManagement'),
         },
     ];
     return (
-        <div className="w-80 h-screen pt-8 border-gray-200 sticky top-0">
-            <div className="flex justify-start ml-3">
+        <div className="w-80 shrink-0 h-screen pt-8 border-gray-200 sticky top-0 px-3">
+            <div className="flex items-center gap-3 px-3 mb-4">
                 <Icon
-                    className="ml-2.5 mt-3"
+                    className="shrink-0"
                     width="35"
                     height="35"
                     icon="flat-color-icons:settings"
                 ></Icon>
-                <span
-                    className={`font-semi-bold text-4xl mt-2 ml-3 
-                        // theme === 'dark' ? 'text-white' : 'text-gray-600'
-                    `}
-                >
-                    Settings
+                <span className="text-3xl font-semibold text-gray-700 leading-tight">
+                    {t('settings.sidebar.title')}
                 </span>
             </div>
-            {SettingsOptions.map((option) => (
-                <button
-                    key={option.id}
-                    onClick={() => onSelectionClick(option.id)}
-                >
-                    <div
-                        className={`flex pt-8 justify-start ml-6 
-                            activeSection === option.id
-                                // ? 'text-blue-700'
-                                // : theme === 'dark' ? 'text-white' : 'text-gray-600'
-                        `}
-                    >
-                        <Icon
-                            icon={option.icon}
-                            width="26"
-                            height="30"
-                        />
-                        <span className="ml-6 text-xl mt-0.5">
-                            {option.title}
-                        </span>
-                    </div>
-                </button>
-            ))}
+            <nav className="flex flex-col gap-1">
+                {SettingsOptions.map((option) => {
+                    const isActive = activeSection === option.id;
+                    return (
+                        <button
+                            key={option.id}
+                            onClick={() => onSelectionClick(option.id)}
+                            aria-current={isActive ? 'page' : undefined}
+                            className={`flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left transition-colors ${
+                                isActive
+                                    ? 'bg-blue-50 text-blue-700 font-medium'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                        >
+                            <Icon
+                                className="shrink-0"
+                                icon={option.icon}
+                                width="24"
+                                height="24"
+                            />
+                            <span className="text-base leading-snug break-words">
+                                {option.title}
+                            </span>
+                        </button>
+                    );
+                })}
+            </nav>
         </div>
     );
 }

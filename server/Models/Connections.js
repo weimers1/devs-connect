@@ -1,4 +1,5 @@
 import sequelize from '../config/database.js';
+import User from '../models/User.js';
 import { DataTypes } from 'sequelize';
 
 //User connections
@@ -13,7 +14,7 @@ const Connections = sequelize.define('Connections', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'users',
+      model: User,
       key: 'id',
     },
   },
@@ -21,7 +22,7 @@ const Connections = sequelize.define('Connections', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'users',
+      model: User,
       key: 'id',
     },
   },

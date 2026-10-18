@@ -34,7 +34,10 @@ export const testS3Connection = async () => {
         console.log('S3 connection successful!');
         return true;
     } catch (error) {
-        console.error('S3 connection failed:', error?.message || error);
+        console.error('S3 connection failed:', {
+            name: error?.name || 'Error',
+            code: error?.$metadata?.httpStatusCode || error?.code,
+        });
         return false;
     }
 };

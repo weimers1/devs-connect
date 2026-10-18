@@ -44,6 +44,10 @@ const UserProfile = sequelize.define('UserProfile', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    bannerImageUrl: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     career: {
         type: DataTypes.STRING,
         allowNull: true,

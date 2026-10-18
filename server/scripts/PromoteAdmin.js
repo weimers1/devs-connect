@@ -1,18 +1,19 @@
 import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, cert } from 'firebase-admin/app'; // Import the modular cert directly
-import { readFileSync } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { initializeApp, cert } from 'firebase-admin/app';
 import 'dotenv/config.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+if (!serviceAccountJson) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is required');
+}
 
-// Resolves relative location path out of scripts/ into server/
-const keyPath = path.resolve(__dirname, '../firebase-admin-key.json');
-const serviceAccount = JSON.parse(readFileSync(keyPath, 'utf8'));
+let serviceAccount;
+try {
+    serviceAccount = JSON.parse(serviceAccountJson);
+} catch {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON must contain valid JSON');
+}
 
-// Call the imported modular functions directly to bypass the undefined namespace bug
 initializeApp({
     credential: cert(serviceAccount),
 });

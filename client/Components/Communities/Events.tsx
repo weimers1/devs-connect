@@ -4,6 +4,7 @@ import API from "../../Service/service";
 import CreatePost from './CreatePost';
 import PostCard from './PostTypes';
 import { Icon } from "@iconify/react/dist/iconify.js";
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 interface Events  {
     communityId: string,
@@ -14,6 +15,7 @@ interface Events  {
 
 
 const Events: React.FC<Events> = ({communityId, activeTab}) => {
+      const { t } = useLanguage();
       const [posts, setPosts] = useState<Post[]>([]);
       const [loading, setLoading] = useState(true);
     //   const [adminStatus, setadminStatus] = useState(false); //Determine Admin/Ownership
@@ -58,7 +60,7 @@ const Events: React.FC<Events> = ({communityId, activeTab}) => {
                 <CreatePost onPostCreate={handlePostCreate} activeTab={activeTab} />
                 <div className="text-center py-8">
                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                    <p className="text-gray-500">Loading Events...</p>
+                    <p className="text-gray-500">{t('communities.events.loading')}</p>
                 </div>
             </div>
         );
@@ -82,7 +84,7 @@ const Events: React.FC<Events> = ({communityId, activeTab}) => {
                 ))
             ) : (
                 <div className="text-center py-12">
-                    <p className="text-gray-500 mb-4">No Events Posted yet</p>
+                    <p className="text-gray-500 mb-4">{t('communities.events.empty')}</p>
                 </div>
             )}
         </div>

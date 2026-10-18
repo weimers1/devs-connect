@@ -3,10 +3,12 @@ import { useNavigate} from 'react-router-dom';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import API from '../../Service/service';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 export interface Post {
     id: number;
     userId?: number;
+    publicId?: string;
     type: 'posts' | 'lfg' | 'qanda' | 'events';
     author: string;
     avatar: string;
@@ -16,6 +18,9 @@ export interface Post {
     comments: number;
     tags: string[];
     canDelete?: boolean;
+    canInteract?: boolean;
+    isLiked?: boolean;
+    isSaved?: boolean;
     // Programming post specific
     codeSnippet?: string;
     language?: string;
@@ -38,6 +43,14 @@ interface PostCardProps {
     onPostDelete?: (postId: number) => void;
 }
 
+interface PostComment {
+    id: number;
+    content: string;
+    author: string;
+    avatar: string | null;
+    timestamp: string;
+}
+
 // const postId  = useParams<{postId: string}>();
 
 
@@ -58,11 +71,13 @@ function handleWindowSizeChange() {
 const isMobile = width <= 768;
 
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const { requireAuth } = useAuthRedirect();
-    const [isLiked, setIsLiked] = useState(false);
-    const [likes, setLikes] = useState("");
+    const [isLiked, setIsLiked] = useState(Boolean(post.isLiked));
+    const [isSaved, setIsSaved] = useState(Boolean(post.isSaved));
+    const [likes, setLikes] = useState(String(post.likes || 0));
     const [showComments, setShowComments] = useState(false);
-    const [comments, setComments] = useState<any[]>([]);
+    const [comments, setComments] = useState<PostComment[]>([]);
     const [newComment, setNewComment] = useState('');
     const [loadingComments, setLoadingComments] = useState(false);
     const [wantingToDelete, setWantingToDelete] = useState(false); //State to determine if a user wants to
@@ -127,10 +142,11 @@ const isMobile = width <= 768;
        getProfileImage();
         getLikeStatus();
         fetchlikes();
+       setIsSaved(Boolean(post.isSaved));
         return () => {
         window.removeEventListener('resize', handleWindowSizeChange);
     }
-    }, [post?.id, post?.userId]);
+    }, [navigate, post?.id, post?.userId, post?.isSaved]);
 
     const handleProfileClick = async () => {
         if (!post.userId) return;
@@ -141,12 +157,12 @@ const isMobile = width <= 768;
                 if (post.userId?.toString() === currentUser.userId.toString()) {
                     navigate('/profile');
                 } else {
-                    navigate(`/profile/${post.userId}`);
+                    if (post.publicId) navigate(`/profile/${post.publicId}`);
                 }
             } catch (error) {
                 console.error('Failed to get current user:', error);
                 // Fallback to other user profile
-                navigate(`/profile/${post.userId}`);
+                if (post.publicId) navigate(`/profile/${post.publicId}`);
             }
         });
     };
@@ -161,6 +177,18 @@ const isMobile = width <= 768;
                 // setLikes(JSON.stringify(likecount));
             } catch (error) {
                 console.error('Failed to like post:', error);
+            }
+        });
+    };
+
+    const handleSave = async () => {
+        requireAuth(async () => {
+            try {
+                const result = await API.toggleSavedPost(String(post.id));
+                setIsSaved(result.saved);
+                onPostUpdate?.();
+            } catch (error) {
+                console.error('Failed to save post:', error);
             }
         });
     };
@@ -273,7 +301,7 @@ const isMobile = width <= 768;
                             </button>
                             <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeInfo?.bg} ${typeInfo?.color}`}>
                                 <Icon icon={typeInfo?.icon} className="w-3 h-3 mr-1" />
-                                {post?.type.toUpperCase()}
+                                {t('communities.post.type.' + post?.type)}
                             </div>
                             <span className="text-gray-500 text-sm">{post?.timestamp}</span>
                         </div>
@@ -281,7 +309,7 @@ const isMobile = width <= 768;
                             <button 
                                 onClick={areYouSure}
                                 className="text-gray-400 hover:text-red-600 transition-colors"
-                                title="Delete post"
+                                title={t('communities.post.delete')}
                             >
                                 <Icon icon="mdi:delete" className="w-5 h-5" />
                             </button>
@@ -289,19 +317,19 @@ const isMobile = width <= 768;
                       {wantingToDelete  && (
     <div className="fixed inset-0  bg-gray/20 backdrop-invert backdrop-opacity-20 flex items-center justify-center z-50">
         <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-            <h2 className="text-xl font-bold mb-6 text-center">Permanently Delete Post?</h2>
+            <h2 className="text-xl font-bold mb-6 text-center">{t('communities.post.deleteConfirmTitle')}</h2>
             <div className="flex flex-col gap-3">
                 <button 
                     onClick={handleDelete}
                     className="w-full py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold"
                 >
-                    Confirm Delete
+                    {t('communities.post.confirmDelete')}
                 </button>
                 <button 
                     onClick={handleCancel}
                     className="w-full py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold"
                 >   
-                    Cancel                  
+                    {t('communities.post.cancel')}
                 </button>
             </div>
         </div> 
@@ -313,7 +341,7 @@ const isMobile = width <= 768;
                     <div className="mb-3">
                         {post?.type === 'qanda' && post?.question && (
                             <div className="mb-3">
-                                <h5 className="font-semibold text-gray-900 mb-2">Q: {post.question}</h5>
+                                <h5 className="font-semibold text-gray-900 mb-2">{t('communities.post.questionPrefix', { question: post.question })}</h5>
                                 {/* {post.isAnswered && (
                                     <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
                                         <div className="flex items-center mb-1">
@@ -349,15 +377,15 @@ const isMobile = width <= 768;
                             <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-4">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                                     <div>
-                                        <span className="font-medium text-green-800">Project:</span>
+                                        <span className="font-medium text-green-800">{t('communities.post.project')}</span>
                                         <p className="text-green-700">{post?.projectType}</p>
                                     </div>
                                     <div>
-                                        <span className="font-medium text-green-800">Duration:</span>
+                                        <span className="font-medium text-green-800">{t('communities.post.duration')}</span>
                                         <p className="text-green-700">{post?.duration}</p>
                                     </div>
                                     <div>
-                                        <span className="font-medium text-green-800">Skills Needed:</span>
+                                        <span className="font-medium text-green-800">{t('communities.post.skillsNeeded')}</span>
                                         <div className="flex flex-wrap gap-1 mt-1">
                                             {post?.skillsNeeded?.map((skill, index) => (
                                                 <span key={index} className="px-2 py-1 bg-green-200 text-green-800 text-xs rounded-full">
@@ -369,14 +397,14 @@ const isMobile = width <= 768;
                                 </div>
                             </div>
                         )}
-                              {post?.type === 'events' && (
+                              {post?.type === 'events' && post.DateOfEvent && (
                             <div className="md:mt-10 rounded-lg ">
                                 <div className="flex gap-1 justify-around md:mb-10 mt-2 ">
                                     <div className=" p-2 bg-blue-600  font-mono select-none rounded hover:bg-blue-500"> 
-                                <p className="text-white font-mono select-none">Start Time: {post?.Time}</p>
+                                <p className="text-white font-mono select-none">{t('communities.post.startTime', { time: post?.Time ?? '' })}</p>
                                 </div>
                                  <div className="bg-blue-600  hover:bg-blue-500 p-2 rounded">
-                                <label className="text-white font-mono select-none">Start Date:  {post.DateOfEvent.slice(0,10)}</label>
+                                <label className="text-white font-mono select-none">{t('communities.post.startDate', { date: post.DateOfEvent.slice(0,10) })}</label>
                                 </div> 
                                 </div>
                             </div>
@@ -400,23 +428,40 @@ const isMobile = width <= 768;
                     <div className="flex items-center space-x-6 text-gray-500">
                         <button 
                             onClick={handleLike}
+                            title={t('communities.post.like')}
                             className={`flex items-center space-x-1 transition-colors ${
-                                isLiked ? 'text-red-600' : 'hover:text-red-600'
+                                isLiked
+                                    ? 'text-red-600'
+                                    : 'hover:text-red-600'
                             }`}
+                            aria-label={isLiked ? t('communities.post.unlike') : t('communities.post.like')}
                         >
                             <Icon icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} className="w-4 h-4" />
                             <span className="text-sm">{likes}</span>
                         </button>
                         <button 
                             onClick={toggleComments}
-                            className="flex items-center space-x-1 hover:text-blue-600 transition-colors"
+                            title={t('communities.post.viewComments')}
+                            aria-label={showComments ? t('communities.post.hideComments') : t('communities.post.viewComments')}
+                            className="flex items-center space-x-1 transition-colors hover:text-blue-600"
                         >
                             <Icon icon="mdi:comment-outline" className="w-4 h-4" />
                             <span className="text-sm">{comments?.length || post?.comments || 0}</span>
                         </button>
+                        <button
+                            onClick={handleSave}
+                            className={`flex items-center space-x-1 transition-colors ${
+                                isSaved ? 'text-blue-600' : 'hover:text-blue-600'
+                            }`}
+                            title={isSaved ? t('communities.post.removeSaved') : t('communities.post.save')}
+                            aria-label={isSaved ? t('communities.post.unsave') : t('communities.post.save')}
+                        >
+                            <Icon icon={isSaved ? 'mdi:bookmark' : 'mdi:bookmark-outline'} className="w-4 h-4" />
+                            <span className="text-sm">{isSaved ? t('communities.post.saved') : t('communities.post.saveShort')}</span>
+                        </button>
                         <button className="flex items-center space-x-1 hover:text-blue-600 transition-colors">
                             <Icon icon="mdi:share-outline" className="w-4 h-4" />
-                            <span className="text-sm">Share</span>
+                            <span className="text-sm">{t('communities.post.share')}</span>
                         </button>
                         {post?.type === 'lfg' && (
                             <button 
@@ -424,7 +469,7 @@ const isMobile = width <= 768;
                                 className="flex items-center space-x-1 hover:text-green-600 transition-colors ml-auto"
                             >
                                 <Icon icon="mdi:hand-heart" className="w-4 h-4" />
-                                <span className="text-sm font-medium">Interested</span>
+                                <span className="text-sm font-medium">{t('communities.post.interested')}</span>
                             </button>
                         )}
                     </div>
@@ -436,7 +481,7 @@ const isMobile = width <= 768;
                             <div className="flex space-x-3 mb-4">
                                 <img
                                     src={userProfileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(`${firstName[0]}`)}&background=random`}
-                                    alt="You"
+                                    alt={t('communities.post.you')}
                                     className="w-8 h-8 rounded-full"
                                 />
                                 <div className="flex-1">
@@ -444,7 +489,7 @@ const isMobile = width <= 768;
                                         value={newComment}
                                         onChange={(e) => setNewComment(e.target.value)}
                                         onFocus={() => requireAuth()}
-                                        placeholder="Write a comment..."
+                                        placeholder={t('communities.post.commentPlaceholder')}
                                         className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         rows={2}
                                     />
@@ -453,7 +498,7 @@ const isMobile = width <= 768;
                                         disabled={!newComment.trim()}
                                         className="mt-2 px-4 py-1 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        Comment
+                                        {t('communities.post.comment')}
                                     </button>
                                 </div>
                             </div>
@@ -465,8 +510,8 @@ const isMobile = width <= 768;
                                 </div>
                             ) : (
                                 <div className="space-y-3">
-                                    {comments.map((comment, index) => (
-                                        <div key={index} className="flex space-x-3">
+                                    {comments.map((comment) => (
+                                        <div key={comment.id} className="flex space-x-3">
                                             <img
                                                 src={comment.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.author)}&background=random`}
                                                 alt={comment.author}

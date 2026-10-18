@@ -1,40 +1,9 @@
 /// <reference types="vite/client" />
-import { StytchLogin } from '@stytch/react';
-import { Products } from '@stytch/vanilla-js';
+import { Products, StytchLogin } from '@stytch/react';
 import Layout from './Layout';
 import React from 'react';
+import { useLanguage } from '../src/i18n/LanguageContext';
 const URL_CLIENT =  import.meta.env.VITE_URL_CLIENT || 'http://localhost:6969';
-
-// Define TypeScript interface for stytchStyle
-interface StytchStyle {
-    fontFamily: string;
-    container: {
-        backgroundColor: string;
-        borderColor: string;
-        width?: string;
-        [key: string]: string | undefined;
-    };
-    input: {
-        textAlign: string;
-    };
-    buttons: {
-        primary: {
-            backgroundColor?: string;
-            textColor?: string;
-            borderColor?: string;
-            borderRadius?: string;
-        };
-        secondary: {
-            backgroundColor?: string;
-            textColor?: string;
-            borderColor?: string;
-            borderRadius?: string;
-        };
-    };
-    colors: {
-        primary: string;
-    };
-}
 
 // Login Page That Uses Magic Link
 const stytchConfig = {
@@ -51,42 +20,30 @@ const stytchConfig = {
 // Conditionally set the width based on screen size
 const isSmallScreen = window.innerWidth < 1024;
 
-const stytchStyle: StytchStyle = {
-    fontFamily: 'Monospace',
-    container: {
-        backgroundColor: 'white',
-        borderColor: 'white',
-        ...(isSmallScreen ? { width: '100%' } : { width: '500px' }), // Conditionally add width
-    },
-    input: {
-        textAlign: 'center', // Center text in input fields
-    },
-    buttons: {
-        primary: {
-            backgroundColor: '#1447e6',
-            textColor: 'white',
-        },
-        secondary: {
-            backgroundColor: 'white',
-            textColor: '#1447e6',
-        },
-    },
-    colors: {
+const stytchPresentation = {
+    theme: {
+        'color-scheme': 'light' as const,
+        'font-family': 'monospace',
+        'container-width': isSmallScreen ? '100%' : '600px',
+        background: 'white',
+        foreground: '#111827',
         primary: '#1447e6',
+        'primary-foreground': 'white',
     },
 };
 
 const Login = () => {
+    const { t } = useLanguage();
     return (
         <Layout>
             <section className="h-175 lg:h-[100vh] flex flex-col items-center justify-center">
                 <h1 className="text-center mb-8 text-6xl text-bg-linear-to-tr from-blue-700 to-slate-950 font-mono select-none font-black tracking-tight text-shadow-sm mb-25">
-                    Connect. Code. Create.
+                    {t('login.tagline')}
                 </h1>
                 <div className="shadow-xl">
                     <StytchLogin
                         config={stytchConfig}
-                        styles={stytchStyle}
+                        presentation={stytchPresentation}
                     />
                 </div>
             </section>

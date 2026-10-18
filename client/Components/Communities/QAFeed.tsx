@@ -3,6 +3,7 @@ import CreatePost from './CreatePost';
 import PostCard from './PostTypes';
 import type {Post} from './PostTypes';
 import API from '../../Service/service';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 //
 interface QAFeedProps { //What props this component expects to receive
@@ -11,6 +12,7 @@ interface QAFeedProps { //What props this component expects to receive
 }
 //Functional React component that accepts communityId as a prop
 const QAFeed: React.FC<QAFeedProps> = ({ communityId, activeTab }) => { //Tells TypeScript this is a React functional component with specific 
+    const { t } = useLanguage();
     const [posts, setPosts] = useState<Post[]>([]);//Creates state variable posts (array of Post objects) with setter function setPosts
     const [loading, setLoading] = useState(true); //Loading State
 
@@ -55,7 +57,7 @@ const QAFeed: React.FC<QAFeedProps> = ({ communityId, activeTab }) => { //Tells 
                 <CreatePost onPostCreate={handlePostCreate} activeTab={activeTab} />
                 <div className="text-center py-8">
                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                    <p className="text-gray-500">Loading Q&A posts...</p>
+                    <p className="text-gray-500">{t('communities.qa.loading')}</p>
                 </div>
             </div>
         );
@@ -79,8 +81,8 @@ const QAFeed: React.FC<QAFeedProps> = ({ communityId, activeTab }) => { //Tells 
                 ))
             ) : (
                 <div className="text-center py-12">
-                    <p className="text-gray-500 mb-4">No Q&A posts yet</p>
-                    <p className="text-sm text-gray-400">Be the first to ask a question!</p>
+                    <p className="text-gray-500 mb-4">{t('communities.qa.empty')}</p>
+                    <p className="text-sm text-gray-400">{t('communities.qa.emptyHint')}</p>
                 </div>
             )}
         </div>

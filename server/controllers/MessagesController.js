@@ -1,6 +1,8 @@
+import sequelize from '../config/database.js';
+import { Op } from 'sequelize';
 import Messages from '../Models/MessagesTable.js';
 import User from '../models/User.js';
-import { Op } from 'sequelize';
+import { isBlockedBetweenUsers } from '../utils/userVisibility.js';
 
 //Functions (For SideBar Messages List)
 //  GET CONVERSATIONS LIST
@@ -10,77 +12,81 @@ export const getConversations = async (req, res) => {
         // This prevents messages from being shown to wrong users
         const currentUserId = req.user.userId; // Get authenticated user ID from auth middleware
 
-        // Get all messages involving current user  from the DB
-        const result = await Messages.findAll({
-            where: {
-                [Op.or]: [
-                    { sender_id: currentUserId },
-                    { receiver_id: currentUserId },
-                ],
+        const rows = await sequelize.query(
+            `
+            SELECT
+                latest.conversation_id,
+                CASE
+                    WHEN message.sender_id = :currentUserId THEN message.receiver_id
+                    ELSE message.sender_id
+                END AS otherUserId,
+                otherUser.firstName,
+                otherUser.lastName,
+                otherProfile.profileImageUrl,
+                message.content AS lastMessageContent,
+                message.timestamp AS lastMessageTimestamp,
+                message.sender_id AS lastMessageSenderId,
+                COALESCE(unread.unreadCount, 0) AS unreadCount
+            FROM (
+                SELECT conversation_id, MAX(id) AS latestMessageId
+                FROM messages
+                WHERE sender_id = :currentUserId OR receiver_id = :currentUserId
+                GROUP BY conversation_id
+            ) latest
+            INNER JOIN messages message ON message.id = latest.latestMessageId
+            LEFT JOIN Users otherUser ON otherUser.id = CASE
+                WHEN message.sender_id = :currentUserId THEN message.receiver_id
+                ELSE message.sender_id
+            END
+            LEFT JOIN UserProfiles otherProfile ON otherProfile.userId = otherUser.id
+            LEFT JOIN (
+                SELECT conversation_id, COUNT(*) AS unreadCount
+                FROM messages
+                WHERE receiver_id = :currentUserId AND status != 'read'
+                GROUP BY conversation_id
+            ) unread ON unread.conversation_id = latest.conversation_id
+            WHERE NOT EXISTS (
+                SELECT 1 FROM BlockedUsers blocked
+                WHERE (
+                    blocked.blockerId = :currentUserId
+                    AND blocked.blockedUserId = CASE
+                        WHEN message.sender_id = :currentUserId
+                        THEN message.receiver_id ELSE message.sender_id
+                    END
+                ) OR (
+                    blocked.blockedUserId = :currentUserId
+                    AND blocked.blockerId = CASE
+                        WHEN message.sender_id = :currentUserId
+                        THEN message.receiver_id ELSE message.sender_id
+                    END
+                )
+            )
+            ORDER BY message.timestamp DESC, message.id DESC
+            `,
+            {
+                replacements: { currentUserId },
+                type: sequelize.QueryTypes.SELECT,
             },
-            // Temporarily removed includes until associations are set up
-            order: [['timestamp', 'DESC']], //Order by Newest First
-        });
+        );
 
-        // Group by conversation and get latest message per conversation
-        const conversationsMap = new Map();
+        const conversations = rows.map((row) => ({
+            conversation_id: row.conversation_id,
+            otherUser: {
+                id: row.otherUserId,
+                firstName: row.firstName || `User${row.otherUserId}`,
+                lastName: row.lastName || 'Test',
+                profileImageUrl: row.profileImageUrl || null,
+            },
+            lastMessage: {
+                content: row.lastMessageContent,
+                createdAt: row.lastMessageTimestamp,
+                sender_id: row.lastMessageSenderId,
+            },
+            unreadCount: Number(row.unreadCount) || 0,
+            isOnline: false,
+        }));
 
-        // FEATURE: Fetch real user data instead of generating fake names
-        // This shows actual user names like "John Doe" instead of "User3 Test"
-        const otherUserIds = [...new Set(result.map(message => 
-            message.sender_id === currentUserId ? message.receiver_id : message.sender_id
-        ))];
-
-        // Fetch user data for all other users
-        const otherUsers = await User.findAll({
-            where: { id: otherUserIds },
-            attributes: ['id', 'firstName', 'lastName', 'email']
-        });
-
-        const userMap = new Map(otherUsers.map(user => [user.id, user]));
-
-        result.forEach((message) => {
-            const conversationId = message.conversation_id;
-
-            if (!conversationsMap.has(conversationId)) {
-                const otherUserId =
-                    message.sender_id === currentUserId
-                        ? message.receiver_id
-                        : message.sender_id;
-
-                const otherUser = userMap.get(otherUserId);
-
-                // Count unread messages in this conversation
-                const unreadCount = result.filter(
-                    (msg) =>
-                        msg.conversation_id === conversationId &&
-                        msg.receiver_id === currentUserId &&
-                        msg.status !== 'read'
-                ).length;
-
-                conversationsMap.set(conversationId, {
-                    conversation_id: conversationId,
-                    otherUser: {
-                        id: otherUserId,
-                        firstName: otherUser?.firstName || `User${otherUserId}`,
-                        lastName: otherUser?.lastName || 'Test',
-                        email: otherUser?.email || `user${otherUserId}@test.com`,
-                    },
-                    lastMessage: {
-                        content: message.content,
-                        createdAt: message.timestamp,
-                        sender_id: message.sender_id,
-                    },
-                    unreadCount: unreadCount,
-                    isOnline: false,
-                });
-            }
-        });
-
-        const conversations = Array.from(conversationsMap.values()); //This will convert the Map Data Structure into an array thats why we're extracting the values so we can use res.json
-
-
-        res.json({ success: true, data: conversations }); //Makes this serializable so the frontend can consume it
+        res.json({ success: true, data: conversations });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -105,6 +111,9 @@ export const getConversationMessages = async (req, res) => {
         }
 
         const currentUserId = req.user.userId; // Get authenticated user ID from auth middleware
+        if (await isBlockedBetweenUsers(currentUserId, parsedUserId)) {
+            return res.status(403).json({ error: 'Conversation unavailable' });
+        }
 
         //Create Conversation_id (Smaller Id First) | creates Array With both users ID's, converts Userid to number
         const conversationId = [currentUserId, parsedUserId] //Ensures Consistent Conversation_id regardless of who sends first
@@ -129,64 +138,46 @@ export const getConversationMessages = async (req, res) => {
 //  SEND MESSAGE | Front end sends a Post Requests to receiver_id: 2, content: "hey" then sender_id (from auth). Then the conversation is created example 1-2, we then save to the database and return the message to frontend
 export const sendMessage = async (req, res) => {
     try {
-        const { receiver_id, content } = req.body; //Gets who to send to and the message content from the frontend
-        const sender_id = req.user.userId; // Get authenticated user ID from auth middleware
-             
-      
-        // const userId = API.getCurrentUserId(); // Get authenticated user ID from auth middleware
-        // Create conversation_id | Purpose is to group messages between same two users
-        const conversationId = [sender_id, receiver_id] //Example User 1 -> User -> 2 = 1-2 This is how we can create a consistent Conversation
+        const receiverId = Number(req.body.receiver_id);
+        const content = req.body.content;
+        const senderId = Number(req.user.userId);
+
+        if (!Number.isInteger(receiverId) || receiverId <= 0) {
+            return res.status(400).json({ error: 'Invalid receiver ID' });
+        }
+        if (!Number.isInteger(senderId) || senderId <= 0) {
+            return res.status(401).json({ error: 'Invalid authenticated user' });
+        }
+        if (receiverId === senderId) {
+            return res.status(400).json({ error: 'Cannot send a message to yourself' });
+        }
+        if (typeof content !== 'string' || !content.trim() || content.trim().length > 1000) {
+            return res.status(400).json({ error: 'Message must contain 1 to 1000 characters' });
+        }
+        if (!(await User.findByPk(receiverId))) {
+            return res.status(404).json({ error: 'Recipient not found' });
+        }
+        if (await isBlockedBetweenUsers(senderId, receiverId)) {
+            return res.status(403).json({ error: 'Recipient is unavailable' });
+        }
+
+        const conversationId = [senderId, receiverId]
             .sort((a, b) => a - b)
             .join('-');
-        //Saves TO Database | Creates new row in Messages table : Result: Message gets unique ID and timestamps
         const message = await Messages.create({
-            sender_id, // Who sent it (1)
-            receiver_id, // Who receives it (2)
-            content, // Message text ("Hello there!")
-            conversation_id: conversationId, // Which conversation ("1-2")
-            message_type: 'text', // Type of message
-            status: 'sent', // Initial status
-         // Marks if the message is sent by the authenticated user
+            sender_id: senderId,
+            receiver_id: receiverId,
+            content: content.trim(),
+            conversation_id: conversationId,
+            message_type: 'text',
+            status: 'sent',
         });
-        //  Emit Socket.io event after saving to DB
-        //  Emit Socket.io event after saving
-        const messageData = {
-            id: message.id,
-            sender_id: message.sender_id,
-            conversation_id: message.conversation_id,
-            receiver_id: message.receiver_id,
-            content: message.content,
-            timestamp: message.timestamp,
-         
-        };
-
-        // Sanitize content before emitting to prevent XSS
-        const sanitizedContent = message.content.replace(
-            /[<>"'&]/g,
-            (match) => {
-                const entities = {
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#x27;',
-                    '&': '&amp;',
-                };
-                return entities[match];
-            }
-        );
-
-        // Get the io instance and emit to conversation room
         const io = req.app.get('io');
-        io.to(`user-${receiver_id}`).emit('receiver-message', {
-            id: message.id,
-            sender_id: message.sender_id,
-            receiver_id: message.receiver_id,
-            content: sanitizedContent,
-            timestamp: message.timestamp,
-            conversation_id: message.conversation_id,
-        });
+        if (io) {
+            io.to(`user-${receiverId}`).emit('receiver-message', message);
+        }
 
-        res.json({ success: true, data: message });
+        res.status(201).json({ success: true, data: message });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'Failed to send message' });
@@ -292,11 +283,17 @@ export const createTestUsers = async (req, res) => {
 //  MARK AS READ
 export const markAsRead = async (req, res) => {
     try {
-        const { other_user_id } = req.body; //This will get the other persons ID from the frontend Request Ex(User 2 sent messages to User 1)
-        const currentUserId = req.user.userId; // Get authenticated user ID from auth middleware
+        const otherUserId = Number(req.body.other_user_id);
+        const currentUserId = Number(req.user.userId);
 
-        // Create conversation_id | Target specific conversations for updates
-        const conversationId = [currentUserId, other_user_id]
+        if (!Number.isInteger(otherUserId) || otherUserId <= 0 || otherUserId === currentUserId) {
+            return res.status(400).json({ error: 'Invalid other user ID' });
+        }
+        if (await isBlockedBetweenUsers(currentUserId, otherUserId)) {
+            return res.status(403).json({ error: 'Conversation unavailable' });
+        }
+
+        const conversationId = [currentUserId, otherUserId]
             .sort((a, b) => a - b)
             .join('-');
 

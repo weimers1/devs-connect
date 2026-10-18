@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import Tag from '../Decal/Tag';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 interface CommunityHeaderProps {
     community: {
@@ -17,6 +18,7 @@ interface CommunityHeaderProps {
 
 const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community }) => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
 
     return (
         <div className="relative h-64 md:h-80 overflow-hidden">
@@ -29,6 +31,7 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community }) => {
             
             <button
                 onClick={() => navigate('/communities')}
+                aria-label={t('communities.header.back')}
                 className="absolute top-6 left-6 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
             >
                 <Icon icon="mdi:arrow-left" className="w-6 h-6 text-white" />
@@ -44,11 +47,11 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community }) => {
                         <div className="flex items-center space-x-4 text-white/90">
                             <span className="flex items-center">
                                 <Icon icon="mdi:account-group" className="w-4 h-4 mr-1" />
-                                {community.membersTotal} members
+                                {t('communities.header.members', { count: community.membersTotal })}
                             </span>
                             <span className="flex items-center">
                                 <div className="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></div>
-                                {community.membersOnline} online
+                                {t('communities.header.online', { count: community.membersOnline })}
                             </span>
                         </div>
                     </div>

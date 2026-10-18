@@ -3,6 +3,7 @@ import CreatePost from './CreatePost';
 import PostCard from './PostTypes';
 import type {Post} from './PostTypes';
 import API from '../../Service/service';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 interface LFGFeedProps {
     communityId: string,
@@ -10,6 +11,7 @@ interface LFGFeedProps {
 }
 
 const LFGFeed: React.FC<LFGFeedProps> = ({ communityId, activeTab }) => {
+    const { t } = useLanguage();
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -52,7 +54,7 @@ const LFGFeed: React.FC<LFGFeedProps> = ({ communityId, activeTab }) => {
                 <CreatePost onPostCreate={handlePostCreate} activeTab={activeTab} />
                 <div className="text-center py-8">
                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                    <p className="text-gray-500">Loading LFG posts...</p>
+                    <p className="text-gray-500">{t('communities.lfg.loading')}</p>
                 </div>
             </div>
         );
@@ -76,8 +78,8 @@ const LFGFeed: React.FC<LFGFeedProps> = ({ communityId, activeTab }) => {
                 ))
             ) : (
                 <div className="text-center py-12">
-                    <p className="text-gray-500 mb-4">No LFG posts yet</p>
-                    <p className="text-sm text-gray-400">Be the first to start a collaboration!</p>
+                    <p className="text-gray-500 mb-4">{t('communities.lfg.empty')}</p>
+                    <p className="text-sm text-gray-400">{t('communities.lfg.emptyHint')}</p>
                 </div>
             )}
         </div>

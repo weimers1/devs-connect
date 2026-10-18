@@ -1,253 +1,195 @@
 import React, { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import API from '../../Service/service';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 interface CommunityActionBarProps {
+    isJoined?: boolean;
+    onJoinToggle?: () => Promise<void>;
     community: {
         id: string;
         description: string;
+        isPrivate?: boolean;
         createdDate?: string;
         createdAt?: string;
         isOwner?: boolean;
+        isMember?: boolean;
     };
-   
 }
-const CommunityActionBar: React.FC<CommunityActionBarProps> = ({ 
-    community, 
-   
+const CommunityActionBar: React.FC<CommunityActionBarProps> = ({
+    community,
+    isJoined,
+    onJoinToggle,
 }) => {
-
-const { communityId } = useParams<{ communityId: string }>(); //Get the community ID FROM Browser
-const [membershipStatus, setMembershipStatus] = useState(false);
-const [isOwner, setOwnerStatus] = useState(false);
-const [isAdmin, setIsAdmin] = useState(false);
-const [isReview, setisReview] = useState(false);
-const [reviewValue, setreviewValue] = useState(0);
-const [loading, setLoading] = useState(false);
-// const [promoteUser, setpromoteUser] = useState(false);
-// const [ownerId, setOwnerId] = useState<string | null>();
-
-    //  function handleReviewClick() {
-
-    // }
-   
-//Handle The Review Submission
-const handleReviewSubmit = async() => {
-    try{
-         setLoading(true);
-        const userId = await API.getCurrentUser();
-        if(!userId) {
-            console.log("No User Logged IN");
-            return;
-        }
-    if(communityId) {
-       
-        const review = await API.handleReviewSubmit(communityId, reviewValue);
-      
-        if(!review.success) {
-            console.log("Failed To Submit A review")
-        }
-    } 
-    } catch(error) {
-        console.log("There was an error trying to submit the review", error);
-        return;
-    } finally {
-        setLoading(false);
-        setisReview(false);
-    }
-}
-    const onJoin = async () =>  {
-    // Implement join community logic here
-    try{    
-    const user = await API.getCurrentUser();
-        const userId =  user.userId;
-        if(!userId) {
-            console.log("No user Logged in");
-            return;
-        }
-        if(userId && communityId) {
-            const response = await API.joinCommunity(communityId);
-            if(!response.success){
-                console.log("Failed to join community");
-            }
-              setMembershipStatus(true);
-        }
-    } catch(error) {
-        console.log("There was some issue with joining community", error);
-        navigate('/login'); //No auth = no interactiing
-    }
-  }
-
-  const LeaveCommunity = async () => {
-    try {
-        const user = await API.getCurrentUser();
-        if(!user) {
-            console.log("no user logged in ");
-            return;
-        }
-        // if(isOwner) {
-        //     setpromoteUser(true);
-        //     return;
-        // }
-        if(membershipStatus == true && user && communityId) {
-            const leavecommunity = await API.LeaveCommunity(user.userId, communityId);
-            if(!leavecommunity.success){
-                console.log("Failed to leave community");
-            }
-              setMembershipStatus(false);
-        }
-    } catch(error) {
-        console.log("There was some issue with leaving community", error);
-    }
-
-  }
-
-useEffect(() => {
-    if (!communityId) return;
-
-    const fetchUserCommunityStatus = async () => {
-        const user = await API.getCurrentUser();
-        if (!user?.userId) return;
-
-     const results = await Promise.allSettled([
-            API.getCommunityMembership(communityId, user.userId),
-            API.isCommunityOwner(user.userId, communityId),
-            API.getCommunityAdmins(communityId, user.userId),
-            API.getReview(communityId),
-]);
-
-            const [membership, owner, admin, review] = results;
-           
-        setMembershipStatus(membership.status === "fulfilled" ? membership.value?.isMember : false);
-        setOwnerStatus(owner.status === "fulfilled" ? owner.value?.owner : false);
-        setIsAdmin(admin.status === "fulfilled" ? admin.value?.admin : false);
-        setreviewValue(review.status === "fulfilled" ? review.value?.Review?.[0].Review : null);
-    };
-
-   
-    fetchUserCommunityStatus();
-}, [communityId]);
-
     const navigate = useNavigate();
-    const handleEditCommunity = () => {
-        if(isOwner == true || isAdmin) {
-        navigate(`/edit-community/${communityId}`);
-        }else {
-            return;
+    const { t, language } = useLanguage();
+    const [membershipStatus, setMembershipStatus] = useState(
+        isJoined ?? (community.isOwner === true || community.isMember === true),
+    );
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isUpdatingMembership, setIsUpdatingMembership] = useState(false);
+    const [membershipError, setMembershipError] = useState('');
+
+    useEffect(() => {
+        setMembershipStatus(
+            isJoined ?? (community.isOwner === true || community.isMember === true),
+        );
+    }, [community.isMember, community.isOwner, isJoined]);
+
+    useEffect(() => {
+        let active = true;
+        const fetchAdminStatus = async () => {
+            try {
+                const user = await API.getCurrentUser();
+                if (!user?.userId) return;
+                const admin = await API.getCommunityAdmins(
+                    community.id,
+                    String(user.userId),
+                );
+                if (active) setIsAdmin(admin?.admin === true);
+            } catch {
+                if (active) setIsAdmin(false);
+            }
+        };
+
+        void fetchAdminStatus();
+        return () => {
+            active = false;
+        };
+    }, [community.id]);
+
+    const onJoin = async () => {
+        if (!community.id || isUpdatingMembership) return;
+        setIsUpdatingMembership(true);
+        setMembershipError('');
+        try {
+            const user = await API.getCurrentUser();
+            if (!user?.userId) {
+                navigate('/login');
+                return;
+            }
+            if (onJoinToggle) {
+                await onJoinToggle();
+                setMembershipStatus((joined) => !joined);
+                return;
+            }
+            const response = await API.joinCommunity(community.id);
+            if (response?.success !== true) {
+                throw new Error(t('communities.actionBar.joinNotConfirmed'));
+            }
+            setMembershipStatus(true);
+        } catch (error) {
+            console.error('Failed to join community:', error);
+            setMembershipError(
+                error instanceof Error
+                    ? error.message
+                    : t('communities.actionBar.joinFailed'),
+            );
+        } finally {
+            setIsUpdatingMembership(false);
         }
     };
+
+    const leaveCommunity = async () => {
+        if (!community.id || isUpdatingMembership) return;
+        setIsUpdatingMembership(true);
+        setMembershipError('');
+        try {
+            const user = await API.getCurrentUser();
+            if (!user?.userId) {
+                navigate('/login');
+                return;
+            }
+            const response = await API.LeaveCommunity(
+                String(user.userId),
+                community.id,
+            );
+            if (response?.success !== true) {
+                throw new Error(t('communities.actionBar.leaveNotConfirmed'));
+            }
+            setMembershipStatus(false);
+        } catch (error) {
+            console.error('Failed to leave community:', error);
+            setMembershipError(
+                error instanceof Error
+                    ? error.message
+                    : t('communities.actionBar.leaveFailed'),
+            );
+        } finally {
+            setIsUpdatingMembership(false);
+        }
+    };
+
+    const handleEditCommunity = () => {
+        if (community.isOwner === true || isAdmin) {
+            navigate(`/edit-community/${community.id}`);
+        }
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <p className="text-gray-600 mb-2">{community.description}</p>
                     <p className="text-sm text-gray-500">
-                        Created {new Date(community.createdDate || community.createdAt || Date.now()).toLocaleDateString('en-US', { 
+                        {t('communities.actionBar.created', { date: new Date(community.createdDate || community.createdAt || Date.now()).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', { 
                             year: 'numeric', 
                             month: 'long', 
                             day: 'numeric' 
-                        })}
+                        }) })}
                     </p>
                 </div>
-                <div className="flex space-x-3">
-                    {(isOwner || isAdmin)  && (
-                        <>
-                            <button 
+                <div className="flex flex-wrap items-center gap-3">
+                    {(community.isOwner || isAdmin) && (
+                        <button
                                 onClick={handleEditCommunity}
                                 className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                            >
-                                <Icon icon="mdi:cog" className="w-4 h-4 mr-2 inline" />
-                                Edit Community
-                            </button>
-                            {/* {isOwner ?(
-                                     <div className="px-4 py-2 bg-green-100 text-green-700 rounded-lg">
-                                <Icon icon="mdi:crown" className="w-4 h-4 mr-2 inline" />
-                                Owner
-                            </div>
-                            ) : (
-                                <div className="px-4 py-2 bg-green-100 text-green-700 rounded-lg">
-                                Admin
-                                </div>
-                            )} */}
-                           
-                        </>
-                    ) }
+                        >
+                            <Icon icon="mdi:cog" className="w-4 h-4 mr-2 inline" />
+                            {t('communities.actionBar.editCommunity')}
+                        </button>
+                    )}
+                    {community.isOwner ? (
+                        <div className="px-6 py-3 rounded-xl bg-green-100 text-green-700 font-semibold">
+                            <Icon icon="mdi:crown" className="w-4 h-4 mr-2 inline" />
+                            {t('communities.actionBar.owner')}
+                        </div>
+                    ) : community.isPrivate && !membershipStatus ? (
+                        <span className="inline-flex items-center gap-2 rounded-xl bg-gray-100 px-5 py-3 font-semibold text-gray-600">
+                            <Icon icon="mdi:lock-outline" className="h-4 w-4" />
+                            {t('communities.actionBar.inviteOnly')}
+                        </span>
+                    ) : (
                         <button
-                            
-                        onClick={membershipStatus ? LeaveCommunity : onJoin}
-                            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                            type="button"
+                            onClick={membershipStatus && !onJoinToggle ? leaveCommunity : onJoin}
+                            disabled={isUpdatingMembership}
+                            aria-label={membershipStatus ? t('communities.actionBar.leaveCommunity') : t('communities.actionBar.joinCommunity')}
+                            className={`px-6 py-3 rounded-xl font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 ${
                                 membershipStatus
                                     ? 'bg-green-100 text-green-700 hover:bg-green-200'
                                     : 'bg-blue-600 text-white hover:bg-blue-700'
                             }`}
                         >
-                            <Icon 
-                                icon={membershipStatus ? "mdi:check" : "mdi:plus"} 
-                                className="w-4 h-4 mr-2 inline" 
+                            <Icon
+                                icon={isUpdatingMembership ? 'mdi:loading' : membershipStatus ? 'mdi:check' : 'mdi:plus'}
+                                className={`w-4 h-4 mr-2 inline ${isUpdatingMembership ? 'animate-spin' : ''}`}
                             />
-                            {membershipStatus ? 'Joined' : 'Join Community'}
+                            {isUpdatingMembership
+                                ? t('communities.actionBar.pleaseWait')
+                                : membershipStatus
+                                  ? t('communities.actionBar.joined')
+                                  : t('communities.actionBar.joinCommunity')}
                         </button>
-                        {membershipStatus && (
-                                  <button className="hover:scale-120 transition-transform"
-                        onClick={() =>setisReview(true)}
-                        >
-                              <Icon
-
-                                                                        icon="mdi:star"
-                                                                        className={`w-12 h-12 text-yellow-400`}
-                                                                    />
-                        </button>
-                        )}
-                  
-                              {isReview && (
-                                                                <>
-                                            <div className="fixed bg-gray/20 backdrop-invert backdrop-opacity-20 inset-0 flex items-center justify-center ">
-                                           
-                                    <div className="bg-white rounded-xl mb-12 p-6  md:w-90 md:h-60  ">
-                                        <div className="flex">
-                                          <h2 className="text-3xl font-bold  text-center ml-7">{`Leave A Review`}</h2>
-                                          <button className="ml-8.5"
-                                          onClick={() => setisReview(false)}
-                                          ><Icon icon="icomoon-free:cross" width="18" height="18"/></button>
-                                          </div>
-                                        <div className="flex mt-10  ">
-                                             <button  onClick={() => setreviewValue(1)}>
-                                                <Icon key={1} icon="mdi:star"  width="60" height="60" className={`mb-2 mx-auto  ${
-                                                    reviewValue >= 1 ? "text-yellow-400" : "text-gray-400"
-                                                }`} /></button>
-                                                 <button onClick={() => setreviewValue(2)}>
-                                                     <Icon key={2} icon="mdi:star"  width="60" height="60" className={`mb-2 mx-auto  ${
-                                                    reviewValue >= 2 ? "text-yellow-400" : "text-gray-400"
-                                                }`} /></button>
-                                                     <button  onClick={() => setreviewValue(3)}>
-                                                         <Icon key={3} icon="mdi:star"   width="60" height="60" className={`mb-2 mx-auto ${
-                                                    reviewValue >= 3 ? "text-yellow-400" : "text-gray-400"
-                                                }`} /></button>
-                                                        <button  onClick={() => setreviewValue(4)}>
-                                                             <Icon key={4} icon="mdi:star"  width="60" height="60" className={`mb-2 mx-auto  ${
-                                                    reviewValue >= 4 ? "text-yellow-400" : "text-gray-400"
-                                                }`} /></button>
-                                                             <button  onClick={() => setreviewValue(5)}>
-                                                                <Icon key={5} icon="mdi:star" width="60" height="60" className={`mb-2 mx-auto  ${
-                                                    reviewValue >= 5 ? "text-yellow-400" : "text-gray-400"
-                                                }`} /></button>
-                                              
-                                        </div>
-                                                  <button onClick={() => handleReviewSubmit()} className=" mt-3 flex p-1.5 rounded-xl float-right bg-blue-800 text-white">{loading ? 
-          
-          <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-1"></div>
-        : 'Submit'}
-                                                    
-                                                   </button>    
-                                    </div> 
-                                    
-                                </div>
-                                
-                                </>
-                                                )}
+                    )}
                 </div>
             </div>
+            {membershipError && (
+                <p className="mt-4 text-sm text-red-600" role="alert">
+                    {membershipError}
+                </p>
+            )}
         </div>
     );
 };

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 interface TypeaheadProps {
     apiEndpoint: string;
     id: string;
     inputClasses: string;
     placeHolder: string;
-    inheritedOnChange: Function;
+    inheritedOnChange: (selectedId: number) => void;
+    onSelect?: (result: SearchResult) => void;
 }
 
 interface SearchResult {
@@ -19,7 +21,9 @@ const Typeahead = ({
     inputClasses,
     placeHolder,
     inheritedOnChange,
+    onSelect,
 }: TypeaheadProps) => {
+    const { t } = useLanguage();
     const [searchTerm, setSearchTerm] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -77,7 +81,7 @@ const Typeahead = ({
             setIsOpen(true);
         } catch (error) {
             console.error('Search API error:', error);
-            setError('Failed to fetch search results');
+            setError(t('social.typeahead.fetchError'));
             setResults([]);
             setIsOpen(false);
         }
@@ -87,6 +91,7 @@ const Typeahead = ({
         setHasSelected(true); // Set flag to prevent search
         setSearchTerm(result.text);
         setSelectedId(result.id);
+        onSelect?.(result);
         setResults([]);
         setIsOpen(false);
     };

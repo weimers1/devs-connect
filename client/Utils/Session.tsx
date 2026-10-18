@@ -1,15 +1,12 @@
-export const validateSession = async (
-    sessionToken: string
-): Promise<boolean> => {
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+
+export const validateSession = async (): Promise<boolean> => {
     try {
         const response = await fetch(
-            `http://localhost:6969/session/status/get`,
+            `${API_BASE}/session/status/get`,
             {
                 method: 'GET',
                 credentials: 'include',
-                headers: {
-                    Authorization: `Bearer ${sessionToken}`,
-                },
             }
         );
 

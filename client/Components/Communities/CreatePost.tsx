@@ -5,6 +5,7 @@ import API from '../../Service/service';
 import { useParams } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 interface CreatePostProps {
     onPostCreate: (postData: any) => void,
@@ -13,6 +14,7 @@ interface CreatePostProps {
 
 const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
     const { requireAuth } = useAuthRedirect();
+    const { t } = useLanguage();
     const [content, setContent] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
     const {communityId} = useParams();
@@ -20,47 +22,60 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
     const [selectedDate, setSelectedDate] = useState(new Date());
     //Community Membership 
     const [isMember, setIsMember] = useState(false);
+    const [membershipLoading, setMembershipLoading] = useState(true);
     const [adminstatus, setadminStatus] = useState(false);
 
-    //UseEffect to determine membership
     useEffect(() => {
-        const getMembershipStatus = async() => {
-        try{
-        const userId = await API.getCurrentUser();
-        if(userId && communityId) {
-            const membershipStatus = await API.getCommunityMembership(communityId, userId.userId);
-            if(membershipStatus.isMember == true) {
-                 setIsMember(true);
-            } else {
-                setIsMember(false);
+        let active = true;
+        const loadCommunityPermissions = async () => {
+            setMembershipLoading(true);
+            try {
+                if (!communityId) {
+                    setIsMember(false);
+                    setadminStatus(false);
+                    return;
+                }
+                const currentUser = await API.getCurrentUser();
+                if (!currentUser?.userId) {
+                    setIsMember(false);
+                    setadminStatus(false);
+                    return;
+                }
+
+                const [membership, admin] = await Promise.allSettled([
+                    API.getCommunityMembership(communityId, currentUser.userId),
+                    API.getCommunityAdmins(communityId, currentUser.userId),
+                ]);
+                if (membership.status === 'rejected') {
+                    throw membership.reason;
+                }
+                if (active) {
+                    setIsMember(membership.value.isMember === true);
+                    setadminStatus(
+                        admin.status === 'fulfilled' && admin.value.admin === true,
+                    );
+                }
+            } catch (error) {
+                console.error('Failed to load community posting permissions:', error);
+                if (active) {
+                    setIsMember(false);
+                    setadminStatus(false);
+                }
+            } finally {
+                if (active) setMembershipLoading(false);
             }
-        }
-        } catch(error) {
-            console.log("There was an error obtaining the membershipstatus", error);
-        }
-    }
-               const determineStatus = async () =>  {
-          
-        try {
-            const currentUser = await API.getCurrentUser(); 
-             if(currentUser.userId && communityId) {
-            const isOwnerOrAdmin = await API.getCommunityAdmins(communityId, currentUser.userId);
-            setadminStatus(isOwnerOrAdmin.admin);
-             }
-            
-        } catch(error) {
-            console.log("failed to determine the staus of the user", error);
-        } 
-    }
-    determineStatus();
-     getMembershipStatus();    
-     
-   
-    },[])
+        };
+
+        void loadCommunityPermissions();
+        return () => {
+            active = false;
+        };
+    }, [communityId]);
 
   
     //Handle Post Click - if user is a member, expand the post form, if not show not member tab
     const handlePostClick = () => {
+        if (membershipLoading) return;
         if(isMember) {
             setIsExpanded(true);
         } else {
@@ -77,10 +92,10 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
 
     const PostTypes = 
     [
-    { type: 'posts', icon: 'mdi:code-tags', label: 'Posts', color: 'blue' },
-    { type: 'lfg', icon: 'mdi:account-group', label: 'LFG', color: 'green' },
-    { type: 'qanda', icon: 'mdi:help-circle', label: 'Q&A', color: 'purple' },
-    { type: 'event', icon: 'mdi:calendar', label: 'events', color: 'red' }
+    { type: 'posts', icon: 'mdi:code-tags', label: t('communities.createPost.type.posts'), color: 'blue' },
+    { type: 'lfg', icon: 'mdi:account-group', label: t('communities.createPost.type.lfg'), color: 'green' },
+    { type: 'qanda', icon: 'mdi:help-circle', label: t('communities.createPost.type.qanda'), color: 'purple' },
+    { type: 'event', icon: 'mdi:calendar', label: t('communities.createPost.type.events'), color: 'red' }
     ];
 
     //Const Times
@@ -218,13 +233,15 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                         type="text"
                         value={''}
                         placeholder={
-                            activeTab === 'posts' ? "Post an exciting accomplishment or something you learned..." :
-                            activeTab === 'lfg' ? "Describe your project and what you're looking for..." :
-                            activeTab === "events" ? "What's Your event?"  :
-                            "What's your question?"
+                            activeTab === 'posts' ? t('communities.createPost.postPlaceholder') :
+                            activeTab === 'lfg' ? t('communities.createPost.lfgPlaceholder') :
+                            activeTab === "events" ? t('communities.createPost.eventPlaceholder')  :
+                            t('communities.createPost.questionPlaceholder')
                         }
                         className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                         onClick={() => requireAuth(() => handlePostClick())}
+                        disabled={membershipLoading}
+                        aria-busy={membershipLoading}
                         readOnly
                     />
                    
@@ -262,7 +279,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                     {activeTab == 'qanda' && (
                         <input
                             type="text"
-                            placeholder="What's your question?"
+                            placeholder={t('communities.createPost.questionPlaceholder')}
                             value={question}
                             onChange={(e) => setQuestion(e.target.value)}
                             className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
@@ -270,13 +287,13 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                     )}
 
                     {/* Main Content */}
-                     {activeTab === "events" &&  <p className="font-bold text-black text-xl">Event Topic</p>}
+                     {activeTab === "events" &&  <p className="font-bold text-black text-xl">{t('communities.createPost.eventTopic')}</p>}
                     <textarea
                         placeholder={
-                            activeTab === 'posts' ? "Post an exciting accomplishment or something you learned..." :
-                            activeTab === 'lfg' ? "Describe your project and what you're looking for..." :
-                            activeTab === "events" ? "What's Your event?"  :
-                            "provide more details about your questions..."
+                            activeTab === 'posts' ? t('communities.createPost.postPlaceholder') :
+                            activeTab === 'lfg' ? t('communities.createPost.lfgPlaceholder') :
+                            activeTab === "events" ? t('communities.createPost.eventPlaceholder')  :
+                            t('communities.createPost.questionDetailsPlaceholder')
                         }
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
@@ -299,7 +316,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                                 <option value="html">HTML</option>
                             </select>
                             <textarea
-                                placeholder="Paste your code here (optional)..."
+                                placeholder={t('communities.createPost.codePlaceholder')}
                                 value={codeSnippet}
                                 onChange={(e) => setCodeSnippet(e.target.value)}
                                 className="w-full bg-gray-900 text-green-400 font-mono text-sm border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px] resize-none"
@@ -313,7 +330,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                        <div className="mx-4 container mb-4">
   <div className="flex flex-row items-end gap-4 w-full justify-around">
     <div className="flex flex-col">
-      <label className="text-xl text-black">Start Date</label>
+      <label className="text-xl text-black">{t('communities.createPost.startDate')}</label>
       <div className="react-datepicker rounded-x md:w-32 md:h-8  ">
         <DatePicker minDate={minDate} maxDate={maxDate} 
         className=" md:w-32 items-center md:h-8 px-6 text-black py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -323,7 +340,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
       </div>
     </div>
     <div className="flex flex-col">
-      <label className="text-xl text-black">Start Time</label>
+      <label className="text-xl text-black">{t('communities.createPost.startTime')}</label>
       <select 
         value={Time}
         onChange={(e) => setTime(e.target.value)} 
@@ -348,21 +365,21 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <input
                                 type="text"
-                                placeholder="Project type (e.g., Web App)"
+                                placeholder={t('communities.createPost.projectType')}
                                 value={projectType}
                                 onChange={(e) => setProjectType(e.target.value)}
                                 className="bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                             <input
                                 type="text"
-                                placeholder="Duration (e.g., 2-3 months)"
+                                placeholder={t('communities.createPost.duration')}
                                 value={duration}
                                 onChange={(e) => setDuration(e.target.value)}
                                 className="bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                             <input
                                 type="text"
-                                placeholder="Skills needed (comma separated)"
+                                placeholder={t('communities.createPost.skills')}
                                 value={skillsNeeded}
                                 onChange={(e) => setSkillsNeeded(e.target.value)}
                                 className="bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -376,14 +393,14 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                             onClick={() => setIsExpanded(false)}
                             className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                         >
-                            Cancel
+                            {t('communities.createPost.cancel')}
                         </button>
                         <button
                             onClick={() => requireAuth(handleSubmit)}
                             disabled={!content.trim() || (activeTab === 'qanda' && !question.trim())}
                             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Post
+                            {t('communities.createPost.post')}
                         </button>
                     </div>
                 </div>
@@ -394,7 +411,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreate, activeTab }) => {
                            
                     <div className="bg-white rounded-xl mb-12 p-6  md:w-90 mx-4">
                           <Icon icon="streamline-plump-color:sad-face-flat" className="mb-2 mx-auto" width="72" height="72" />
-                        <h2 className="text-2xl font-bold mb-6 text-center">{`You are not a member of this community, consider joining!`}</h2>
+                        <h2 className="text-2xl font-bold mb-6 text-center">{t('communities.createPost.notMember')}</h2>
                         <div className="flex flex-col gap-3">
                         </div>
                     </div> 

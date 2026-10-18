@@ -1,60 +1,12 @@
 import UserProfile from '../Models/UserProfile.js';
 import Session from '../models/Session.js';
 import User from '../models/User.js';
-import DisplaySettings from '../models/DisplaySettings.js';
-import GeneralPreferences from '../models/GeneralPreferences.js';
-import Privacy_Security from '../models/Privacy-Security.js';
+import DisplaySettings from '../Models/DisplaySettings.js';
+import GeneralPreferences from '../Models/GeneralPreferences.js';
+import Privacy_Security from '../Models/Privacy-Security.js';
 import stytch from '../config/stytch.js';
-import VisibilitySettings from '../models/VisibilitySettings.js';
-import Certifications from '../models/Certifications.js';
-
-export const linkGitHub = async (req, res) => {
-    try {
-        const user = await User.findOne({
-            where: { id: req.user.userId },
-        });
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Validate GitHub data
-        const { githubId, githubUsername, githubEmail } = req.body;
-
-        if (!githubId || !githubUsername) {
-            return res
-                .status(400)
-                .json({ error: 'GitHub ID and username are required' });
-        }
-
-        // Validate email format if provided using literal regex
-        if (
-            githubEmail &&
-            !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(
-                githubEmail
-            )
-        ) {
-            return res.status(400).json({ error: 'Invalid email format' });
-        }
-
-        // Update user with GitHub info
-        await user.update({ 
-            githubId,
-            githubUsername,
-            githubEmail,
-        });
-
-        res.json({
-            message: 'GitHub account linked successfully',
-            githubId: req.body.githubId,
-            githubUsername: req.body.githubUsername,
-            githubEmail: req.body.githubEmail,
-        });
-    } catch (error) {
-        console.error('GitHub link error:', error);
-        res.status(500).json({ error: 'Failed to link GitHub account' });
-    }
-};
+import VisibilitySettings from '../Models/VisibilitySettings.js';
+import Certifications from '../Models/Certifications.js';
 
 export const addCertification = async (req, res) => {
     try {

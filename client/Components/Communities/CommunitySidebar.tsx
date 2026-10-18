@@ -1,9 +1,20 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams} from 'react-router-dom';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthRedirect } from '../Auth/useAuthRedirect';
 import API from '../../Service/service';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import Profile from '/assets/images/Nav-Profile.png';
+import { useLanguage } from '../../src/i18n/LanguageContext';
+
+interface CommunitySidebarMember {
+    id: string | number;
+    publicId: string;
+    role: string;
+    firstName: string;
+    lastName: string;
+    profileImageUrl?: string | null;
+    isOnline?: boolean;
+}
 
 interface CommunitySidebarProps {
     community: {
@@ -11,7 +22,7 @@ interface CommunitySidebarProps {
         membersOnline: string;
         category: string;
         rules: string;
-        members?: any[];
+        members?: CommunitySidebarMember[];
     };
     showMembersCenter: boolean;
     setShowMembersCenter?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -20,6 +31,7 @@ interface CommunitySidebarProps {
 
 const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community, setShowMembersCenter, showMembersCenter }) => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const { requireAuth } = useAuthRedirect();
 
     const Temppfp = Profile;   
@@ -29,19 +41,22 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community, setShowM
     }
 };
 
-    const handleProfileClick = async (userId: string) => {
+    const handleProfileClick = async (userId: string, publicId: string) => {
         requireAuth(async () => {
             try {
                 const currentUser = await API.getCurrentUser();
-                    if(!currentUser) navigate('/login');
-                    if(userId == currentUser.userId) {
+                if (!currentUser) {
+                    navigate('/login');
+                    return;
+                }
+                if (userId === String(currentUser.userId)) {
                         navigate('/profile');
                     } else
-                    navigate(`/profile/${userId}`);
+                    navigate(`/profile/${publicId}`);
             } catch (error) {
                 console.error('Failed to get current user:', error);
                 // Fallback to other user profile
-                navigate(`/profile/${userId}`);
+                navigate(`/profile/${publicId}`);
             }
         });
     };
@@ -50,18 +65,18 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community, setShowM
         <div className="space-y-6">
             {/* Community Stats */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Community Stats</h3>
+                <h3 className="font-semibold text-gray-900 mb-4">{t('communities.sidebar.stats')}</h3>
                 <div className="space-y-3">
                     <div className="flex justify-between">
-                        <span className="text-gray-600">Total Members</span>
+                        <span className="text-gray-600">{t('communities.sidebar.totalMembers')}</span>
                         <span className="font-semibold">{community.membersTotal}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-gray-600">Online Now</span>
+                        <span className="text-gray-600">{t('communities.sidebar.onlineNow')}</span>
                         <span className="font-semibold text-green-600">{community.membersOnline}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-gray-600">Category</span>
+                        <span className="text-gray-600">{t('communities.sidebar.category')}</span>
                         <span className="font-semibold">{community.category}</span>
                     </div>
                 </div>
@@ -69,7 +84,7 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community, setShowM
 
             {/* Community Rules */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Community Rules</h3>
+                <h3 className="font-semibold text-gray-900 mb-4">{t('communities.sidebar.rules')}</h3>
                 <div className="space-y-3 w-full">
                         <div  className="flex space-x-2">
                             <p  className="rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{community.rules}</p>
@@ -80,7 +95,7 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community, setShowM
 
             {/* Active Members */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
-  <h3 className="font-semibold text-gray-900 mb-4">Community Members</h3>
+  <h3 className="font-semibold text-gray-900 mb-4">{t('communities.sidebar.members')}</h3>
 
   <div className="space-y-3">
     {community.members && community.members.length > 0 ? (
@@ -97,7 +112,7 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community, setShowM
                   }
                   alt={`${member.firstName} ${member.lastName}`}
                   className="w-8 h-8 rounded-full object-cover hover:ring-2 hover:ring-blue-500 cursor-pointer"
-                  onClick={() => handleProfileClick(member.id)}
+                  onClick={() => handleProfileClick(String(member.id), member.publicId)}
                 />
 
                 <div
@@ -111,34 +126,34 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community, setShowM
           <div className="flex-1">
             <span
               className="text-sm text-gray-700 hover:text-blue-500 cursor-pointer"
-              onClick={() => handleProfileClick(member.id)}
+              onClick={() => handleProfileClick(String(member.id), member.publicId)}
             >
               {member.firstName} {member.lastName}
             </span>
 
             {member.role === "admin" && (
               <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">
-                Admin
+                {t('communities.sidebar.admin')}
               </span>
             )}
              {member.role === "owner" && (
               <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">
                  <Icon icon="mdi:crown" className="w-4 h-4 mr-1 inline" />
-                Owner
+                {t('communities.sidebar.owner')}
               </span>
             )}
           </div>
         </div>
       ))
     ) : (
-      <p className="text-gray-500 text-sm">No members yet</p>
+      <p className="text-gray-500 text-sm">{t('communities.sidebar.noMembers')}</p>
     )}
 
     {community.members && community.members.length > 5 && (
       <button className="text-sm text-blue-500 cursor-pointer"
       onClick={handleShowMembersClick}
       >
-        View all members
+        {t('communities.sidebar.viewAll')}
       </button>
     )}
   
@@ -157,7 +172,7 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community, setShowM
       </button>
 
       {/* Modal Title */}
-      <h2 className="text-2xl font-bold mb-4 text-center">Community Members</h2>
+      <h2 className="text-2xl font-bold mb-4 text-center">{t('communities.sidebar.members')}</h2>
 
       {/* Members List */}
       <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">
@@ -171,28 +186,28 @@ const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ community, setShowM
               >
                 <div className="flex items-center space-x-3">
                   <img
-                    onClick={() => handleProfileClick(member.id)}
+                    onClick={() => handleProfileClick(String(member.id), member.publicId)}
                     src={member.profileImageUrl || Temppfp}
                     alt={`${member.firstName} ${member.lastName}`}
                     className="w-10 h-10 rounded-full object-cover"
                   />
                   <div>
                     <p className="font-medium truncate"
-                     onClick={() => handleProfileClick(member.id)}
+                     onClick={() => handleProfileClick(String(member.id), member.publicId)}
                     >{member.firstName} {member.lastName}</p>
-                    <p className="text-xs text-gray-500">{member.isOnline ? "Online" : "Offline"}</p>
+                    <p className="text-xs text-gray-500">{member.isOnline ? t('communities.sidebar.online') : t('communities.sidebar.offline')}</p>
                   </div>
                   {member.role === "admin" && (
-                    <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Admin</span>
+                    <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">{t('communities.sidebar.admin')}</span>
                   )}
                   {member.role === "owner" && (
-                    <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded">Owner</span>
+                    <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded">{t('communities.sidebar.owner')}</span>
                   )}
                 </div>
               </div>
             ))
         ) : (
-          <p className="text-gray-500 text-sm text-center mt-4">No members yet</p>
+          <p className="text-gray-500 text-sm text-center mt-4">{t('communities.sidebar.noMembers')}</p>
         )}
       </div>
     </div>

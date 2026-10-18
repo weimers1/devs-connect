@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { assets } from '../../assets/assets';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useDropdown } from '../DropDown/DropDownContext';
 import ProfileDropdown from '../DropDown/ProfileDropDown';
@@ -9,64 +9,78 @@ import { useAuth } from '../Auth/AuthContext';
 import { defaultRoutes, protectedRoutes } from '../../Utils/routes';
 import API from '../../Service/service';
 import NavBarSearch from './NavBarSearch';
-
-export interface Community {
-    id: string;
-    name: string;
-    description?: string;
-    memberCount: number;
-    image?: string;
-    color?: string;
-    icon?: string;
-    isPrivate: boolean;
-}
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 const Navbar: React.FC = () => {
     // const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
     // const { theme } = useTheme();
-    const { isProfileDropdownOpen, toggleProfileDropdown } = useDropdown();
+    const { isProfileDropdownOpen, toggleProfileDropdown, closeAll } = useDropdown();
+    const profileMenuRef = useRef<HTMLDivElement>(null);
     const { isAuthenticated } = useAuth();
+    const { t, language, setLanguage } = useLanguage();
+    const routeTitle = (title: string) => {
+        const key = `nav.route.${title}`;
+        const translated = t(key);
+        return translated === key ? title : translated;
+    };
     const [userProfile, setUserProfile] = useState('');
-    const [loading, setLoading] = useState(true);
-    const [name, setName] = useState('');
-    const [communities, setCommunities] = useState<Community[]>([]); // Community Data
+    const [profileDetails, setProfileDetails] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        avatar: '',
+    });
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
 
     useEffect(() => {
+        if (!isProfileDropdownOpen) return;
+
+        const closeOnOutsideClick = (event: MouseEvent) => {
+            if (
+                event.target instanceof Node &&
+                !profileMenuRef.current?.contains(event.target)
+            ) {
+                closeAll();
+            }
+        };
+
+        document.addEventListener('mousedown', closeOnOutsideClick);
+        return () => {
+            document.removeEventListener('mousedown', closeOnOutsideClick);
+        };
+    }, [closeAll, isProfileDropdownOpen]);
+
+    useEffect(() => {
+        let active = true;
         const loadProfileData = async () => {
             try {
                 const response = await API.getProfileInformation();
-                if (response?.pfp) {
-                    setUserProfile(response.pfp);
-                } else {
-                    setUserProfile('');
+                if (active) {
+                    setUserProfile(response?.pfp || '');
+                    setProfileDetails({
+                        firstName: response?.firstName || '',
+                        lastName: response?.lastName || '',
+                        email: response?.email || '',
+                        avatar: response?.pfp || '',
+                    });
                 }
             } catch (error) {
                 console.error('Failed to Load UserProfile', error);
             }
         };
 
-        const fetchCommunities = async () => {
-            try {
-                const currentUser = await API.getCurrentUser();
-                if (!currentUser) return;
-
-                const data = await API.getCommunities();
-                setCommunities(data);
-            } catch (error) {
-                console.error('Failed to fetch communities:', error);
-            }
-        };
-
         if (isAuthenticated) {
-            loadProfileData();
-            fetchCommunities();
+            void loadProfileData();
         } else {
-            setLoading(false);
+            setUserProfile('');
+            setProfileDetails({ firstName: '', lastName: '', email: '', avatar: '' });
         }
+        return () => {
+            active = false;
+        };
     }, [isAuthenticated]);
 
     //Overall Search Bar Update
@@ -96,11 +110,6 @@ const Navbar: React.FC = () => {
 
     const isActive = (route: string) => location.pathname === route;
 
-    //Loading
-    if (loading) {
-        <div>Loading....</div>;
-    }
-
     return (
         <nav
             className={`sticky top-0 z-50 shadow-lg border-b`}
@@ -120,7 +129,7 @@ const Navbar: React.FC = () => {
                             <img
                                 src={assets.Logo}
                                 className="h-10 w-auto"
-                                alt="DevConnect Logo"
+                                alt={t('nav.logoAlt')}
                             />
                             <span
                                 className={`text-xl font-bold hidden sm:block
@@ -147,7 +156,7 @@ const Navbar: React.FC = () => {
                                     type="text"
                                     value={searchQuery}
                                     className="block rounded-2xl w-full pl-10 pr-3 py-1.5 border leading-5 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out bg-white border-black"
-                                    placeholder="Search communities and people..."
+                                    placeholder={t('nav.searchLong')}
                                     onChange={handleSearchChange}
                                 />
                             </div>
@@ -173,7 +182,7 @@ const Navbar: React.FC = () => {
                                     type="text"
                                     value={searchQuery}
                                     className="block w-full pl-9 pr-3 py-1.5 text-sm border rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white border-gray-300"
-                                    placeholder="Search..."
+                                    placeholder={t('nav.searchShort')}
                                     onChange={handleSearchChange}
                                 />
                             </div>
@@ -208,7 +217,7 @@ const Navbar: React.FC = () => {
                                         icon={page.icon}
                                         className="w-7 h-7"
                                     />
-                                    <span>{page.title}</span>
+                                    <span>{routeTitle(page.title)}</span>
                                 </Link>
                             );
                         })}
@@ -216,45 +225,43 @@ const Navbar: React.FC = () => {
 
                     {/* Desktop Navigation Links */}
                     <div className="hidden md:flex items-center  space-x-3 mx-12">
+                        <button
+                            type="button"
+                            onClick={() => setLanguage(language === 'en' ? 'es' : 'en')}
+                            className="rounded-lg border border-gray-300 px-2.5 py-1 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100"
+                            aria-label={t('nav.switchLanguage')}
+                            title={t('nav.switchLanguage')}
+                        >
+                            {language === 'en' ? 'ES' : 'EN'}
+                        </button>
                         {/* User Profile / DROPDOWN - Only show if authenticated */}
                         {isAuthenticated && (
-                            <div className="ml-4 flex items-center space-x-3">
-                                <button
-                                    className={`p-2 rounded-lg transition-colors 
-                                        // theme === 'dark'
-                                        //     ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
-                                        //     : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                                    `}
-                                >
-                                    <Icon
-                                        icon="mdi:bell-outline"
-                                        className="w-7 h-7"
-                                    />
-                                </button>
-                                <div className="relative ">
+                            <div
+                                ref={profileMenuRef}
+                                className="ml-4 flex items-center space-x-3"
+                            >
+                                <div className="relative">
                                     <button
                                         onClick={toggleProfileDropdown}
-                                        className="h-8 w-8 rounded-full flex items-center justify-center"
+                                        className="h-9 w-9 overflow-hidden rounded-full border border-gray-200 bg-gray-100 transition hover:ring-2 hover:ring-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        aria-label={t('nav.openProfileMenu')}
                                     >
-                                        {userProfile ? (
-                                            <img
-                                                alt="Profile"
-                                                src={userProfile || assets.Profile}
-                                                className="w-8 h-8 fixed rounded-full object-cover"
-                                                onError={(e) => {
-                                                    e.currentTarget.style.display =
-                                                        'none';
-                                                }}
-                                            />
-                                        ) : (
-                                            <span className="text-white text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-600">
-                                                U
-                                            </span>
-                                        )}
+                                        <img
+                                            alt=""
+                                            src={userProfile || assets.Profile}
+                                            className="h-full w-full rounded-full object-cover"
+                                            onError={(e) => {
+                                                if (e.currentTarget.src !== new URL(assets.Profile, window.location.href).href) {
+                                                    e.currentTarget.src = assets.Profile;
+                                                }
+                                            }}
+                                        />
                                     </button>
                                 </div>
 
-                                {isProfileDropdownOpen && <ProfileDropdown />}
+                                {isProfileDropdownOpen && (
+                                    <ProfileDropdown profile={profileDetails} />
+                                )}
                             </div>
                         )}
 
@@ -265,7 +272,7 @@ const Navbar: React.FC = () => {
                                     to="/login"
                                     className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
                                 >
-                                    Login
+                                    {t('nav.login')}
                                 </Link>
                             </div>
                         )}
@@ -326,13 +333,22 @@ const Navbar: React.FC = () => {
                                         icon={page.icon}
                                         className="w-6 h-6"
                                     />
-                                    <span>{page.title}</span>
+                                    <span>{routeTitle(page.title)}</span>
                                 </Link>
                             );
                         })}
                     </div>
 
                     {/* Mobile User Section */}
+                    <div className="border-t px-4 py-3">
+                        <button
+                            type="button"
+                            onClick={() => setLanguage(language === 'en' ? 'es' : 'en')}
+                            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-700"
+                        >
+                            {t('nav.switchLanguage')} ({language === 'en' ? 'ES' : 'EN'})
+                        </button>
+                    </div>
                     {isAuthenticated ? (
                         <div
                             className={`border-t px-4 py-3 
@@ -342,11 +358,16 @@ const Navbar: React.FC = () => {
                             `}
                         >
                             <div className="flex items-center space-x-3">
-                                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                                    <span className="text-white font-medium">
-                                        U
-                                    </span>
-                                </div>
+                                <img
+                                    src={userProfile || assets.Profile}
+                                    alt=""
+                                    className="h-10 w-10 rounded-full border border-gray-200 bg-gray-100 object-cover"
+                                    onError={(e) => {
+                                        if (e.currentTarget.src !== new URL(assets.Profile, window.location.href).href) {
+                                            e.currentTarget.src = assets.Profile;
+                                        }
+                                    }}
+                                />
                                 <div className="flex-1">
                                     <div
                                         className={`text-base font-medium 
@@ -355,7 +376,7 @@ const Navbar: React.FC = () => {
                                             //     : 'text-gray-900'
                                         `}
                                     >
-                                        User Profile
+                                        {t('nav.userProfile')}
                                     </div>
                                 </div>
                             </div>
@@ -373,7 +394,7 @@ const Navbar: React.FC = () => {
                                 className="w-full flex justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
-                                Login
+                                {t('nav.login')}
                             </Link>
                         </div>
                     )}

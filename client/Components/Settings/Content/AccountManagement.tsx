@@ -1,22 +1,26 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import React, { useState } from 'react';
 // import { useTheme } from '../../../src/ThemeContext';
+import { useAuth } from '../../Auth/AuthContext';
+import { useLanguage } from '../../../src/i18n/LanguageContext';
 
 const Management = [
     {
         id: 'logout',
-        name: 'Sign Out',
-        description: 'Sign out of your account on this device',
+        name: 'settings.account.signOut',
+        description: 'settings.account.signOutDescription',
     },
     {
         id: 'delete-account',
-        name: 'Delete Account',
-        description: 'Permanently delete your account and data',
+        name: 'settings.account.deleteAccount',
+        description: 'settings.account.deleteAccountDescription',
     },
 ];
 
 function AccountManagement() {
+    const { t } = useLanguage();
     // const { theme } = useTheme();
+    const { logout } = useAuth();
     const [openSetting, setOpenSetting] = useState<string | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
@@ -24,8 +28,8 @@ function AccountManagement() {
         setOpenSetting(openSetting === settingId ? null : settingId);
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('session_token');
+    const handleLogout = async () => {
+        await logout();
         window.location.href = '/login';
     };
 
@@ -41,10 +45,12 @@ function AccountManagement() {
                     // theme === 'dark' ? 'text-white' : 'text-gray-900'
                 `}
             >
-                <h2 className="text-xl font-semibold ">Account Management</h2>
-                <p className="text-sm  mt-1">
-                    Manage your account settings and data
-                </p>
+                <h2 className="text-xl font-semibold                 ">
+                                    {t('settings.account.title')}
+                                </h2>
+                                <p className="text-sm  mt-1">
+                                    {t('settings.account.subtitle')}
+                                </p>
             </div>
 
             {Management.map((item, index) => (
@@ -78,10 +84,10 @@ function AccountManagement() {
                                             : ''
                                     }`}
                                 >
-                                    {item.name}
+                                    {t(item.name)}
                                 </h3>
                             </div>
-                            <p className="text-sm ">{item.description}</p>
+                            <p className="text-sm ">{t(item.description)}</p>
                         </div>
                         <Icon
                             icon={
@@ -112,35 +118,23 @@ function AccountManagement() {
                                                 />
                                                 <div>
                                                     <h3 className="font-semibold text-red-800 mb-2">
-                                                        This action cannot be
-                                                        undone
+                                                        {t('settings.account.irreversible')}
                                                     </h3>
                                                     <p className="text-sm text-red-700 mb-3">
-                                                        Your account and all
-                                                        associated data will be
-                                                        permanently deleted
-                                                        after 14 days.
+                                                        {t('settings.account.deleteWarning')}
                                                     </p>
                                                     <div className="text-sm text-red-700 space-y-1">
                                                         <div>
-                                                            • All your posts and
-                                                            comments will be
-                                                            removed
+                                                            • {t('settings.account.deleteBullet.posts')}
                                                         </div>
                                                         <div>
-                                                            • Your community
-                                                            memberships will be
-                                                            cancelled
+                                                            • {t('settings.account.deleteBullet.communities')}
                                                         </div>
                                                         <div>
-                                                            • Your hackathon
-                                                            history will be
-                                                            deleted
+                                                            • {t('settings.account.deleteBullet.hackathons')}
                                                         </div>
                                                         <div>
-                                                            • Any active
-                                                            subscriptions will
-                                                            be cancelled
+                                                            • {t('settings.account.deleteBullet.subscriptions')}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -157,11 +151,11 @@ function AccountManagement() {
                                                     `}
                                                 >
                                                     <label className="block text-sm font-medium  mb-2">
-                                                        Type{' '}
+                                                        {t('settings.account.typeToConfirmPrefix')}{' '}
                                                         <span className="font-mono  px-1 rounded">
                                                             DELETE
                                                         </span>{' '}
-                                                        to confirm
+                                                        {t('settings.account.typeToConfirmSuffix')}
                                                     </label>
                                                 </div>
                                                 <input
@@ -187,7 +181,7 @@ function AccountManagement() {
                                                     }}
                                                     className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
                                                 >
-                                                    Cancel
+                                                    {t('settings.common.cancel')}
                                                 </button>
                                                 <button
                                                     disabled={
@@ -196,7 +190,7 @@ function AccountManagement() {
                                                     }
                                                     className="px-5 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    Delete Account
+                                                    {t('settings.account.deleteAccount')}
                                                 </button>
                                             </div>
                                         </div>
@@ -211,9 +205,7 @@ function AccountManagement() {
                                                 className="w-5 h-5 text-blue-600 mr-3"
                                             />
                                             <p className="text-sm text-blue-800">
-                                                You will be signed out of your
-                                                account and redirected to the
-                                                login page.
+                                                {t('settings.account.signOutNotice')}
                                             </p>
                                         </div>
 
@@ -224,13 +216,13 @@ function AccountManagement() {
                                                 }
                                                 className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
                                             >
-                                                Cancel
+                                                {t('settings.common.cancel')}
                                             </button>
                                             <button
                                                 onClick={handleLogout}
                                                 className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
                                             >
-                                                Sign Out
+                                                {t('settings.account.signOut')}
                                             </button>
                                         </div>
                                     </div>

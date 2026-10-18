@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { useNavigate, useParams } from 'react-router-dom';
-import Tag from '../../Components/Decal/Tag';
+import { useNavigate } from 'react-router-dom';
 import API from '../../Service/service';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 
 export interface Community {
@@ -18,70 +18,96 @@ export interface Community {
 
 const CommunityExplore = () => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [communities, setCommunities] = useState<Community[]>([]);
     const [loading, setLoading] = useState(true);
-    const [CommunityName, setName] = useState('');
-    const [currentUser, setcurrentUser] = useState('');
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(false);
+    const [total, setTotal] = useState(0);
+    const [error, setError] = useState<'load' | 'loadMore' | null>(null);
+    const loadMoreInProgress = useRef(false);
+    const loadMoreController = useRef<AbortController | null>(null);
 
-      useEffect(() => {
-         const getUser = async () => {
-            try{
-                  const currentUserid = await API.getCurrentUser();
-                if(currentUser) {
-                    setcurrentUser(currentUserid.userId);
-                }
-            } catch(error) {
-                console.log("failed to get user", error);
-            }
-         }
-        const fetchCommunities = async () => { 
-            try { 
-                 const data = await API.getCommunities();
-                setCommunities(data);
-              
-            } catch (error) {
-                console.error('Failed to fetch communities:', error);
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        loadMoreController.current?.abort();
+        loadMoreController.current = null;
+        loadMoreInProgress.current = false;
+        setLoadingMore(false);
+        setHasMore(false);
+        setPage(1);
+        setSearch(e.target.value);
+    };
+
+    useEffect(() => {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(async () => {
+            setLoading(true);
+            setError(null);
+            setPage(1);
+            try {
+                const result = await API.getCommunityPage({
+                    page: 1,
+                    search: search.trim(),
+                    signal: controller.signal,
+                });
+                setCommunities(result.communities);
+                setHasMore(result.hasMore);
+                setTotal(result.total);
+            } catch (fetchError) {
+                if (controller.signal.aborted) return;
+                console.error('Failed to fetch communities:', fetchError);
+                setError('load');
+                setCommunities([]);
+                setHasMore(false);
+                setTotal(0);
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) setLoading(false);
             }
+        }, 250);
+
+        return () => {
+            window.clearTimeout(timeout);
+            controller.abort();
+            loadMoreController.current?.abort();
+            loadMoreController.current = null;
+            loadMoreInProgress.current = false;
         };
-  
-        getUser();
-        fetchCommunities();
-        
-    }, []);
-    //Constantly updating the name
-    const handleChange = (e) => {
-        setName(e.target.value);
-    }
+    }, [search]);
 
-    //        const checkBanStatus = async (communityId: string) => {
-    //     try {
-    //         const user = API.getCurrentUser();
-    //         if(!user) {
-    //             navigate('/login');
-    //         }
-    //         //Check Is member banned from community
-    //         const banned = await API.getCommunityMembership(communityId, user.toString());
-    //         if(!banned) {
-    //             console.log("Unable to detect if user was banned from communitiy");
-    //         }   
-    //         if(banned.role.toLowerCase() == "banned") {
-    //             setBannedStatus(true);
-    //         }
-    //     } catch(error) {
-    //         console.log("error checking the ban status", error);
-    //     }
-    // } 
+    const handleLoadMore = async () => {
+        if (loadMoreInProgress.current || !hasMore) return;
+        loadMoreInProgress.current = true;
+        const controller = new AbortController();
+        loadMoreController.current = controller;
+        setLoadingMore(true);
+        setError(null);
+        try {
+            const nextPage = page + 1;
+            const result = await API.getCommunityPage({
+                page: nextPage,
+                search: search.trim(),
+                signal: controller.signal,
+            });
+            setCommunities((current) => [...current, ...result.communities]);
+            setPage(nextPage);
+            setHasMore(result.hasMore);
+            setTotal(result.total);
+        } catch (fetchError) {
+            if (controller.signal.aborted) return;
+            console.error('Failed to load more communities:', fetchError);
+            setError('loadMore');
+        } finally {
+            if (loadMoreController.current === controller) {
+                loadMoreController.current = null;
+                loadMoreInProgress.current = false;
+                setLoadingMore(false);
+            }
+        }
+    };
 
-    //FilteredCommunities
-    const filteredCommunities = communities.filter((community) => community.name.toLowerCase().includes(CommunityName.toLowerCase()));
-
-   
-
-    // items.filter(item =>
-    // item.name.toLowerCase().includes(searchQuery.toLowerCase())
-
+    const errorMessage = error === 'load' ? t('communities.explore.loadError') : error === 'loadMore' ? t('communities.explore.loadMoreError') : '';
     const handleCommunityClick = (communityId: string) => {
         navigate(`/community/${communityId}`);
     };
@@ -96,11 +122,10 @@ const CommunityExplore = () => {
                     />
                 </div>
                 <h1 className="text-3xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent mb-4">
-                    Explore Communities
+                    {t('communities.explore.title')}
                 </h1>
                 <p className="text-gray-600 text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed">
-                    Discover vibrant communities, connect with like-minded
-                    developers, and grow your professional network
+                    {t('communities.explore.subtitle')}
                 </p>
             </div>
 
@@ -115,7 +140,7 @@ const CommunityExplore = () => {
                 <input
                     onChange={handleChange}
                     type="text"
-                    placeholder="Search communities, topics, or technologies..."
+                    placeholder={t('communities.explore.searchPlaceholder')}
                     className="w-full pl-14 pr-6 py-4 lg:py-5 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-400 shadow-lg hover:shadow-xl transition-all duration-300 text-base lg:text-lg placeholder-gray-400"
                 />
                 <div className="absolute inset-y-0 right-0 pr-6 flex items-center">
@@ -130,10 +155,10 @@ const CommunityExplore = () => {
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                            Featured Communities
+                            {t('communities.explore.sectionTitle')}
                         </h2>
                         <p className="text-gray-600">
-                            Join the most active developer communities
+                            {t('communities.explore.sectionSubtitle')}
                         </p>
                     </div>
                     {/* <div className="hidden lg:flex items-center space-x-4">
@@ -152,16 +177,20 @@ const CommunityExplore = () => {
                 {loading ? (
                     <div className="col-span-full text-center py-12">
                         <Icon icon="mdi:loading" className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-                        <p className="text-gray-600">Loading communities...</p>
+                        <p className="text-gray-600">{t('communities.explore.loading')}</p>
                     </div>
-                ) : filteredCommunities.length === 0 ? (
+                ) : error ? (
+                    <div className="col-span-full text-center py-12" role="alert">
+                        <p className="text-red-600">{errorMessage}</p>
+                    </div>
+                ) : communities.length === 0 ? (
                     <div className="col-span-full text-center py-12">
                         <Icon icon="mdi:account-group-outline" className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <p className="text-gray-600">No communities found</p>
+                        <p className="text-gray-600">{t('communities.explore.empty')}</p>
                     </div>
-                ) : filteredCommunities.map((community, index) => (
+                ) : communities.map((community) => (
                     <div
-                        key={index}
+                        key={community.id}
                         onClick={() => handleCommunityClick(community.id)}
                         className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 hover:border-blue-300 hover:-translate-y-3 hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-blue-500/20"
                         tabIndex={0}
@@ -172,7 +201,7 @@ const CommunityExplore = () => {
                             }
                         }}
                         role="button"
-                        aria-label={`Navigate to ${community.name} community`}
+                        aria-label={t('communities.explore.navigateTo', { name: community.name })}
                     >
                         {/* Enhanced Image Header */}
                         <div
@@ -196,11 +225,6 @@ const CommunityExplore = () => {
                                 </div>
                             )}
 
-                            {/* Floating Tags */}
-                            <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                                <Tag type="new" />
-                            </div>
-
                             {/* Community Title with Icon */}
                             <div className="absolute bottom-4 left-4 right-4">
                                 <div className="flex items-center mb-2">
@@ -215,7 +239,7 @@ const CommunityExplore = () => {
                                             {community.name}
                                         </h3>
                                         <p className="text-white/90 text-sm font-medium">
-                                            {community.memberCount} members
+                                            {t('communities.explore.members', { count: community.memberCount })}
                                         </p>
                                     </div>
                                 </div>
@@ -225,7 +249,7 @@ const CommunityExplore = () => {
                         {/* Enhanced Content */}
                         <div className="p-6">
                             <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
-                                {community.description || 'Join this community to connect with like-minded developers.'}
+                                {community.description || t('communities.explore.defaultDescription')}
                             </p>
 
                             {/* Enhanced Stats */}
@@ -238,26 +262,6 @@ const CommunityExplore = () => {
                                         />
                                         {community.memberCount}
                                     </span>
-                                    <span className="flex items-center text-green-600 text-sm font-medium">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse"></div>
-                                        Active
-                                    </span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                    {[...Array(5)].map((_, i) => (
-                                        <Icon
-                                            key={i}
-                                            icon="mdi:star"
-                                            className={`w-4 h-4 ${
-                                                i < 4
-                                                    ? 'text-yellow-400'
-                                                    : 'text-gray-300'
-                                            }`}
-                                        />
-                                    ))}
-                                    <span className="text-xs text-gray-500 ml-1">
-                                        4.8
-                                    </span>
                                 </div>
                             </div>
 
@@ -268,19 +272,28 @@ const CommunityExplore = () => {
                 ))}
             </div>
 
-            {/* Enhanced Load More Button */}
-            <div className="mt-12 lg:mt-16 text-center">
-                <button className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 text-gray-700 rounded-2xl transition-all duration-300 font-semibold text-base shadow-lg hover:shadow-xl border border-gray-200 hover:border-gray-300 group">
-                    <Icon
-                        icon="mdi:refresh"
-                        className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-500"
-                    />
-                    Load More Communities
-                </button>
-                <p className="text-gray-500 text-sm mt-4">
-                    Showing 4 of 50+ communities
-                </p>
-            </div>
+            {error && !loading && communities.length > 0 && (
+                <p className="mt-4 text-center text-red-600" role="alert">{errorMessage}</p>
+            )}
+            {hasMore && (
+                <div className="mt-12 lg:mt-16 text-center">
+                    <button
+                        type="button"
+                        onClick={handleLoadMore}
+                        disabled={loadingMore}
+                        className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 text-gray-700 rounded-2xl transition-all duration-300 font-semibold text-base shadow-lg hover:shadow-xl border border-gray-200 hover:border-gray-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        <Icon
+                            icon={loadingMore ? 'mdi:loading' : 'mdi:chevron-down'}
+                            className={`w-5 h-5 mr-2 ${loadingMore ? 'animate-spin' : ''}`}
+                        />
+                        {loadingMore ? t('communities.explore.loadingMore') : t('communities.explore.loadMore')}
+                    </button>
+                    <p className="text-gray-500 text-sm mt-4">
+                        {t('communities.explore.showing', { shown: communities.length, total })}
+                    </p>
+                </div>
+            )}
         </div>
     );
 };

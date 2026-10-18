@@ -1,7 +1,26 @@
 import multer from 'multer';
-import s3Client, { testS3Connection, uploadToS3 } from '../config/aws.js';
+import { randomUUID } from 'node:crypto';
+import { uploadToS3 } from '../config/aws.js';
 import UserProfile from '../Models/UserProfile.js';
-import Community from '../Models/Communites.js';
+
+const imageTypes = new Map([
+    ['image/jpeg', { extension: 'jpg', signature: (buffer) =>
+        buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff }],
+    ['image/png', { extension: 'png', signature: (buffer) =>
+        buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) }],
+    ['image/gif', { extension: 'gif', signature: (buffer) =>
+        buffer.length >= 6 && ['GIF87a', 'GIF89a'].includes(buffer.toString('ascii', 0, 6)) }],
+    ['image/webp', { extension: 'webp', signature: (buffer) =>
+        buffer.length >= 12 && buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP' }],
+]);
+
+const getValidatedImage = (file) => {
+    const imageType = imageTypes.get(file.mimetype);
+    if (!imageType || !imageType.signature(file.buffer)) {
+        return null;
+    }
+    return { contentType: file.mimetype, extension: imageType.extension };
+};
 
 // Configure multer for memory storage
 const upload = multer({
@@ -10,38 +29,13 @@ const upload = multer({
         fileSize: 5 * 1024 * 1024, // 5MB limit
     },
     fileFilter: (req, file, cb) => {
-        // Only allow images
-        if (file.mimetype.startsWith('image/')) {
+        if (imageTypes.has(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Only image files are allowed'), false);
+            cb(new Error('Only JPEG, PNG, GIF, and WebP images are allowed'), false);
         }
     },
 });
-
-// Test endpoint to check S3 connection
-export const testS3 = async (req, res) => {
-    try {
-        const isConnected = await testS3Connection();
-
-        if (isConnected) {
-            res.json({
-                success: true,
-                message: ' S3 connection successful!',
-            });
-        } else {
-            res.status(500).json({
-                success: false,
-                message: ' S3 connection failed',
-            });
-        }
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
-};
 
 // Upload to S3 function
 export const uploadProfileImage = async (req, res) => {
@@ -49,11 +43,12 @@ export const uploadProfileImage = async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
+        const image = getValidatedImage(req.file);
+        if (!image) {
+            return res.status(400).json({ error: 'Invalid image file' });
+        }
 
-        // Generate unique filename
-        const fileName = `profile-images/${Date.now()}-${
-            req.file.originalname
-        }`;
+        const fileName = `profile-images/${randomUUID()}.${image.extension}`;
 
         // Validate AWS bucket name
         if (!process.env.AWS_BUCKET_NAME) {
@@ -67,10 +62,10 @@ export const uploadProfileImage = async (req, res) => {
             Bucket: process.env.AWS_BUCKET_NAME,
             Key: fileName,
             Body: req.file.buffer,
-            ContentType: req.file.mimetype,
+            ContentType: image.contentType,
         };
 
-        const result = await uploadToS3(params);
+        await uploadToS3(params);
         
         const baseUrl = process.env.BASE_URL || 'http://localhost:6969';
         const proxyUrl = `${baseUrl}/api/upload/images/${fileName}`;
@@ -81,8 +76,48 @@ export const uploadProfileImage = async (req, res) => {
             message: 'Image uploaded successfully!',
         });
     } catch (error) {
-        console.error('Upload error:', error);
+        console.error('Image upload failed:', {
+            name: error.name,
+            code: error.$metadata?.httpStatusCode || error.code,
+        });
         res.status(500).json({ error: 'Upload failed' });
+    }
+};
+
+export const uploadProfileBanner = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+        const image = getValidatedImage(req.file);
+        if (!image) {
+            return res.status(400).json({ error: 'Invalid image file' });
+        }
+        if (!process.env.AWS_BUCKET_NAME) {
+            return res
+                .status(500)
+                .json({ error: 'AWS bucket configuration missing' });
+        }
+
+        const fileName = `profile-banners/${randomUUID()}.${image.extension}`;
+        await uploadToS3({
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: fileName,
+            Body: req.file.buffer,
+            ContentType: image.contentType,
+        });
+
+        const baseUrl = process.env.BASE_URL || 'http://localhost:6969';
+        return res.json({
+            success: true,
+            imageUrl: `${baseUrl}/api/upload/images/${fileName}`,
+        });
+    } catch (error) {
+        console.error('Profile banner upload failed:', {
+            name: error.name,
+            code: error.$metadata?.httpStatusCode || error.code,
+        });
+        return res.status(500).json({ error: 'Banner upload failed' });
     }
 };
 
@@ -122,11 +157,9 @@ export const updateProfileImage = async (req, res) => {
             message: 'Profile image updated successfully',
         });
     } catch (error) {
-        console.error('Profile image update error:', {
-            message: error.message,
-            stack: error.stack,
-            userId: req.user?.userId,
-            timestamp: new Date().toISOString()
+        console.error('Profile image update failed:', {
+            name: error.name,
+            code: error.original?.code || error.code,
         });
         res.status(500).json({ error: 'Failed to update profile image' });
     }
@@ -139,16 +172,21 @@ export const uploadCommunityImage = async (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        const fileName = `community-images/${Date.now()}-${req.file.originalname}`;
+        const image = getValidatedImage(req.file);
+        if (!image) {
+            return res.status(400).json({ error: 'Invalid image file' });
+        }
+
+        const fileName = `community-images/${randomUUID()}.${image.extension}`;
 
         const params = {
             Bucket: process.env.AWS_BUCKET_NAME,
             Key: fileName,
             Body: req.file.buffer,
-            ContentType: req.file.mimetype,
+            ContentType: image.contentType,
         };
 
-        const result = await uploadToS3(params);
+        await uploadToS3(params);
 
         // Extract the S3 key from the fileName
         const s3Key = fileName;
@@ -163,11 +201,15 @@ export const uploadCommunityImage = async (req, res) => {
             message: 'Community image uploaded successfully!',
         });
     } catch (error) {
-        console.error('Community image upload error:', error);
+        console.error('Community image upload failed:', {
+            name: error.name,
+            code: error.$metadata?.httpStatusCode || error.code,
+        });
         res.status(500).json({ error: 'Upload failed' });
     }
 };
 
 // Export multer middleware
 export const uploadMiddleware = upload.single('profileImage');
+export const uploadBannerMiddleware = upload.single('profileBanner');
 export const uploadCommunityMiddleware = upload.single('communityImage');

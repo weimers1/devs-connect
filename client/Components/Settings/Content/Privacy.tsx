@@ -1,12 +1,13 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import React, { useState } from 'react';
+import { useLanguage } from '../../../src/i18n/LanguageContext';
 // import { useTheme } from '../../../src/ThemeContext';
 
 const PrivacyOptions = [
     {
         id: 'email',
-        name: 'Email Address',
-        description: 'Manage your email preferences',
+        name: 'settings.privacy.email.name',
+        description: 'settings.privacy.email.description',
     },
     // {  WILL BE IN FUTURE ITERATION
     //   id: 'phone',
@@ -21,6 +22,7 @@ const PrivacyOptions = [
 ];
 
 function Privacy() {
+    const { t } = useLanguage();
     // const { theme } = useTheme();
     const [openSetting, setOpenSetting] = useState<string | null>(null);
 
@@ -42,10 +44,10 @@ function Privacy() {
                     `}
                 >
                     <h2 className="text-xl font-semibold ">
-                        Privacy & Security
+                        {t('settings.privacy.title')}
                     </h2>
                     <p className="text-sm  mt-1">
-                        Manage your account security and privacy settings
+                        {t('settings.privacy.subtitle')}
                     </p>
                 </div>
 
@@ -66,8 +68,8 @@ function Privacy() {
                                     //     : 'text-gray-900'
                                 `}
                             >
-                                <h3 className="font-medium ">{item.name}</h3>
-                                <p className="text-sm">{item.description}</p>
+                                <h3 className="font-medium ">                                {t(item.name)}</h3>
+                                                                <p className="text-sm">{t(item.description)}</p>
                             </div>
                             <Icon
                                 icon={
@@ -100,7 +102,7 @@ function Privacy() {
                                                 `}
                                             >
                                                 <label className="block text-sm font-medium  mb-2">
-                                                    Primary Email
+                                                    {t('settings.privacy.primaryEmail')}
                                                 </label>
                                                 <input
                                                     type="email"
@@ -118,7 +120,7 @@ function Privacy() {
                                                     htmlFor="emailNotifications"
                                                     className="text-sm text-gray-700"
                                                 >
-                                                    Receive email notifications
+                                                    {t('settings.privacy.emailNotifications')}
                                                 </label>
                                             </div>
                                         </>
@@ -134,7 +136,7 @@ function Privacy() {
                                                 `}
                                             >
                                                 <label className="block text-sm font-medium  mb-2">
-                                                    Phone Number
+                                                    {t('settings.privacy.phoneNumber')}
                                                 </label>
                                                 <input
                                                     type="tel"
@@ -152,7 +154,7 @@ function Privacy() {
                                                     htmlFor="smsNotifications"
                                                     className="text-sm text-gray-700"
                                                 >
-                                                    Receive SMS notifications
+                                                    {t('settings.privacy.smsNotifications')}
                                                 </label>
                                             </div>
                                         </>
@@ -167,9 +169,7 @@ function Privacy() {
                                             `}
                                         >
                                             <p className="text-sm  mb-4">
-                                                Passkeys provide a more secure
-                                                way to sign in without
-                                                passwords.
+                                                {t('settings.privacy.passkeysIntro')}
                                             </p>
                                             <div className="space-y-3">
                                                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -180,17 +180,15 @@ function Privacy() {
                                                         />
                                                         <div>
                                                             <span className="font-medium ">
-                                                                Touch ID
+                                                                {t('settings.privacy.touchId')}
                                                             </span>
                                                             <p className="text-sm ">
-                                                                Use your
-                                                                fingerprint to
-                                                                sign in
+                                                                {t('settings.privacy.touchIdDescription')}
                                                             </p>
                                                         </div>
                                                     </div>
                                                     <button className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-                                                        Setup
+                                                        {t('settings.privacy.setup')}
                                                     </button>
                                                 </div>
                                                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -201,16 +199,15 @@ function Privacy() {
                                                         />
                                                         <div>
                                                             <span className="font-medium ">
-                                                                Security Key
+                                                                {t('settings.privacy.securityKey')}
                                                             </span>
                                                             <p className="text-sm ">
-                                                                Use a hardware
-                                                                security key
+                                                                {t('settings.privacy.securityKeyDescription')}
                                                             </p>
                                                         </div>
                                                     </div>
                                                     <button className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-                                                        Add
+                                                        {t('settings.privacy.add')}
                                                     </button>
                                                 </div>
                                             </div>

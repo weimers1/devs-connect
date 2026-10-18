@@ -1,6 +1,20 @@
 // Backend API service
 const validateUrl = (url: string): boolean => {
-    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url);
+    try {
+        const parsed = new URL(url);
+        const isLocalHost = ['localhost', '127.0.0.1'].includes(parsed.hostname);
+        return (
+            (parsed.protocol === 'https:' ||
+                (parsed.protocol === 'http:' && isLocalHost)) &&
+            !parsed.username &&
+            !parsed.password &&
+            parsed.pathname === '/' &&
+            !parsed.search &&
+            !parsed.hash
+        );
+    } catch {
+        return false;
+    }
 };
 
 const rawBaseUrl = import.meta.env.VITE_API_URL || 
@@ -12,21 +26,14 @@ if (!validateUrl(rawBaseUrl)) {
 const BASE_URL = rawBaseUrl;
 const API_BASE = `${BASE_URL}/api/messages`;
 const API_SETTINGS = `${BASE_URL}/api/settings`;
+const fetch: typeof globalThis.fetch = (input, init = {}) =>
+    globalThis.fetch(input, { ...init, credentials: 'include' });
 
 // Helper function to get auth headers
-const getAuthHeaders = (includeContentType = false, requireAuth = true) => {
+const getAuthHeaders = (includeContentType = false) => {
     const headers: Record<string, string> = {
         Accept: 'application/json',
     };
-
-    const token = localStorage.getItem('session_token');
-    if (requireAuth) {
-        if (!token) throw new Error('No authentication token found');
-        headers['Authorization'] = `Bearer ${token}`;
-    } else if (token) {
-        // Include token if available, but don't require it
-        headers['Authorization'] = `Bearer ${token}`;
-    }
 
     if (includeContentType) {
         headers['Content-Type'] = 'application/json';
@@ -61,6 +68,69 @@ const API = {
         if (!response.ok) throw new Error('Failed to fetch profile settings');
         return response.json();
     },
+    submitFeedback: async (feedback: {
+        category: string;
+        contactEmail: string;
+        message: string;
+    }) => {
+        const response = await fetch(`${BASE_URL}/api/feedback`, {
+            method: 'POST',
+            headers: getAuthHeaders(true),
+            body: JSON.stringify(feedback),
+        });
+        if (!response.ok) {
+            const result = await response.json().catch(() => null);
+            throw new Error(
+                typeof result?.error === 'string'
+                    ? result.error
+                    : 'Failed to send feedback'
+            );
+        }
+        return response.json();
+    },
+    getVisibilitySettings: async () => {
+        const response = await fetch(`${API_SETTINGS}/visibility`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to fetch visibility settings');
+        return response.json();
+    },
+    updateVisibilitySettings: async (settings: {
+        profileVisibility?: string;
+        connectionsVisibility?: string;
+        communitiesVisibility?: string;
+    }) => {
+        const response = await fetch(`${API_SETTINGS}/visibility`, {
+            method: 'PUT',
+            headers: getAuthHeaders(true),
+            body: JSON.stringify(settings),
+        });
+        if (!response.ok) throw new Error('Failed to update visibility settings');
+        return response.json();
+    },
+    getBlockedUsers: async () => {
+        const response = await fetch(`${BASE_URL}/api/blocks`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to fetch blocked users');
+        return response.json();
+    },
+    blockUser: async (userId: number) => {
+        const response = await fetch(`${BASE_URL}/api/blocks/${userId}`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to block user');
+        return response.json();
+    },
+    unblockUser: async (userId: number) => {
+        const response = await fetch(`${BASE_URL}/api/blocks/${userId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to unblock user');
+        return response.json();
+    },
     //Update Profile Settings
     updateProfileSettings: async (profile: object) => {
         const response = await fetch(`${API_SETTINGS}/profile`, {
@@ -69,6 +139,17 @@ const API = {
             body: JSON.stringify(profile),
         });
         if (!response.ok) throw new Error('Failed to update profile settings');
+    },
+    uploadProfileImage: async (file: File) => {
+        const formData = new FormData();
+        formData.append('profileImage', file);
+        const response = await fetch(`${BASE_URL}/api/upload/profile-image`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData,
+        });
+        if (!response.ok) throw new Error('Failed to upload profile image');
+        return response.json();
     },
     //Update Display Settings API
     // updateDisplaySettings: async (settings: object) => {
@@ -81,6 +162,13 @@ const API = {
     //     return response.json();
     // },
     //General Preferences 
+    getGeneralPreferences: async () => {
+        const response = await fetch(`${API_SETTINGS}/general`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to fetch general settings');
+        return response.json();
+    },
     updateGeneralPreferences: async (settings: object) =>  {
             const response = await fetch(`${API_SETTINGS}/general`, {
                 method: 'PUT', 
@@ -151,12 +239,83 @@ const API = {
         return response.json();
     },
 
+    //Show or hide the GitHub account on the profile
+    updateGitHubVisibility: async (visible: boolean) => {
+        const response = await fetch(`${API_SETTINGS}/github-visibility`, {
+            method: 'PUT',
+            headers: getAuthHeaders(true),
+            body: JSON.stringify({ visible }),
+        });
+        if (!response.ok) throw new Error('Failed to update GitHub visibility');
+        return response.json();
+    },
+
     //Get GitHub Username
     getGitHubInfo: async () => {
         const response = await fetch(`${API_SETTINGS}/github-info`, {
             headers: getAuthHeaders(),
         });
         if (!response.ok) throw new Error('Failed to fetch GitHub username');
+        return response.json();
+    },
+
+    //Projects
+    getProjects: async (
+        params: { mine?: boolean; owner?: string; community?: string; q?: string; status?: string; page?: number } = {}
+    ) => {
+        const query = new URLSearchParams();
+        if (params.mine) query.set('mine', 'true');
+        if (params.owner) query.set('owner', params.owner);
+        if (params.community) query.set('community', params.community);
+        if (params.q) query.set('q', params.q);
+        if (params.status) query.set('status', params.status);
+        if (params.page) query.set('page', String(params.page));
+        const response = await fetch(`${BASE_URL}/api/projects?${query.toString()}`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to load projects');
+        return response.json();
+    },
+    saveProject: async (
+        project: {
+            title: string;
+            description: string;
+            githubUrl: string;
+            demoUrl: string;
+            tags: string[];
+            status: string;
+            collaborators: string[];
+            communityId: string | null;
+        },
+        projectId?: number
+    ) => {
+        const response = await fetch(
+            `${BASE_URL}/api/projects${projectId ? `/${projectId}` : ''}`,
+            {
+                method: projectId ? 'PUT' : 'POST',
+                headers: getAuthHeaders(true),
+                body: JSON.stringify(project),
+            }
+        );
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data?.error || 'Failed to save project');
+        }
+        return data;
+    },
+    getProjectCommunities: async (): Promise<{ id: string; name: string }[]> => {
+        const response = await fetch(`${BASE_URL}/api/projects/communities`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to load communities');
+        return response.json();
+    },
+    deleteProject: async (projectId: number) => {
+        const response = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to delete project');
         return response.json();
     },
 
@@ -169,6 +328,16 @@ const API = {
             }
         );
         if (!response.ok) throw new Error('Failed to fetch user profile');
+        return response.json();
+    },
+    getUserProfileByInternalId: async (userId: string) => {
+        const response = await fetch(
+            `${BASE_URL}/api/users/internal/${userId}/profile`,
+            {
+                headers: getAuthHeaders(),
+            }
+        );
+        if (!response.ok) throw new Error('Failed to fetch message recipient profile');
         return response.json();
     },
 
@@ -189,15 +358,52 @@ const API = {
         if (!response.ok) throw new Error('Failed to fetch communities');
         return response.json();
     },
+    getCommunityPage: async (options: {
+        page: number;
+        limit?: number;
+        search?: string;
+        signal?: AbortSignal;
+    }) => {
+        const params = new URLSearchParams({
+            page: String(options.page),
+            limit: String(options.limit ?? 12),
+        });
+        if (options.search) params.set('search', options.search);
+        const response = await fetch(
+            `${BASE_URL}/api/communities/user?${params.toString()}`,
+            {
+                headers: getAuthHeaders(),
+                signal: options.signal,
+            },
+        );
+        if (!response.ok) throw new Error(`Failed to fetch communities (${response.status})`);
+        const data = await response.json();
+        if (!Array.isArray(data.communities) || typeof data.hasMore !== 'boolean') {
+            throw new Error('Invalid community page response');
+        }
+        return data as {
+            communities: Array<{
+                id: string;
+                name: string;
+                description?: string;
+                memberCount: number;
+                image?: string;
+                color?: string;
+                icon?: string;
+                isPrivate: boolean;
+            }>;
+            hasMore: boolean;
+            total: number;
+        };
+    },
 
     //Get Community by ID
     getCommunityById: async (id: string) => {
         const response = await fetch(`${BASE_URL}/api/communities/${id}`, {
-            // headers: getAuthHeaders(true),
-       
+            headers: getAuthHeaders(),
         });
         if (!response.ok) throw new Error('Failed to fetch community');
-        console.log(id);
+       
         return response.json();
       
     },
@@ -217,9 +423,21 @@ const API = {
         formData.append('communityImage', file);
         const response = await fetch(`${BASE_URL}/api/upload/community-image`, {
             method: 'POST',
+            headers: getAuthHeaders(),
             body: formData,
         });
         if (!response.ok) throw new Error('Failed to upload community image');
+        return response.json();
+    },
+    uploadProfileBanner: async (file: File) => {
+        const formData = new FormData();
+        formData.append('profileBanner', file);
+        const response = await fetch(`${BASE_URL}/api/upload/profile-banner`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData,
+        });
+        if (!response.ok) throw new Error('Failed to upload profile banner');
         return response.json();
     },
 
@@ -239,7 +457,7 @@ const API = {
         const response = await fetch(
             `${BASE_URL}/api/communities/${id}/members`,
             {
-                headers: getAuthHeaders(false, false),
+                headers: getAuthHeaders(),
             }
         );
         if (!response.ok) throw new Error('Failed to fetch community members');
@@ -252,7 +470,7 @@ const API = {
             ? `${BASE_URL}/api/communities/${id}/posts?type=${type}`
             : `${BASE_URL}/api/communities/${id}/posts`;
         const response = await fetch(url, {
-            headers: getAuthHeaders(false, false),
+            headers: getAuthHeaders(),
         });
         if (!response.ok) throw new Error('Failed to fetch community posts');
         return response.json();
@@ -319,6 +537,29 @@ const API = {
             }
         );
         if (!response.ok) throw new Error('Failed to like post');
+        return response.json();
+    },
+
+    toggleSavedPost: async (postId: string) => {
+        const response = await fetch(
+            `${BASE_URL}/api/communities/posts/${postId}/save`,
+            {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+            }
+        );
+        if (!response.ok) throw new Error('Failed to save post');
+        return response.json();
+    },
+
+    getSavedPosts: async () => {
+        const response = await fetch(
+            `${BASE_URL}/api/communities/posts/saved`,
+            {
+                headers: getAuthHeaders(),
+            }
+        );
+        if (!response.ok) throw new Error('Failed to fetch saved posts');
         return response.json();
     },
 
@@ -499,13 +740,20 @@ const API = {
         if(!response.ok) throw new Error('Failed to unban user');
         return response.json();
     },
-    connectToUser: async(userId: string, currentUserId: string) => {
-        const response = await fetch(`${BASE_URL}/api/connections/connect/${userId}/to/${currentUserId}`,{
+    connectToUser: async(userId: string) => {
+        const response = await fetch(`${BASE_URL}/api/connections/connect/${encodeURIComponent(userId)}`,{
             method: "POST",
             headers: getAuthHeaders(),
         })
-        if(!response.ok) throw new Error('Failed To Connect to user');
-        return response.json();
+        const result = await response.json().catch(() => ({}));
+        if(!response.ok) {
+            throw new Error(
+                typeof result?.error === 'string'
+                    ? result.error
+                    : `Failed to connect (HTTP ${response.status}).`,
+            );
+        }
+        return result;
     },
     getrelevantconnection: async(userId: string, currentUserId: string) => {
          const response = await fetch(`${BASE_URL}/api/connections/obtain/connection/between/${currentUserId}/to/${userId}`,{
@@ -547,12 +795,20 @@ const API = {
         if(!response.ok) throw new Error('Failed To getUser Suggestions');
         return response.json();
     },
+    getSidebarCommunityRecommendations: async() => {
+        const response = await fetch(`${BASE_URL}/api/communities/obtain/sidebar/community-suggestions`, {
+            method: 'GET',
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to get community recommendations');
+        return response.json();
+    },
     
     // Platform-wide search
     searchCommunities: async(query: string) => {
         const response = await fetch(`${BASE_URL}/api/search/communities?q=${encodeURIComponent(query)}`, {
             method: "GET",
-            headers: getAuthHeaders(false, false),
+            headers: getAuthHeaders(),
         });
         if(!response.ok) throw new Error('Failed to search communities');
         return response.json();

@@ -23,7 +23,9 @@ router.post('/send', authMiddleware, sendMessage);
 // router.post('/reply', authMiddleware, sendReply);
 //Mark Messages as Read Route
 router.post('/mark-read', authMiddleware, markAsRead);
-//Create Test Users Route
-router.post('/create-test-users', createTestUsers);
+//Create Test Users Route (development only)
+if (process.env.NODE_ENV !== 'production') {
+    router.post('/create-test-users', authMiddleware, createTestUsers);
+}
 
 export default router;

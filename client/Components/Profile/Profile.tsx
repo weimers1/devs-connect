@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../Layout';
 import UserCard from './UserCard';
@@ -8,6 +8,7 @@ import Communities from './ProfileCommunities';
 import API from '../../Service/service';
 import { Icon } from '@iconify/react';
 import { assets } from '../../assets/assets';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 // const MONTHS = [
 //     'January',
@@ -23,15 +24,24 @@ import { assets } from '../../assets/assets';
 //     'November',
 //     'December',
 // ];
-   export const validateImageUrl = (url: string) => {
+   export const validateImageUrl = (
+       url: string,
+       apiBaseUrl = 'http://localhost:6969',
+   ) => {
         try {
             const parsedUrl = new URL(url);
-            const allowedHosts = ['s3.amazonaws.com', 'amazonaws.com', 'localhost'];
+            const apiBase = new URL(apiBaseUrl);
+            const isAmazonHost =
+                parsedUrl.hostname === 'amazonaws.com' ||
+                parsedUrl.hostname.endsWith('.amazonaws.com');
+            const isApiImage =
+                parsedUrl.origin === apiBase.origin &&
+                parsedUrl.pathname.startsWith('/api/upload/images/');
             return (
-                  (allowedHosts.some((host) =>
-                    parsedUrl.hostname.endsWith(host)
-                ) && parsedUrl.protocol === 'https:') ||
-                (parsedUrl.hostname === 'localhost' && parsedUrl.protocol === 'http:')
+                ((isAmazonHost || isApiImage) &&
+                    (parsedUrl.protocol === 'https:' ||
+                        (parsedUrl.hostname === 'localhost' &&
+                            parsedUrl.protocol === 'http:')))
             );
         } catch {
             return false;
@@ -43,14 +53,28 @@ function Profile() {
     // const navigate = useNavigate();
     const isOwnProfile = !userId;
     const navigate = useNavigate();
+    const { t } = useLanguage();
     // const [showCertModal, setShowCertModal] = React.useState(false); //Certification Modal
     const [showProfModal, setShowProfModal] = React.useState(false); // Profile Modal
-    const [certSaving, setCertSaving] = useState(false);
     const [imageUploading, setImageUploading] = useState(false);
+    const [bannerUploading, setBannerUploading] = useState(false);
     const [currentProfileImage, setCurrentProfileImage] = useState('');
-    const [certSaveStatus, setCertSaveStatus] = useState(''); // 'success', 'error', ''
-    const [hasChanges, setHasChanges] = useState(false);
+    const [currentBannerImage, setCurrentBannerImage] = useState('');
+    const [pendingProfileImage, setPendingProfileImage] = useState<File | null>(
+        null
+    );
+    const [pendingBannerImage, setPendingBannerImage] = useState<File | null>(
+        null
+    );
+    const [profileImagePreview, setProfileImagePreview] = useState('');
+    const [bannerImagePreview, setBannerImagePreview] = useState('');
     const [currentUser, setcurrentUser] = useState('');
+    const [profileOwnerId, setProfileOwnerId] = useState('');
+    const [profilePublicId, setProfilePublicId] = useState('');
+    const [communityCount, setCommunityCount] = useState(0);
+    const updateCommunityCount = useCallback((count: number) => {
+        setCommunityCount(count);
+    }, []);
     // const theme = useTheme(); //Change Theme
 
     // const [certData, setCertData] = useState({
@@ -66,86 +90,6 @@ function Profile() {
     // TYPE FIX: Added explicit string type for URL validation parameter
 
 
-    // TYPE FIX: Added explicit File type to prevent TypeScript implicit any error
-    const handleImageUpload = async (file: File) => {
-        setImageUploading(true);
-
-        try {
-            // Upload to S3
-            const formData = new FormData();
-            formData.append('profileImage', file);
-
-            const baseUrl =
-               import.meta.env.VITE_API_URL ||
-                'http://localhost:6969';
-            const uploadResponse = await fetch(
-                `${baseUrl}/api/upload/profile-image`,
-                {
-                    method: 'POST',
-                    body: formData,
-                }
-            );
-
-            if (!uploadResponse.ok) {
-                throw new Error(`Upload failed: ${uploadResponse.status}`);
-            }
-
-            const uploadResult = await uploadResponse.json();
-
-            if (!uploadResult.success) {
-                throw new Error('Upload to S3 failed');
-            }
-
-            // Validate returned URL to prevent SSRF
-            if (!validateImageUrl(uploadResult.imageUrl)) {
-                throw new Error('Invalid image URL returned from server');
-            }
-
-            // Save URL to database
-            const token = localStorage.getItem('session_token');
-            if (!token) {
-                throw new Error('No authentication token found');
-            }
-            const saveResponse = await fetch(
-                `${baseUrl}/api/settings/profile-image`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer ' + token,
-                    },
-                    body: JSON.stringify({
-                        imageUrl: uploadResult.imageUrl,
-                    }),
-                }
-            );
-
-            if (!saveResponse.ok) {
-                throw new Error(`Database save failed: ${saveResponse.status}`);
-            }
-
-            let saveResult;
-            try {
-                saveResult = await saveResponse.json();
-            } catch (jsonError) {
-                throw new Error('Invalid response from server');
-                console.log(jsonError, 'Error parsing JSON response');
-            }
-
-            if (!saveResult || saveResult.error) {
-                throw new Error(saveResult?.error || 'Database save failed');
-            }
-
-            setCurrentProfileImage(uploadResult.imageUrl);
-        } catch (error) {
-            console.error('Upload failed:', error);
-            alert('Failed to upload profile image. Please try again.');
-        } finally {
-            setImageUploading(false);
-        
-        }
-    };
-
     // const [connectionData, setConnectionData] = useState({
     //     user2Id: userId,
     //     currentUserId: ''
@@ -160,43 +104,65 @@ function Profile() {
         career: '',
         school: '',
         github: '',
+        pfp: '',
+        bannerImageUrl: '',
     });
+    const [profileLoading, setProfileLoading] = useState(true);
+    const [profileError, setProfileError] = useState<string | null>(null);
     const [profileSaving, setProfileSaving] = useState(false);  
     const [profileSaveStatus, setProfileSaveStatus] = useState('');
-   useEffect(() => {
-    const initializeProfile = async () => {
-        try {
-            //  Get the logged-in user first
-            const user = await API.getCurrentUser();
-            if (!user) {
-                navigate("/login");
-                return;
+    const closeProfileModal = useCallback(() => {
+        if (profileSaving) return;
+        setPendingProfileImage(null);
+        setPendingBannerImage(null);
+        setProfileSaveStatus('');
+        setShowProfModal(false);
+    }, [profileSaving]);
+
+    useEffect(() => {
+        let active = true;
+        const initializeProfile = async () => {
+            setProfileLoading(true);
+            setProfileError(null);
+            try {
+                const [user, response] = await Promise.all([
+                    API.getCurrentUser(),
+                    isOwnProfile
+                        ? API.getProfileInformation()
+                        : API.getUserProfile(userId!),
+                ]);
+                if (!active) return;
+                if (!user) {
+                    navigate('/login');
+                    return;
+                }
+                setcurrentUser(String(user.userId));
+                setProfileOwnerId(String(response.id || user.userId));
+                setProfilePublicId(String(response.publicId || user.publicId || ''));
+
+                if (userId && userId.toLowerCase() === user.publicId?.toLowerCase()) {
+                    navigate('/profile', { replace: true });
+                    return;
+                }
+
+                setProfileData(response);
+                setCurrentProfileImage(response.pfp || '');
+                setCurrentBannerImage(response.bannerImageUrl || '');
+            } catch (error) {
+                console.error('Failed to load profile data:', error);
+                if (active) {
+                    setProfileError('profile.page.loadError');
+                }
+            } finally {
+                if (active) setProfileLoading(false);
             }
-            setcurrentUser(user.userId);
+        };
 
-            //  CHECK REDIRECT: If URL ID matches Logged-in ID
-            if (userId && userId.toString() === user.userId.toString()) {
-                navigate('/connections', { replace: true });
-                return; // Stop execution here; the navigate will trigger a re-render
-            }
-
-            //  FETCH DATA: Now that we know who is who
-            const response = isOwnProfile
-                ? await API.getProfileInformation()
-                : await API.getUserProfile(userId!);
-
-            const decodedPfp = response.pfp ? decodeURIComponent(response.pfp) : '';
-            setProfileData(response);
-            setCurrentProfileImage(decodedPfp);
-
-        } catch (error) {
-            console.error('Failed to load profile data:', error);
-            // Reset profile state on error...
-        }
-    };
-
-    initializeProfile();
-}, [userId, isOwnProfile, navigate]); 
+        initializeProfile();
+        return () => {
+            active = false;
+        };
+    }, [userId, isOwnProfile, navigate]);
 // Removed currentUser from deps to avoid infinite loops since we set it inside
 
     //Check Url For modal trigger so the form for certifications and profile  can pop up
@@ -210,6 +176,44 @@ function Profile() {
             setShowProfModal(true);
         }
     }, []);
+
+    useEffect(() => {
+        if (!showProfModal) return;
+
+        const previousOverflow = document.body.style.overflow;
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape' && !profileSaving) {
+                closeProfileModal();
+            }
+        };
+
+        document.body.style.overflow = 'hidden';
+        document.addEventListener('keydown', closeOnEscape);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [showProfModal, profileSaving, closeProfileModal]);
+
+    useEffect(() => {
+        if (!pendingProfileImage) {
+            setProfileImagePreview('');
+            return;
+        }
+        const previewUrl = URL.createObjectURL(pendingProfileImage);
+        setProfileImagePreview(previewUrl);
+        return () => URL.revokeObjectURL(previewUrl);
+    }, [pendingProfileImage]);
+
+    useEffect(() => {
+        if (!pendingBannerImage) {
+            setBannerImagePreview('');
+            return;
+        }
+        const previewUrl = URL.createObjectURL(pendingBannerImage);
+        setBannerImagePreview(previewUrl);
+        return () => URL.revokeObjectURL(previewUrl);
+    }, [pendingBannerImage]);
   
     // TYPE FIX: Added explicit string types for date combination parameters
     // Combine month and year into date string
@@ -218,140 +222,33 @@ function Profile() {
     //     return `${month}-${year}`;
     // };
 
-    //Handle Save for updating
-    const handleSave = async () => {
-        setCertSaving(true);
-        setCertSaveStatus('');
-        try {
-            // Combine the date fields before sending
-            // const certPayload = {
-            //     certName: certData.certName,
-            //     issuer: certData.issuer,
-            //     dateEarned: combineDateFields(
-            //         certData.issuedMonth,
-            //         certData.issuedYear
-            //     ),
-            //     dateExpiration: combineDateFields(
-            //         certData.expiryMonth,
-            //         certData.expiryYear
-            //     ),
-            //     credentialID: certData.credentialID,
-            //     credentialURL: certData.credentialURL,
-            // };
-
-            // await API.addCertifications(certPayload);
-            // setCertSaveStatus('success');
-            // console.log('Certification saved:', certPayload);
-            // Handle Save for updating
-            const handleSave = async () => {
-                setCertSaving(true);
-                setCertSaveStatus('');
-                try {
-                 //   Combine the date fields before sending
-                    // const certPayload = {
-                    //     certName: certData.certName,
-                    //     issuer: certData.issuer,
-                    //     dateEarned: combineDateFields(
-                    //         certData.issuedMonth,
-                    //         certData.issuedYear
-                    //     ),
-                    //     dateExpiration: combineDateFields(
-                    //         certData.expiryMonth,
-                    //         certData.expiryYear
-                    //     ),
-                    //     credentialID: certData.credentialID,
-                    //     credentialURL: certData.credentialURL,
-                    // };
-
-                    // await API.addCertifications(certPayload);
-                    // setCertSaveStatus('success');
-                    // console.log('Certification saved:', certPayload);
-
-                    // setTimeout(() => {
-                    //     setShowCertModal(false);
-                    //     setCertSaving(false);
-                    //     setCertSaveStatus('');
-                    //     // Re-enable scrolling
-                    //     document.body.style.overflow = 'auto';
-                    //     document.documentElement.style.overflow = 'auto';
-                    // }, 1500);
-                } catch (error) {
-                    console.error('Error saving certification:', error);
-                    setCertSaveStatus('error');
-                    setCertSaving(false);
-                }
-            };
-            //Handle Change for certData
-            // const handleChange = (field: string, value: string) => {
-            //     setCertData((prevData) => ({
-            //         ...prevData,
-            //         [field]: value,
-            //     }));
-            //     setHasChanges(true);
-            // };
-
-            // Handle Change for profile data
-            // const handleProfileChange = (field: string, value: string) => {
-            //     setProfileData((prevData) => ({
-            //         ...prevData,
-            //         [field]: value,
-            //     }));
-            //     setHasChanges(true);
-            // };
-
-            // Handle Profile Save
-            const handleProfileSave = async () => {
-                setProfileSaving(true);
-                setProfileSaveStatus('');
-                try {
-                    await API.updateProfileSettings(profileData);
-                    setProfileSaveStatus('success');
-                    console.log('Profile saved:', profileData);
-
-                    setTimeout(() => {
-                        setShowProfModal(false);
-                        setProfileSaving(false);
-                        setProfileSaveStatus('');
-                        document.body.style.overflow = 'auto';
-                        document.documentElement.style.overflow = 'auto';
-                    }, 1500);
-                } catch (error) {
-                    console.error('Error saving profile:', error);
-                    setProfileSaveStatus('error');
-                    setProfileSaving(false);
-                }
-            };
-            // const currentYear = new Date().getFullYear();
-            // setTimeout(() => {
-            //     setShowCertModal(false);
-            //     setCertSaving(false);
-            //     setCertSaveStatus('');
-            //     // Re-enable scrolling
-            //     document.body.style.overflow = 'auto';
-            //     document.documentElement.style.overflow = 'auto';
-            // }, 1500);
-        } catch (error) {
-            console.error('Error saving certification:', error);
-            setCertSaveStatus('error');
-            setCertSaving(false);
-        }
-    };
-    //Handle Change for certData
-    // const handleChange = (field: string, value: string) => {
-    //     setCertData((prevData) => ({
-    //         ...prevData,
-    //         [field]: value,
-    //     }));
-    //     setHasChanges(true);
-    // };
-
-    // Handle Change for profile data
     const handleProfileChange = (field: string, value: string) => {
         setProfileData((prevData) => ({
             ...prevData,
             [field]: value,
         }));
-        setHasChanges(true);
+    };
+
+    const handleImageSelection = (
+        file: File,
+        setPendingImage: (file: File | null) => void
+    ) => {
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+        ];
+        if (!allowedTypes.includes(file.type)) {
+            alert(t('profile.edit.imageTypeError'));
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert(t('profile.edit.imageSizeError'));
+            return;
+        }
+        setPendingImage(file);
+        setProfileSaveStatus('');
     };
 
     // Handle Profile Save
@@ -359,9 +256,53 @@ function Profile() {
         setProfileSaving(true);
         setProfileSaveStatus('');
         try {
-            await API.updateProfileSettings(profileData);
+            const apiBaseUrl =
+                import.meta.env.VITE_API_URL || 'http://localhost:6969';
+            let profileImageUrl = profileData.pfp || '';
+            let bannerImageUrl = profileData.bannerImageUrl || '';
+
+            if (pendingProfileImage) {
+                setImageUploading(true);
+                const uploadResult =
+                    await API.uploadProfileImage(pendingProfileImage);
+                if (
+                    !uploadResult.success ||
+                    typeof uploadResult.imageUrl !== 'string' ||
+                    !validateImageUrl(uploadResult.imageUrl, apiBaseUrl)
+                ) {
+                    throw new Error('Profile photo upload failed');
+                }
+                profileImageUrl = uploadResult.imageUrl;
+            }
+
+            if (pendingBannerImage) {
+                setBannerUploading(true);
+                const uploadResult =
+                    await API.uploadProfileBanner(pendingBannerImage);
+                if (
+                    typeof uploadResult.imageUrl !== 'string' ||
+                    !validateImageUrl(uploadResult.imageUrl, apiBaseUrl)
+                ) {
+                    throw new Error('Cover photo upload failed');
+                }
+                bannerImageUrl = uploadResult.imageUrl;
+            }
+
+            await API.updateProfileSettings({
+                ...profileData,
+                pfp: profileImageUrl || null,
+                bannerImageUrl: bannerImageUrl || null,
+            });
+            setProfileData((previous) => ({
+                ...previous,
+                pfp: profileImageUrl,
+                bannerImageUrl,
+            }));
+            setCurrentProfileImage(profileImageUrl);
+            setCurrentBannerImage(bannerImageUrl);
+            setPendingProfileImage(null);
+            setPendingBannerImage(null);
             setProfileSaveStatus('success');
-            console.log('Profile saved:', profileData);
 
             setTimeout(() => {
                 setShowProfModal(false);
@@ -373,6 +314,9 @@ function Profile() {
         } catch (error) {
             console.error('Error saving profile:', error);
             setProfileSaveStatus('error');
+        } finally {
+            setImageUploading(false);
+            setBannerUploading(false);
             setProfileSaving(false);
         }
     };
@@ -386,27 +330,79 @@ function Profile() {
     return (
         <Layout>
             {/* Main container - centered for other users, full width for own profile */}
-           <div className="flex mt-3 flex-col items-center space-y-4">
-                {/* User Profile Card */}
-                <UserCard
-                    currentUserId={currentUser}
-                    userId={userId}
-                    isOwnProfile={isOwnProfile}
-                    profileData={profileData}
-                />
-
-                {/* Profile sections */}
-                <div className="divide-y-0 divide-transparent w-full mx-auto ">
-                    <Communities userId={userId} />
-                </div>
-
-                {/* Sidebar for desktop only - only show for own profile */}
-                {isOwnProfile && (
-                    <div className="hidden lg:block fixed right-4 top-24">
-                        <Sidebar />
+            {profileLoading ? (
+                <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6" role="status"                 aria-label={t('profile.page.loading')}>
+                                    <span className="sr-only">{t('profile.page.loadingEllipsis')}</span>
+                    <div className="mx-auto max-w-3xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                        <div className="h-28 animate-pulse bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 motion-reduce:animate-none sm:h-36" />
+                        <div className="px-5 pb-6 sm:px-8">
+                            <div className="-mt-10 flex flex-col gap-4 sm:-mt-12 sm:flex-row sm:items-end sm:justify-between">
+                                <div className="flex items-end gap-4">
+                                    <div className="h-20 w-20 animate-pulse rounded-full border-4 border-white bg-slate-200 shadow-sm motion-reduce:animate-none sm:h-24 sm:w-24" />
+                                    <div className="space-y-2 pb-1">
+                                        <div className="h-5 w-40 animate-pulse rounded bg-slate-200 motion-reduce:animate-none sm:w-56" />
+                                        <div className="h-3 w-32 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="h-9 w-28 animate-pulse rounded-lg bg-slate-100 motion-reduce:animate-none" />
+                                    <div className="h-9 w-24 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none" />
+                                </div>
+                            </div>
+                            <div className="mt-6 grid gap-5 border-t border-slate-100 pt-5 sm:grid-cols-[minmax(0,1fr)_minmax(14rem,0.8fr)]">
+                                <div className="space-y-3">
+                                    <div className="h-3 w-14 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
+                                    <div className="h-3 w-full max-w-lg animate-pulse rounded bg-slate-100 motion-reduce:animate-none" />
+                                    <div className="h-3 w-4/5 max-w-md animate-pulse rounded bg-slate-100 motion-reduce:animate-none" />
+                                </div>
+                                <div className="h-20 animate-pulse rounded-lg bg-blue-50 motion-reduce:animate-none" />
+                            </div>
+                        </div>
                     </div>
-                )}
-            </div>
+                    <div className="mx-auto mt-6 max-w-3xl rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                        <div className="mb-4 h-4 w-36 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="h-16 animate-pulse rounded-lg bg-slate-100 motion-reduce:animate-none" />
+                            <div className="h-16 animate-pulse rounded-lg bg-slate-100 motion-reduce:animate-none" />
+                        </div>
+                    </div>
+                </div>
+            ) : profileError ? (
+                <div className="flex min-h-[50vh] items-center justify-center text-red-600" role="alert">
+                    {t(profileError)}
+                </div>
+            ) : (
+                <div className="flex mt-3 flex-col items-center space-y-4">
+                    <UserCard
+                        currentUserId={currentUser}
+                        userId={profileOwnerId || currentUser}
+                        publicId={profilePublicId || userId || ''}
+                        isOwnProfile={isOwnProfile}
+                        profileData={{
+                            ...profileData,
+                            pfp: currentProfileImage || profileData.pfp,
+                            bannerImageUrl:
+                                currentBannerImage || profileData.bannerImageUrl,
+                        }}
+                        communityCount={communityCount}
+                        onEditProfile={() => setShowProfModal(true)}
+                    />
+
+                    <div className="divide-y-0 divide-transparent w-full mx-auto ">
+                        <Communities
+                            userId={profileOwnerId || currentUser}
+                            isOwnProfile={isOwnProfile}
+                            onLoadedCount={updateCommunityCount}
+                        />
+                    </div>
+
+                    {isOwnProfile && (
+                        <div className="hidden lg:block fixed right-4 top-24">
+                            <Sidebar />
+                        </div>
+                    )}
+                </div>
+            )}
             {/*  Before closing Layout */}
             {/* {showCertModal && (
                 <div
@@ -712,77 +708,164 @@ function Profile() {
             )} */}
             {showProfModal && (
                 <div
-                    className="fixed inset-0 flex items-start justify-center pt-8 z-[9999]"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6"
+                    onMouseDown={(event) => {
+                        if (
+                            event.target === event.currentTarget &&
+                            !profileSaving
+                        ) {
+                            closeProfileModal();
+                        }
+                    }}
                 >
-                    <div className="bg-white w-170 mr-12 max-h-[90vh] overflow-y-auto rounded-xl p-6 mx-4">
-                        <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
-                        <hr className="mb-6" />
-
-                        {/* Profile Photo Section */}
-                        <div className="flex flex-col items-center mb-6">
-                            <img
-                                src={
-                                    currentProfileImage &&
-                                    currentProfileImage.startsWith(
-                                        'https://'
-                                    ) &&
-                                    /^https:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/[^\s<>"']*)?$/.test(
-                                        currentProfileImage
-                                    )
-                                        ? currentProfileImage
-                                        : assets.Profile
-                                }
-                                alt="Profile"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = assets.Profile;
-                                }}
-                                className="w-20 h-20 rounded-full border-4 border-gray-300 shadow-lg object-cover mb-3"
-                            />
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    data-testid="profile-upload-input"
-                                    onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                        // Check file type
-                                        if (!file.type.startsWith('image/')) {
-                                            alert(
-                                                'Please select an image file'
-                                            );
-                                            return;
-                                        }
-                                        // Check file size (5MB)
-                                        if (file.size > 5 * 1024 * 1024) {
-                                            alert(
-                                                'File size must be less than 5MB'
-                                            );
-                                            return;
-                                        }
-                                        handleImageUpload(file);
-                                    }
-                                }}
-                                className="hidden"
-                                id="profile-upload"
-                            />
-                            <label
-                                htmlFor="profile-upload"
-                                className="text-blue-600 hover:text-blue-800 font-medium text-sm cursor-pointer"
+                    <div
+                        className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="edit-profile-title"
+                    >
+                        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:px-7">
+                            <div>
+                                <h2
+                                    id="edit-profile-title"
+                                    className="text-xl font-semibold text-slate-900"
+                                >
+                                    {t('profile.edit.title')}
+                                </h2>
+                                <p className="mt-0.5 text-sm text-slate-500">
+                                    {t('profile.edit.subtitle')}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeProfileModal}
+                                disabled={profileSaving}
+                                aria-label={t('profile.edit.close')}
+                                className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
                             >
-                                {imageUploading
-                                    ? 'Uploading...'
-                                    : 'Change Profile Photo'}
-                            </label>
+                                <Icon icon="mdi:close" className="h-5 w-5" />
+                            </button>
                         </div>
 
-                        {/* Form Fields */}
-                        <div className="space-y-4">
+                        <div className="space-y-6 px-5 py-6 sm:px-7">
+                            <section>
+                                <div className="mb-3">
+                                    <h3 className="font-semibold text-slate-900">
+                                        {t('profile.edit.coverPhoto')}
+                                    </h3>
+                                    <p className="text-sm text-slate-500">
+                                        {t('profile.edit.coverHint')}
+                                    </p>
+                                </div>
+                                <div className="relative h-32 overflow-hidden rounded-xl bg-slate-100 sm:h-40">
+                                    <img
+                                        src={bannerImagePreview || currentBannerImage || assets.Banner}
+                                        alt={t('profile.edit.coverPreviewAlt')}
+                                        onError={(event) => {
+                                            event.currentTarget.src = assets.Banner;
+                                        }}
+                                        className="h-full w-full object-cover"
+                                    />
+                                    <input
+                                        id="profile-banner-upload"
+                                        type="file"
+                                        accept="image/png,image/jpeg,image/gif,image/webp"
+                                        className="sr-only"
+                                        aria-label={t('profile.edit.chooseCover')}
+                                        onChange={(event) => {
+                                            const file = event.target.files?.[0];
+                                            if (file) {
+                                                handleImageSelection(
+                                                    file,
+                                                    setPendingBannerImage
+                                                );
+                                            }
+                                            event.target.value = '';
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor="profile-banner-upload"
+                                        className="absolute bottom-3 right-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white/95 px-3 py-2 text-sm font-semibold text-slate-800 shadow transition hover:bg-white"
+                                    >
+                                        <Icon
+                                            icon={bannerUploading ? 'mdi:loading' : 'mdi:camera-outline'}
+                                            className={`h-4 w-4 ${bannerUploading ? 'animate-spin' : ''}`}
+                                        />
+                                        {t('profile.edit.changeCover')}
+                                    </label>
+                                </div>
+                                {pendingBannerImage && (
+                                    <p className="mt-2 text-sm text-blue-700" role="status">
+                                        {t('profile.edit.coverSelected')}
+                                    </p>
+                                )}
+                            </section>
+
+                            <section className="flex items-center gap-4 rounded-xl border border-slate-200 p-4">
+                                <img
+                                    src={profileImagePreview || currentProfileImage || assets.Profile}
+                                    alt={t('profile.edit.photoPreviewAlt')}
+                                    onError={(event) => {
+                                        event.currentTarget.src = assets.Profile;
+                                    }}
+                                    className="h-20 w-20 rounded-full border-2 border-white object-cover shadow ring-1 ring-slate-200"
+                                />
+                                <input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/gif,image/webp"
+                                    data-testid="profile-upload-input"
+                                    onChange={(event) => {
+                                        const file = event.target.files?.[0];
+                                        if (file) {
+                                            handleImageSelection(
+                                                file,
+                                                setPendingProfileImage
+                                            );
+                                        }
+                                        event.target.value = '';
+                                    }}
+                                    className="sr-only"
+                                    id="profile-upload"
+                                />
+                                <div>
+                                    <h3 className="font-semibold text-slate-900">
+                                        {t('profile.edit.profilePhoto')}
+                                    </h3>
+                                    <p className="mb-2 text-sm text-slate-500">
+                                        {t('profile.edit.photoHint')}
+                                    </p>
+                                    <label
+                                        htmlFor="profile-upload"
+                                        className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                                    >
+                                        <Icon
+                                            icon={imageUploading ? 'mdi:loading' : 'mdi:camera-outline'}
+                                            className={`h-4 w-4 ${imageUploading ? 'animate-spin' : ''}`}
+                                        />
+                                        {t('profile.edit.changePhoto')}
+                                    </label>
+                                    {pendingProfileImage && (
+                                        <p className="mt-2 text-sm text-blue-700" role="status">
+                                            {t('profile.edit.photoSelected')}
+                                        </p>
+                                    )}
+                                </div>
+                            </section>
+
+                        <section className="space-y-4">
+                            <div>
+                                <h3 className="font-semibold text-slate-900">
+                                    {t('profile.edit.basicInfo')}
+                                </h3>
+                                <p className="text-sm text-slate-500">
+                                    {t('profile.edit.basicInfoHint')}
+                                </p>
+                            </div>
                             {/* Name Fields */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        First Name
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                                        {t('profile.edit.firstName')}
                                     </label>
                                     <input
                                         type="text"
@@ -793,12 +876,13 @@ function Profile() {
                                                 e.target.value
                                             )
                                         }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        maxLength={50}
+                                        className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Last Name
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                                        {t('profile.edit.lastName')}
                                     </label>
                                     <input
                                         type="text"
@@ -809,15 +893,16 @@ function Profile() {
                                                 e.target.value
                                             )
                                         }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        maxLength={50}
+                                        className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                     />
                                 </div>
                             </div>
 
                             {/* Location */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Location
+                                <label className="mb-1 block text-sm font-medium text-slate-700">
+                                    {t('profile.edit.location')}
                                 </label>
                                 <input
                                     type="text"
@@ -828,15 +913,16 @@ function Profile() {
                                             e.target.value
                                         )
                                     }
-                                    placeholder="City, State"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder={t('profile.edit.locationPlaceholder')}
+                                    maxLength={100}
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                 />
                             </div>
 
                             {/* Career */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Career Goal
+                                <label className="mb-1 block text-sm font-medium text-slate-700">
+                                    {t('profile.edit.careerGoal')}
                                 </label>
                                 <input
                                     type="text"
@@ -847,15 +933,16 @@ function Profile() {
                                             e.target.value
                                         )
                                     }
-                                    placeholder="Software Engineer"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder={t('profile.edit.careerPlaceholder')}
+                                    maxLength={100}
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                 />
                             </div>
 
                             {/* School */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    School
+                                <label className="mb-1 block text-sm font-medium text-slate-700">
+                                    {t('profile.edit.school')}
                                 </label>
                                 <input
                                     type="text"
@@ -866,14 +953,15 @@ function Profile() {
                                             e.target.value
                                         )
                                     }
-                                    placeholder="University Name"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder={t('profile.edit.schoolPlaceholder')}
+                                    maxLength={100}
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                 />
                             </div>
                             {/* Bio */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Bio
+                                <label className="mb-1 block text-sm font-medium text-slate-700">
+                                    {t('profile.edit.bio')}
                                 </label>
                                 <textarea
                                     value={profileData.bio || ''}
@@ -883,25 +971,45 @@ function Profile() {
                                             e.target.value
                                         )
                                     }
-                                    placeholder="Tell others about yourself..."
+                                    placeholder={t('profile.edit.bioPlaceholder')}
                                     rows={3}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                    maxLength={500}
+                                    className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                 />
+                                <p className="mt-1 text-right text-xs text-slate-500">
+                                    {(profileData.bio || '').length}/500
+                                </p>
                             </div>
-                        </div>
+                        </section>
 
                         {/* Action Buttons */}
-                        <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
-                            <button
-                                onClick={() => setShowProfModal(false)}
-                                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                        {profileSaveStatus === 'error' && (
+                            <p
+                                className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                                role="alert"
                             >
-                                Cancel
+                                {t('profile.edit.saveError')}
+                            </p>
+                        )}
+                        <div className="flex justify-end gap-3 border-t border-slate-200 pt-5">
+                            <button
+                                type="button"
+                                onClick={closeProfileModal}
+                                disabled={profileSaving}
+                                className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                            >
+                                {t('profile.edit.cancel')}
                             </button>
                             <button
+                                type="button"
                                 onClick={handleProfileSave}
-                                disabled={profileSaving}
-                                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                                disabled={
+                                    profileSaving ||
+                                    imageUploading ||
+                                    bannerUploading ||
+                                    profileSaveStatus === 'success'
+                                }
+                                className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                                     profileSaveStatus === 'success'
                                         ? 'bg-green-600 text-white'
                                         : profileSaveStatus === 'error'
@@ -913,32 +1021,33 @@ function Profile() {
                                     <>
                                         <Icon
                                             icon="mdi:loading"
-                                            className="animate-spin w-4 h-4 mr-2"
+                                            className="h-4 w-4 animate-spin"
                                         />
-                                        Saving...
+                                        {t('profile.edit.saving')}
                                     </>
                                 ) : profileSaveStatus === 'success' ? (
                                     <>
                                         <Icon
                                             icon="mdi:check"
-                                            className="w-4 h-4 mr-2"
+                                            className="h-4 w-4"
                                         />
-                                        Saved!
+                                        {t('profile.edit.saved')}
                                     </>
                                 ) : profileSaveStatus === 'error' ? (
                                     <>
                                         <Icon
                                             icon="mdi:alert"
-                                            className="w-4 h-4 mr-2"
+                                            className="h-4 w-4"
                                         />
-                                        Error
+                                        {t('profile.edit.error')}
                                     </>
                                 ) : (
-                                    'Save Changes'
+                                    t('profile.edit.saveChanges')
                                 )}
                             </button>
                         </div>
                     </div>
+                </div>
                 </div>
             )}
         </Layout>

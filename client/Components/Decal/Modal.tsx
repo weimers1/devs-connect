@@ -1,5 +1,6 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useEffect, useState } from 'react';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 interface ModalContent {
     children: React.ReactNode;
@@ -10,10 +11,12 @@ interface ModalContent {
 
 const Modal: React.FC<ModalContent> = ({
     children,
-    title = 'Attention',
+    title: titleProp,
     allowClose = true,
     onClose,
 }) => {
+    const { t } = useLanguage();
+    const title = titleProp === undefined ? t('profile.modal.defaultTitle') : titleProp;
     const [isHidden, setIsHidden] = useState(false);
 
     useEffect(() => {

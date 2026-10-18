@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Icon } from '@iconify/react';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 interface ProfileCardProps {
     title: string;
@@ -16,6 +17,7 @@ function ProfileCard({
     onAddClick,
     className = '',
 }: ProfileCardProps) {
+    const { t } = useLanguage();
     return (
         <div
             className={`w-full bg-white sm:rounded-lg shadow-md p-4 sm:p-6 ${className}`}
@@ -27,7 +29,7 @@ function ProfileCard({
                     <button 
                         onClick={onAddClick}
                         className="text-blue-600 hover:text-blue-800"
-                        aria-label={`Add ${title.toLowerCase()}`}
+                        aria-label={t('profile.card.add', { title: title.toLowerCase() })}
                     >
                         <Icon icon="mdi:plus" className="w-5 h-5" />
                     </button>

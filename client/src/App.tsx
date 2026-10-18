@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '../Components/Auth/AuthContext';
+import { LanguageProvider } from './i18n/LanguageProvider';
 import { ProtectedRoute } from '../Components/Auth/ProtectedRoute';
 import { PublicRoute } from '../Components/Auth/PublicRoute';
 import AuthCallBack from '../Components/Auth/AuthCallBack';
@@ -9,7 +10,6 @@ import CommunityPage from '../Components/Communities/CommunityPage';
 import CreateCommunity from '../Components/Communities/CreateCommunity';
 import EditCommunity from '../Components/Communities/EditCommunity';
 import React from 'react';
-import PostTypes from '../Components/Communities/PostTypes';
 import { UserConnectionContextProvider } from '../Components/Connections/UserConnectionContext';
 import Connections from '../Components/Connections/Connections';
 
@@ -61,10 +61,6 @@ const AppRoutes = () => {
                 element={<EditCommunity />}
             />
             <Route
-                path="/profile/:userId"
-                element={<PostTypes />}
-            />
-            <Route
                 path="/connections/:userId"
                 element={<Connections />}
             />
@@ -84,13 +80,15 @@ const AppRoutes = () => {
 
 const App = () => {
     return (
-        <AuthProvider>
-            <BrowserRouter>
-                <UserConnectionContextProvider>
-                    <AppRoutes />
-                </UserConnectionContextProvider>
-            </BrowserRouter>
-        </AuthProvider>
+        <BrowserRouter>
+            <AuthProvider>
+                <LanguageProvider>
+                    <UserConnectionContextProvider>
+                        <AppRoutes />
+                    </UserConnectionContextProvider>
+                </LanguageProvider>
+            </AuthProvider>
+        </BrowserRouter>
     );
 };
 

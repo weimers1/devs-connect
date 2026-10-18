@@ -3,6 +3,7 @@ import CreatePost from './CreatePost';
 import PostCard from './PostTypes';
 import type {Post} from './PostTypes';
 import API from '../../Service/service';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 interface PostsFeedProps {
     communityId: string;
@@ -10,6 +11,7 @@ interface PostsFeedProps {
 }
 
 const PostsFeed: React.FC<PostsFeedProps> = ({ communityId, activeTab }) => {
+    const { t } = useLanguage();
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     useEffect(() => {
@@ -51,7 +53,7 @@ const PostsFeed: React.FC<PostsFeedProps> = ({ communityId, activeTab }) => {
                 <CreatePost onPostCreate={handlePostCreate} activeTab={activeTab} />
                 <div className="text-center py-8">
                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                    <p className="text-gray-500">Loading posts...</p>
+                    <p className="text-gray-500">{t('communities.posts.loading')}</p>
                 </div>
             </div>
         );
@@ -75,8 +77,8 @@ const PostsFeed: React.FC<PostsFeedProps> = ({ communityId, activeTab }) => {
                 ))
             ) : (
                 <div className="text-center py-12">
-                    <p className="text-gray-500 mb-4">No programming posts yet</p>
-                    <p className="text-sm text-gray-400">Be the first to share your code!</p>
+                    <p className="text-gray-500 mb-4">{t('communities.posts.empty')}</p>
+                    <p className="text-sm text-gray-400">{t('communities.posts.emptyHint')}</p>
                 </div>
             )}
         </div>

@@ -1,24 +1,63 @@
-import sequelize from '../config/database.js';
 import { DataTypes } from 'sequelize';
-import UserCommunity from './UserCommunity.js';
+import sequelize from '../config/database.js'; // Ensure correct database configuration import path
 
 const Community = sequelize.define('Community', {
     id: {
-        type: DataTypes.UUID, // Changed from INTEGER to UUID to match frontend parameters
-  // Automatically generates a UUID on creation
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4, //  Fix: Safely auto-generates string keys for AWS
         primaryKey: true,
     },
-    name: { type: DataTypes.STRING, allowNull: false },
-    description: { type: DataTypes.TEXT },
-    createdBy: { type: DataTypes.INTEGER, allowNull: false },
-    rules: { type: DataTypes.TEXT, allowNull: true },
-    icon: { type: DataTypes.STRING, allowNull: true },
-    color: { type: DataTypes.STRING, allowNull: true },
-    image: { type: DataTypes.STRING, allowNull: true },
-    memberCount: { type: DataTypes.INTEGER, defaultValue: 1 },
-    isMember: { type: DataTypes.BOOLEAN, allowNull: false },
-    isOwner: { type: DataTypes.BOOLEAN, allowNull: false },
-    isPrivate: { type: DataTypes.BOOLEAN, defaultValue: false },
+    name: { 
+        type: DataTypes.STRING, 
+        allowNull: false 
+    },
+    description: { 
+        type: DataTypes.TEXT 
+    },
+    createdBy: { 
+        type: DataTypes.STRING, // Changed from INTEGER to match Stytch user UUID configurations
+        allowNull: false 
+    },
+    rules: { 
+        type: DataTypes.TEXT, 
+        allowNull: true 
+    },
+    icon: { 
+        type: DataTypes.STRING, 
+        allowNull: true 
+    },
+    color: { 
+        type: DataTypes.STRING, 
+        allowNull: true 
+    },
+    image: { 
+        type: DataTypes.STRING, 
+        allowNull: true 
+    },
+    memberCount: { 
+        type: DataTypes.INTEGER, 
+        defaultValue: 1 
+    },
+    isPrivate: { 
+        type: DataTypes.BOOLEAN, 
+        defaultValue: false 
+    },
+    // Fix: Turned into VIRTUAL fields so they don't corrupt your AWS schema creation
+    isMember: {
+        type: DataTypes.VIRTUAL,
+        get() {
+            return this.setDataValue('isMember') || false;
+        }
+    },
+    isOwner: {
+        type: DataTypes.VIRTUAL,
+        get() {
+            return this.setDataValue('isOwner') || false;
+        }
+    }
+}, {
+    tableName: 'communities', //  Fix: Forces your AWS database table name to align with your controller query
+    timestamps: true
 });
 
 export default Community;
