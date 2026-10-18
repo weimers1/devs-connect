@@ -1,0 +1,54 @@
+services:
+  # ============================================================================
+  # 1. Express + Socket.io Backend API
+  # ============================================================================
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: devs_connect_server
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    ports:
+      - "${SERVER_PORT:-6969}:6969"
+    depends_on:
+      - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - devs_network
+
+  # ============================================================================
+  # 2. Vite React Frontend (Served by Nginx Reverse Proxy)
+  # ============================================================================
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: devs_connect_client
+    restart: unless-stopped
+    ports:
+      - "${CLIENT_PORT:-80}:80"
+    depends_on:
+      - server
+    networks:
+      - devs_network
+
+  # ============================================================================
+  # 3. Redis (Session Cache & Rate Limiting)
+  # ============================================================================
+  redis:
+    image: redis:alpine
+    container_name: devs_connect_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    networks:
+      - devs_network
+
+networks:
+  devs_network:
+    driver: bridge
+
