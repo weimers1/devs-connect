@@ -85,6 +85,10 @@ const isMobile = width <= 768;
     const [currentUser, setCurrentUser] = useState(Number);
     const [userProfileImage, setUserProfileImage] = useState('');
     const [firstName, setFirstName] = useState('');
+    const [interestSent, setInterestSent] = useState(false);
+    const [showInterested, setShowInterested] = useState(false);
+    const [interestedUsers, setInterestedUsers] = useState<{ publicId: string; isPrivate: boolean; connectionStatus: 'none' | 'pending' | 'connected'; name: string; avatar: string | null; timestamp: string }[]>([]);
+    const [interestedError, setInterestedError] = useState('');
     // const [canDelete, setCanDelete] = useState(true);
     
     useEffect(() => {
@@ -209,11 +213,41 @@ const isMobile = width <= 768;
         });
     };
 
+    const isPostAuthor = post.userId !== undefined && Number(currentUser) === post.userId;
+
+    const loadInterestedUsers = async () => {
+        try {
+            setInterestedUsers(await API.getPostInterests(post.id.toString()));
+            setInterestedError('');
+        } catch (error) {
+            console.error('Failed to load interested users:', error);
+            setInterestedError(error instanceof Error ? error.message : t('communities.post.interestedError'));
+        }
+    };
+
+    const handleConnectionRequest = async (publicId: string) => {
+        try {
+            const result = await API.sendConnectionRequest(publicId, post.id.toString());
+            setInterestedUsers((current) =>
+                current.map((person) =>
+                    person.publicId === publicId ? { ...person, connectionStatus: result.status } : person,
+                ),
+            );
+        } catch (error) {
+            setInterestedError(error instanceof Error ? error.message : t('communities.post.interestedError'));
+        }
+    };
     const handleInterest = async () => {
+        if (isPostAuthor) {
+            const next = !showInterested;
+            setShowInterested(next);
+            if (next) await loadInterestedUsers();
+            return;
+        }
         requireAuth(async () => {
             try {
                 await API.expressInterest(post.id.toString());
-                loadComments();
+                setInterestSent(true);
                 onPostUpdate?.();
             } catch (error) {
                 console.error('Failed to express interest:', error);
@@ -469,11 +503,56 @@ const isMobile = width <= 768;
                                 className="flex items-center space-x-1 hover:text-green-600 transition-colors ml-auto"
                             >
                                 <Icon icon="mdi:hand-heart" className="w-4 h-4" />
-                                <span className="text-sm font-medium">{t('communities.post.interested')}</span>
+                                <span className="text-sm font-medium">{isPostAuthor ? t('communities.post.interestedList') : interestSent ? t('communities.post.interestSent') : t('communities.post.interested')}</span>
                             </button>
                         )}
                     </div>
                     
+                    {isPostAuthor && showInterested && (
+                        <div className="mt-4 border-t pt-4">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-2">{t('communities.post.interestedList')} ({interestedUsers.length})</h4>
+                            {interestedError ? (
+                                <p className="text-sm text-red-600">{t('communities.post.interestedError')}: {interestedError}</p>
+                            ) : interestedUsers.length === 0 ? (
+                                <p className="text-sm text-gray-500">{t('communities.post.interestedEmpty')}</p>
+                            ) : (
+                                <ul className="space-y-2">
+                                    {interestedUsers.map((person) => (
+                                        <li key={person.publicId} className="flex items-center justify-between gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => navigate(`/profile/${person.publicId}`)}
+                                                className="flex items-center space-x-3 hover:text-blue-600 transition-colors"
+                                            >
+                                                <img
+                                                    src={person.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=random`}
+                                                    alt={person.name}
+                                                    className="w-8 h-8 rounded-full object-cover"
+                                                />
+                                                <span className="text-sm font-medium">{person.name}</span>
+                                                <span className="text-xs text-gray-400">{person.timestamp}</span>
+                                            </button>
+                                            {person.isPrivate && person.connectionStatus === 'none' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleConnectionRequest(person.publicId)}
+                                                    className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                                                >
+                                                    {t('communities.post.sendRequest')}
+                                                </button>
+                                            )}
+                                            {person.connectionStatus === 'pending' && (
+                                                <span className="text-xs text-gray-500">{t('communities.post.requestPending')}</span>
+                                            )}
+                                            {person.connectionStatus === 'connected' && (
+                                                <span className="text-xs text-green-600">{t('communities.post.connected')}</span>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
                     {/* Comments Section */}
                     {showComments && (
                         <div className="mt-4 border-t pt-4">

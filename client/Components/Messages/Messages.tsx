@@ -21,6 +21,7 @@ const Messages = () => {
         error,
         searchMessages,
         refreshMessages,
+        setActiveChatUserId,
         socket: messagesSocket,
     } = useMessages();
 
@@ -38,55 +39,67 @@ const Messages = () => {
         };
     }, []);
 
+    const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
     useEffect(() => {
-        if (!targetUserId || !/^\d+$/.test(targetUserId) || !currentUserId) return;
-        if (targetUserId === currentUserId) {
+        if (!targetUserId || !currentUserId) return;
+        const isUuid = UUID_PATTERN.test(targetUserId);
+        // Old links used the numeric ID; they are upgraded to the UUID below.
+        if (!isUuid && !/^\d+$/.test(targetUserId)) return;
+
+        const matchesTarget = (message: Message) =>
+            isUuid
+                ? message.publicId?.toLowerCase() === targetUserId.toLowerCase()
+                : message.userId === targetUserId;
+        const setUrlUser = (publicId?: string) =>
             setSearchParams((current) => {
                 const next = new URLSearchParams(current);
-                next.delete('user');
+                if (publicId) next.set('user', publicId);
+                else next.delete('user');
                 return next;
             }, { replace: true });
-            return;
-        }
-        if (selectedMessage?.userId === targetUserId) return;
 
-        const existingConversation = messages.find(
-            (message) => message.userId === targetUserId,
-        );
+        if (selectedMessage && matchesTarget(selectedMessage)) return;
+
+        const existingConversation = messages.find(matchesTarget);
         if (existingConversation) {
+            if (existingConversation.userId === currentUserId) {
+                setUrlUser();
+                return;
+            }
             setSelectedMessage(existingConversation);
+            if (!isUuid) setUrlUser(existingConversation.publicId);
             return;
         }
 
         let active = true;
         const createConversation = async () => {
             try {
-                const profile = await API.getUserProfileByInternalId(targetUserId);
+                const profile = isUuid
+                    ? await API.getUserProfile(targetUserId)
+                    : await API.getUserProfileByInternalId(targetUserId);
                 if (!active) return;
-                const conversationId = [Number(currentUserId), Number(targetUserId)]
+                const otherUserId = isUuid ? String(profile.id) : targetUserId;
+                if (!profile.publicId || otherUserId === currentUserId) {
+                    setUrlUser();
+                    return;
+                }
+                const conversationId = [Number(currentUserId), Number(otherUserId)]
                     .sort((a, b) => a - b)
                     .join('-');
                 setSelectedMessage({
                     id: conversationId,
-                    userId: targetUserId,
+                    userId: otherUserId,
+                    publicId: profile.publicId,
                     name: `${profile.firstName} ${profile.lastName}`.trim(),
                     lastMessage: '',
                     timestamp: new Date(),
                     avatar: profile.pfp || '',
                 });
+                if (!isUuid) setUrlUser(profile.publicId);
             } catch (profileError) {
                 console.error('Failed to load conversation profile:', profileError);
-                if (!active) return;
-                setSelectedMessage({
-                    id: [Number(currentUserId), Number(targetUserId)]
-                        .sort((a, b) => a - b)
-                        .join('-'),
-                    userId: targetUserId,
-                    name: t('social.messages.newConversation'),
-                    lastMessage: '',
-                    timestamp: new Date(),
-                    avatar: '',
-                });
+                if (active) setUrlUser();
             }
         };
         void createConversation();
@@ -96,9 +109,8 @@ const Messages = () => {
     }, [
         currentUserId,
         messages,
-        selectedMessage?.userId,
+        selectedMessage,
         setSearchParams,
-        t,
         targetUserId,
     ]);
 
@@ -111,7 +123,14 @@ const Messages = () => {
         sendMessage,
         isLoading: isChatLoading,
         error: chatError,
+        isOtherTyping,
+        notifyTyping,
     } = useChat(selectedUserId, messagesSocket);
+
+    useEffect(() => {
+        setActiveChatUserId(selectedUserId);
+        return () => setActiveChatUserId(null);
+    }, [selectedUserId, setActiveChatUserId]);
 
     useEffect(() => {
         if (!messagesSocket) return;
@@ -132,8 +151,8 @@ const Messages = () => {
 
     const handleMessageSelect = useCallback((message: Message) => {
         setSelectedMessage(message);
-        if (message.userId) {
-            setSearchParams({ user: message.userId });
+        if (message.publicId) {
+            setSearchParams({ user: message.publicId });
         }
     }, [setSearchParams]);
 
@@ -200,6 +219,8 @@ const Messages = () => {
                         onBackToList={handleBackToList}
                         messages={chatMessages}
                         onSendMessage={handleSendMessage}
+                        isTyping={isOtherTyping}
+                        onTyping={notifyTyping}
                         isLoading={isChatLoading}
                         error={chatError}
                         onStartConversation={startConversation}

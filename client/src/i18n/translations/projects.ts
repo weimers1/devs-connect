@@ -3,6 +3,10 @@ import type { AreaTranslations } from '../types';
 const projects: AreaTranslations = {
     en: {
         'projects.title': 'Projects',
+        'profile.projects.manage': 'Manage projects',
+        'profile.projects.empty': 'No projects shared yet.',
+        'profile.projects.emptyOwn': 'You haven’t shared any projects yet. Add your first one!',
+        'profile.projects.loadError': 'Projects could not be loaded.',
         'projects.subtitle': 'Share what you are building and discover what other developers are working on.',
         'projects.new': 'New project',
         'projects.tab.all': 'All projects',
@@ -58,6 +62,10 @@ const projects: AreaTranslations = {
     },
     es: {
         'projects.title': 'Proyectos',
+        'profile.projects.manage': 'Administrar proyectos',
+        'profile.projects.empty': 'Aún no hay proyectos compartidos.',
+        'profile.projects.emptyOwn': 'Aún no has compartido proyectos. ¡Agrega el primero!',
+        'profile.projects.loadError': 'No se pudieron cargar los proyectos.',
         'projects.subtitle': 'Comparte lo que estás construyendo y descubre en qué trabajan otros desarrolladores.',
         'projects.new': 'Nuevo proyecto',
         'projects.tab.all': 'Todos los proyectos',

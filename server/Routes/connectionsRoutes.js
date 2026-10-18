@@ -6,10 +6,18 @@ import {
     getrelevantconnection,
     disconnecttotUser,
     getUserConnections,
-    getOtherUserConnections
+    getOtherUserConnections,
+    sendConnectionRequest,
+    getIncomingConnectionRequests,
+    respondToConnectionRequest
 } from "../controllers/connectionsController.js";
 const router = express.Router();
 
+
+//Connection requests
+router.post('/requests/user/:publicId', authMiddleware, sendConnectionRequest);
+router.get('/requests/incoming', authMiddleware, getIncomingConnectionRequests);
+router.post('/requests/:requestId/:action', authMiddleware, respondToConnectionRequest);
 
 //Connect to User 
 router.post('/connect/:userId', authMiddleware, connectToUser);

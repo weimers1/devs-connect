@@ -31,6 +31,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
     onBackToList,
     messages = [],
     onSendMessage,
+    onTyping,
     isTyping = false,
     isLoading = false,
     error = null,
@@ -61,6 +62,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
         setSendError('');
         try {
             await onSendMessage(content);
+            onTyping?.(false);
             setNewMessage('');
             if (inputRef.current) inputRef.current.style.height = 'auto';
             inputRef.current?.focus();
@@ -247,6 +249,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                         value={newMessage}
                         onChange={(event) => {
                             setNewMessage(event.target.value);
+                            onTyping?.(event.target.value.trim().length > 0);
                             event.currentTarget.style.height = 'auto';
                             event.currentTarget.style.height = `${Math.min(event.currentTarget.scrollHeight, 120)}px`;
                         }}

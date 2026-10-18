@@ -5,6 +5,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import stytchClient from './config/stytch.js';
 import User from './models/User.js';
+import { isBlockedBetweenUsers } from './utils/userVisibility.js';
 import passport from 'passport';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
@@ -49,7 +50,6 @@ import connectionsRoutes from './Routes/connectionsRoutes.js';
 import blockRoutes from './Routes/blockRoutes.js';
 import communityRoutes from './Routes/communityRoutes.js';
 import searchRoutes from './Routes/searchRoutes.js';
-import feedbackRoutes from './Routes/feedbackRoutes.js';
 import projectRoutes from './Routes/projectRoutes.js';
 
 const PORT = process.env.PORT || '6969';
@@ -360,6 +360,33 @@ io.on('connection', (socket) => {
         socket.emit('test-response', 'Hello from server!');
     });
 
+    // Relays "is typing" to the other person only; nothing is stored.
+    let lastTypingAt = 0;
+    socket.on('typing', async (payload) => {
+        try {
+            const now = Date.now();
+            const isTyping = payload?.isTyping === true;
+            if (isTyping && now - lastTypingAt < 500) return;
+            if (isTyping) lastTypingAt = now;
+            const receiverId = Number(payload?.receiverId);
+            const senderId = Number(socket.data.userId);
+            if (
+                !Number.isInteger(receiverId) ||
+                receiverId <= 0 ||
+                receiverId === senderId
+            ) {
+                return;
+            }
+            if (await isBlockedBetweenUsers(senderId, receiverId)) return;
+            io.to(`user-${receiverId}`).emit('typing', {
+                userId: senderId,
+                isTyping,
+            });
+        } catch {
+            // Typing indicators are best-effort.
+        }
+    });
+
     socket.on('disconnect', () => {
         if (process.env.NODE_ENV !== 'production') {
             console.log('Client disconnected');
@@ -386,7 +413,6 @@ app.use('/api/users', userRouter);
 app.use('/api/connections', connectionsRoutes);
 app.use('/api/blocks', blockRoutes);
 app.use('/api/search', searchRoutes);
-app.use('/api/feedback', feedbackRoutes);
 app.use('/api/projects', projectRoutes);
 
 // Global Application Error Interceptor Middleware Fallback

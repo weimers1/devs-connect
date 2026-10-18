@@ -1655,6 +1655,15 @@ export const getPostComments = async (req, res) => {
     }
 };
 
+const ensureInterestTable = () =>
+    sequelize.query(`CREATE TABLE IF NOT EXISTS PostInterests (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        postId INT NOT NULL,
+        userId INT NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_post_interest (postId, userId)
+    )`);
+
 export const expressInterest = async (req, res) => {
     try {
         const { postId } = req.params;
@@ -1667,26 +1676,23 @@ export const expressInterest = async (req, res) => {
         if (community?.isPrivate && !isMember) {
             return res.status(403).json({ error: 'Private community' });
         }
-
-        // Check if table exists, if not create it
-        try {
-            await sequelize.query(`CREATE TABLE IF NOT EXISTS PostComments (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                postId INT NOT NULL,
-                userId INT NOT NULL,
-                content TEXT NOT NULL,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )`);
-        } catch (createError) {
-            console.log('Table creation handled:', createError.message);
+        const fullPost = await Post.findByPk(postId, {
+            attributes: ['id', 'userId', 'type'],
+        });
+        if (fullPost.type !== 'lfg') {
+            return res.status(400).json({ error: 'Post is not an LFG post' });
+        }
+        if (fullPost.userId === userId) {
+            return res
+                .status(400)
+                .json({ error: 'You cannot show interest in your own post' });
         }
 
-        await PostComment.create({
-            postId,
-            userId,
-            content: "I'm interested in this project!",
-        });
+        await ensureInterestTable();
+        await sequelize.query(
+            'INSERT IGNORE INTO PostInterests (postId, userId) VALUES (:postId, :userId)',
+            { replacements: { postId, userId } },
+        );
 
         res.json({ message: 'Interest expressed successfully' });
     } catch (error) {
@@ -1695,6 +1701,94 @@ export const expressInterest = async (req, res) => {
     }
 };
 
+export const getPostInterests = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.user.userId;
+        const post = await Post.findByPk(postId);
+        if (!post) return res.status(404).json({ error: 'Post not found' });
+        if (post.userId !== userId) {
+            return res
+                .status(403)
+                .json({ error: 'Only the post author can see interested users' });
+        }
+
+        await ensureInterestTable();
+        const rows = await sequelize.query(
+            `
+            SELECT u.id AS userId, u.publicId, u.firstName, u.lastName, up.profileImageUrl, pi.createdAt
+            FROM PostInterests pi
+            JOIN Users u ON pi.userId = u.id
+            LEFT JOIN UserProfiles up ON u.id = up.userId
+            WHERE pi.postId = :postId
+              AND NOT EXISTS (
+                    SELECT 1 FROM BlockedUsers blocked
+                    WHERE (blocked.blockerId = :viewerId
+                           AND blocked.blockedUserId = pi.userId)
+                       OR (blocked.blockerId = pi.userId
+                           AND blocked.blockedUserId = :viewerId)
+              )
+            ORDER BY pi.createdAt DESC
+            `,
+            {
+                replacements: { postId, viewerId: userId },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        const ids = rows.map((row) => row.userId);
+        const hidden = new Set();
+        const connected = new Set();
+        const pending = new Set();
+        if (ids.length) {
+            const visibility = await sequelize.query(
+                "SELECT userId FROM VisibilitySettings WHERE userId IN (:ids) AND profileVisibility <> 'Everyone'",
+                { replacements: { ids }, type: sequelize.QueryTypes.SELECT },
+            );
+            visibility.forEach((v) => hidden.add(v.userId));
+            const connectionIds = ids.map((id) => [userId, id].sort((a, b) => a - b).join('-'));
+            const links = await sequelize.query(
+                'SELECT connection_id FROM connections WHERE connection_id IN (:connectionIds)',
+                { replacements: { connectionIds }, type: sequelize.QueryTypes.SELECT },
+            );
+            links.forEach((l) => connected.add(l.connection_id));
+            await sequelize.query(`CREATE TABLE IF NOT EXISTS ConnectionRequests (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                senderId INT NOT NULL,
+                receiverId INT NOT NULL,
+                postId INT NULL,
+                status VARCHAR(16) NOT NULL DEFAULT 'pending',
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uniq_connection_request (senderId, receiverId)
+            )`);
+            const requests = await sequelize.query(
+                "SELECT receiverId FROM ConnectionRequests WHERE senderId = :userId AND status = 'pending' AND receiverId IN (:ids)",
+                { replacements: { userId, ids }, type: sequelize.QueryTypes.SELECT },
+            );
+            requests.forEach((r) => pending.add(r.receiverId));
+        }
+
+        res.json(
+            rows.map((row) => ({
+                publicId: row.publicId,
+                isPrivate: hidden.has(row.userId),
+                connectionStatus: connected.has(
+                    [userId, row.userId].sort((a, b) => a - b).join('-'),
+                )
+                    ? 'connected'
+                    : pending.has(row.userId)
+                      ? 'pending'
+                      : 'none',
+                name: `${row.firstName || ''} ${row.lastName || ''}`.trim() || 'Unknown User',
+                avatar: row.profileImageUrl || null,
+                timestamp: new Date(row.createdAt).toLocaleDateString(),
+            })),
+        );
+    } catch (error) {
+        console.error('Error fetching interested users:', error);
+        res.status(500).json({ error: 'Failed to fetch interested users' });
+    }
+};
 export const deletePost = async (req, res) => {
     try {
         const { postId } = req.params;

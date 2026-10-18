@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import UserProfile from '../Models/UserProfile.js';
 import sequelize from '../config/database.js';
@@ -109,6 +110,32 @@ export const getCurrentUser = async (req, res) => {
     } catch (error) {
         console.error('Error fetching current user:', error);
         res.status(500).json({ error: 'Failed to fetch current user' });
+    }
+};
+export const getFeaturebaseToken = async (req, res) => {
+    try {
+        const secret = process.env.FEATUREBASE_JWT_SECRET;
+        if (!secret) {
+            return res.status(503).json({ error: 'Feedback portal is not configured' });
+        }
+        const user = await User.findByPk(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const featurebaseJwt = jwt.sign(
+            {
+                userId: user.publicId,
+                email: user.email,
+                name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+            },
+            secret,
+            { algorithm: 'HS256', expiresIn: '1h' },
+        );
+        res.set('Cache-Control', 'no-store');
+        res.json({ featurebaseJwt });
+    } catch (error) {
+        console.error('Error creating Featurebase token:', error);
+        res.status(500).json({ error: 'Failed to create feedback portal token' });
     }
 };
 //Obtain All User information:
