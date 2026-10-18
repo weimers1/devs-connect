@@ -12,6 +12,7 @@ import {
     commentOnPost,
     getPostComments,
     expressInterest,
+    getPostInterests,
     deletePost,
     getCommunityMemberShip,
     getCommunitiesFromUser,
@@ -67,6 +68,7 @@ router.get('/posts/saved', authMiddleware, getSavedPosts);
 router.post('/posts/:postId/save', authMiddleware, toggleSavedPost);
 router.get('/posts/:postId/comments', authMiddleware, getPostComments);
 router.post('/posts/:postId/interest', authMiddleware, expressInterest);
+router.get('/posts/:postId/interest', authMiddleware, getPostInterests);
 router.delete('/posts/:postId', authMiddleware, deletePost);
 router.get('/:communityId/membership/:userId', authMiddleware, getCommunityMemberShip);
 router.get('/:userId/communities', authMiddleware, getCommunitiesFromUser); // Get all communities a user is in

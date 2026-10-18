@@ -4,6 +4,7 @@ import Layout from '../Layout';
 import UserCard from './UserCard';
 import Sidebar from '../Connections/Sidebar';
 import Communities from './ProfileCommunities';
+import ProfileProjects from './ProfileProjects';
 // import { useTheme } from '../../src/ThemeContext';
 import API from '../../Service/service';
 import { Icon } from '@iconify/react';
@@ -395,6 +396,15 @@ function Profile() {
                             onLoadedCount={updateCommunityCount}
                         />
                     </div>
+
+                    {(profilePublicId || userId) && (
+                        <div className="w-full mx-auto">
+                            <ProfileProjects
+                                publicId={profilePublicId || userId || ''}
+                                isOwnProfile={isOwnProfile}
+                            />
+                        </div>
+                    )}
 
                     {isOwnProfile && (
                         <div className="hidden lg:block fixed right-4 top-24">

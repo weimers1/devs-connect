@@ -210,18 +210,20 @@ function Sidebar() {
                                 className={`flex items-center space-x-2 rounded-lg p-1 transition-colors hover:bg-gray-50 ${index > 0 ? 'hidden sm:flex' : ''}`}
                             >
                                 <div className="relative">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-sm font-semibold text-white">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-sm font-semibold text-white overflow-hidden">
                                <button
+                               type="button"
+                               className="flex h-full w-full items-center justify-center"
                                onClick={() => navigateFromSidebar(`/profile/${connection.publicId}`)}
                                >
                                     {connection.profileImageUrl ? (
                                         <img
-                                className="w-12 h-12 rounded-full object-cover"
+                                className="h-full w-full rounded-full object-cover"
                                 src={connection.profileImageUrl}
                                 alt={`${connection.firstName} ${connection.lastName}`}
                                 ></img>
                                     ) : (
-                                        <span>{connection.firstName.charAt(0) + connection.lastName.charAt(0)}</span>
+                                        <span>{`${connection.firstName?.charAt(0) ?? ''}${connection.lastName?.charAt(0) ?? ''}`}</span>
                                     )}
                                </button>
                                     </div>
@@ -236,7 +238,7 @@ function Sidebar() {
                                     >
                                     <div className="flex items-center space-x-2">
                                         <h4 className="font-medium text-gray-900 text-sm truncate">
-                                            {connection.firstName + ' ' + connection.lastName.slice(0,15)}
+                                            {`${connection.firstName ?? ''} ${(connection.lastName ?? '').slice(0, 15)}`}
                                         </h4>
                                         {/* <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                             {connection.connectionType}
@@ -255,7 +257,7 @@ function Sidebar() {
                                 </div>
                              
                                 <button className="shrink-0 rounded p-1 text-xs text-blue-600 hover:bg-blue-50"
-                                  onClick={() => navigateFromSidebar(`/messages?user=${connection.userId}`)}
+                                  onClick={() => navigateFromSidebar(`/messages?user=${connection.publicId}`)}
                                 >
                                     {t('social.connections.message')}
                                 </button>
@@ -317,20 +319,21 @@ function Sidebar() {
                                 className={`rounded-lg border border-gray-100 p-2 transition-shadow hover:shadow-sm ${index > 0 ? 'hidden sm:block' : ''}`}
                             >
                                 <div className="flex items-start space-x-3">
-                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-600 text-sm font-semibold text-white">
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-600 text-sm font-semibold text-white overflow-hidden">
                                         <button
                                             type="button"
+                                            className="flex h-full w-full items-center justify-center"
                                             aria-label={t('social.connections.viewProfileOf', { name: person.author })}
                                             onClick={() => navigateFromSidebar(`/profile/${person.publicId}`)}
                                         >
                                     {person.profileImageUrl ? (
                                         <img
-                                className="w-12 h-12 rounded-full object-cover"
+                                className="h-full w-full rounded-full object-cover"
                                 src={person.profileImageUrl}
                                 alt={person.author}
                                 ></img>
                                     ) : (
-                                        <span>{`${person.author.charAt(0)}${person.author.charAt(person.author.length-1).toUpperCase()}`}</span>
+                                        <span>{`${(person.author ?? '').charAt(0)}${(person.author ?? '').charAt((person.author ?? '').length - 1).toUpperCase()}`}</span>
                                     )}
                                </button>                 
                                     </div>

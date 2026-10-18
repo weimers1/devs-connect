@@ -116,6 +116,10 @@ export const useMessages = (): UseMessagesReturn => {
   const [searchQuery, setSearchQuery] = useState(''); //User's search input
   const conversationIds = useRef(new Set<string>());
   const pendingConversationRefreshes = useRef(new Set<string>());
+  const activeChatUserId = useRef<string | null>(null);
+  const setActiveChatUserId = useCallback((id: string | null) => {
+    activeChatUserId.current = id;
+  }, []);
     //The purpose of the is to prevent any unnecessary re-renders
   const fetchMessages = useCallback(async () => { 
     setIsLoading(true); 
@@ -137,6 +141,7 @@ export const useMessages = (): UseMessagesReturn => {
         return {
           id: conversation.conversation_id,
           userId: String(conversation.otherUser.id),
+          publicId: conversation.otherUser.publicId || undefined,
           name: `${conversation.otherUser.firstName} ${conversation.otherUser.lastName}`.trim(),
           timestamp: new Date(conversation.lastMessage.createdAt),
           avatar: conversation.otherUser.profileImageUrl || '',
@@ -192,7 +197,12 @@ export const useMessages = (): UseMessagesReturn => {
             };
 
             socket.on('user-blocked', handleUserBlocked);
-            socket.on("receiver-message", (messageData) => {
+            const handleReceiverMessage = (messageData: {
+                conversation_id?: string;
+                sender_id?: number | string;
+                content?: string;
+                timestamp?: unknown;
+            }) => {
                 // Validate messageData structure to prevent runtime errors
                 if (!messageData || typeof messageData !== 'object' || 
                     !messageData.conversation_id || !messageData.content || !messageData.timestamp) {
@@ -202,6 +212,9 @@ export const useMessages = (): UseMessagesReturn => {
                 // Sanitize incoming message data to prevent XSS
                 const sanitizedContent = sanitizeContent(messageData.content);
                 const validatedTimestamp = validateTimestamp(messageData.timestamp);
+                const isActiveChat =
+                  activeChatUserId.current !== null &&
+                  String(messageData.sender_id) === activeChatUserId.current;
                 
               const conversationId = String(messageData.conversation_id);
               setMessages(prev => prev.map(conversation => {
@@ -210,7 +223,9 @@ export const useMessages = (): UseMessagesReturn => {
                   ...conversation,
                   lastMessage: sanitizedContent,
                   timestamp: validatedTimestamp,
-                  unreadCount: (Number(conversation.unreadCount) || 0) + 1,
+                  unreadCount: isActiveChat
+                    ? 0
+                    : (Number(conversation.unreadCount) || 0) + 1,
                 };
               }));
 
@@ -224,9 +239,18 @@ export const useMessages = (): UseMessagesReturn => {
                 });
               }
 
-            });
+            };
+            socket.on("receiver-message", handleReceiverMessage);
+            // After a dropped connection, reload anything that arrived while offline.
+            let hasConnected = socket.connected;
+            const handleConnect = () => {
+              if (hasConnected) void fetchMessages();
+              hasConnected = true;
+            };
+            socket.on('connect', handleConnect);
             return () => {
-              socket.off("receiver-message");
+              socket.off("receiver-message", handleReceiverMessage);
+              socket.off('connect', handleConnect);
               socket.off('user-blocked', handleUserBlocked);
             };
           }
@@ -242,7 +266,8 @@ export const useMessages = (): UseMessagesReturn => {
     error,
     socket,
     searchMessages,
-    refreshMessages
+    refreshMessages,
+    setActiveChatUserId
   };
 };
 
@@ -445,12 +470,116 @@ export const useChat = (
 
   markReadRef.current = markConversationAsRead;
 
+  const [isOtherTyping, setIsOtherTyping] = useState(false);
+  const remoteTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const localTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingSent = useRef(0);
+
+  const clearRemoteTyping = useCallback(() => {
+    if (remoteTypingTimer.current) clearTimeout(remoteTypingTimer.current);
+    remoteTypingTimer.current = null;
+    setIsOtherTyping(false);
+  }, []);
+
+  useEffect(() => {
+    clearRemoteTyping();
+    if (!socket || !userId) return;
+    const handleTyping = (payload: { userId?: number | string; isTyping?: boolean }) => {
+      if (String(payload?.userId) !== userId) return;
+      if (!payload.isTyping) {
+        clearRemoteTyping();
+        return;
+      }
+      setIsOtherTyping(true);
+      if (remoteTypingTimer.current) clearTimeout(remoteTypingTimer.current);
+      // Hide the bubble if the "stopped" event never arrives.
+      remoteTypingTimer.current = setTimeout(clearRemoteTyping, 4000);
+    };
+    const handleMessage = (messageData: { sender_id?: number | string }) => {
+      if (String(messageData?.sender_id) === userId) clearRemoteTyping();
+    };
+    socket.on('typing', handleTyping);
+    socket.on('receiver-message', handleMessage);
+    return () => {
+      socket.off('typing', handleTyping);
+      socket.off('receiver-message', handleMessage);
+      if (remoteTypingTimer.current) clearTimeout(remoteTypingTimer.current);
+    };
+  }, [socket, userId, clearRemoteTyping]);
+
+  const notifyTyping = useCallback((typing: boolean) => {
+    if (!socket || !userId || !socket.connected) return;
+    if (localTypingTimer.current) clearTimeout(localTypingTimer.current);
+    localTypingTimer.current = null;
+    if (!typing) {
+      lastTypingSent.current = 0;
+      socket.emit('typing', { receiverId: Number(userId), isTyping: false });
+      return;
+    }
+    const now = Date.now();
+    if (now - lastTypingSent.current > 2000) {
+      lastTypingSent.current = now;
+      socket.emit('typing', { receiverId: Number(userId), isTyping: true });
+    }
+    localTypingTimer.current = setTimeout(() => {
+      lastTypingSent.current = 0;
+      socket.emit('typing', { receiverId: Number(userId), isTyping: false });
+    }, 3000);
+  }, [socket, userId]);
+
+  useEffect(() => () => {
+    if (localTypingTimer.current) clearTimeout(localTypingTimer.current);
+  }, [userId]);
+
+  // Show messages from the open conversation as soon as they arrive.
+  useEffect(() => {
+    if (!socket || !userId) return;
+    const handleIncoming = (messageData: ChatMessageRecord) => {
+      if (
+        !messageData ||
+        typeof messageData !== 'object' ||
+        String(messageData.sender_id) !== userId ||
+        messageData.id === undefined ||
+        !messageData.content
+      ) {
+        return;
+      }
+      const incoming: ChatMessage = {
+        id: String(messageData.id),
+        content: sanitizeContent(messageData.content),
+        timestamp: validateTimestamp(messageData.timestamp),
+        isOwn: false,
+        status: 'read',
+      };
+      setChatMessages(prev =>
+        prev.some(msg => msg.id === incoming.id) ? prev : [...prev, incoming]
+      );
+      void markReadRef.current(userId);
+    };
+    const handleReconnect = () => {
+      void fetchChatMessages(userId).catch(() => undefined);
+    };
+    let hasConnected = socket.connected;
+    const handleConnect = () => {
+      if (hasConnected) handleReconnect();
+      hasConnected = true;
+    };
+    socket.on('receiver-message', handleIncoming);
+    socket.on('connect', handleConnect);
+    return () => {
+      socket.off('receiver-message', handleIncoming);
+      socket.off('connect', handleConnect);
+    };
+  }, [socket, userId, fetchChatMessages]);
+
   return {
     chatMessages,
     isLoading,
     error,
     fetchChatMessages,
     sendMessage,
+    isOtherTyping,
+    notifyTyping,
     socket
   };
 };
@@ -526,6 +655,7 @@ interface Conversation {
   unreadCount: number;
   otherUser: {
     id: number;
+    publicId?: string | null;
     firstName: string;
     lastName: string;
     profileImageUrl: string | null;

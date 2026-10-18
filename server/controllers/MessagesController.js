@@ -22,6 +22,7 @@ export const getConversations = async (req, res) => {
                 END AS otherUserId,
                 otherUser.firstName,
                 otherUser.lastName,
+                otherUser.publicId AS otherPublicId,
                 otherProfile.profileImageUrl,
                 message.content AS lastMessageContent,
                 message.timestamp AS lastMessageTimestamp,
@@ -73,6 +74,7 @@ export const getConversations = async (req, res) => {
             conversation_id: row.conversation_id,
             otherUser: {
                 id: row.otherUserId,
+                publicId: row.otherPublicId || null,
                 firstName: row.firstName || `User${row.otherUserId}`,
                 lastName: row.lastName || 'Test',
                 profileImageUrl: row.profileImageUrl || null,

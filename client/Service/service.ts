@@ -68,26 +68,6 @@ const API = {
         if (!response.ok) throw new Error('Failed to fetch profile settings');
         return response.json();
     },
-    submitFeedback: async (feedback: {
-        category: string;
-        contactEmail: string;
-        message: string;
-    }) => {
-        const response = await fetch(`${BASE_URL}/api/feedback`, {
-            method: 'POST',
-            headers: getAuthHeaders(true),
-            body: JSON.stringify(feedback),
-        });
-        if (!response.ok) {
-            const result = await response.json().catch(() => null);
-            throw new Error(
-                typeof result?.error === 'string'
-                    ? result.error
-                    : 'Failed to send feedback'
-            );
-        }
-        return response.json();
-    },
     getVisibilitySettings: async () => {
         const response = await fetch(`${API_SETTINGS}/visibility`, {
             headers: getAuthHeaders(),
@@ -602,6 +582,48 @@ const API = {
         return response.json();
     },
 
+    sendConnectionRequest: async (publicId: string, postId: string) => {
+        const response = await fetch(
+            `${BASE_URL}/api/connections/requests/user/${encodeURIComponent(publicId)}`,
+            {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                body: JSON.stringify({ postId: Number(postId) }),
+            }
+        );
+        const body = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(body?.error || 'Failed to send connection request');
+        return body as { status: 'pending' | 'connected' };
+    },
+
+    getIncomingConnectionRequests: async () => {
+        const response = await fetch(`${BASE_URL}/api/connections/requests/incoming`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to load connection requests');
+        return response.json() as Promise<{ id: number; publicId: string; name: string; avatar: string | null; career: string; timestamp: string }[]>;
+    },
+
+    respondToConnectionRequest: async (requestId: number, action: 'accept' | 'decline') => {
+        const response = await fetch(
+            `${BASE_URL}/api/connections/requests/${requestId}/${action}`,
+            { method: 'POST', headers: getAuthHeaders(true) }
+        );
+        if (!response.ok) throw new Error('Failed to respond to connection request');
+        return response.json();
+    },
+    getPostInterests: async (postId: string) => {
+        const response = await fetch(
+            `${BASE_URL}/api/communities/posts/${postId}/interest`,
+            { headers: getAuthHeaders() }
+        );
+        if (!response.ok) {
+            const body = await response.json().catch(() => null);
+            throw new Error(`${body?.error || 'Failed to get interested users'} (${response.status})`);
+        }
+        return response.json() as Promise<{ publicId: string; isPrivate: boolean; connectionStatus: 'none' | 'pending' | 'connected'; name: string; avatar: string | null; timestamp: string }[]>;
+    },
+
     //Delete Post
     deletePost: async (postId: string) => {
         const response = await fetch(
@@ -621,6 +643,20 @@ const API = {
             headers: getAuthHeaders(),
         });
         if (!response.ok) throw new Error('Failed to get current user');
+        return response.json();
+    },
+    getFeaturebaseToken: async (): Promise<{ featurebaseJwt: string }> => {
+        const response = await fetch(`${BASE_URL}/api/users/featurebase-token`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) {
+            const result = await response.json().catch(() => null);
+            throw new Error(
+                typeof result?.error === 'string'
+                    ? result.error
+                    : 'Failed to get feedback portal token',
+            );
+        }
         return response.json();
     },
     //Get Data from the communities a user is in. 

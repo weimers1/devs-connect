@@ -7,6 +7,7 @@ import { useAuthRedirect } from "../Auth/useAuthRedirect";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import type { ConnectionData } from "./UserConnectionContext";
 import { useLanguage } from "../../src/i18n/LanguageContext";
+import ConnectionRequests from "./ConnectionRequests";
 
 function Connections() {
   const { t } = useLanguage();
@@ -22,6 +23,7 @@ function Connections() {
     suggestionsError,
     connectingUserId,
     connectionError,
+    refreshConnections,
   } = useUserConnections();
   const { requireAuth } = useAuthRedirect();
   const navigate = useNavigate();
@@ -255,6 +257,8 @@ function Connections() {
           </div>
         </header>
 
+        {isOwnProfile && <ConnectionRequests onAccepted={() => void refreshConnections()} />}
+
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
           <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -332,7 +336,7 @@ function Connections() {
                         type="button"
                         className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                         onClick={() =>
-                          navigate(`/messages?user=${connection.userId}`)
+                          navigate(`/messages?user=${connection.publicId}`)
                         }
                       >
                         {t("social.connections.message")}

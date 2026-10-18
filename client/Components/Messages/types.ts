@@ -4,6 +4,7 @@ import type { Socket } from "socket.io-client";
 export interface Message {
   id: string;
   userId?: string;
+  publicId?: string;
   name: string;
   timestamp: Date;
   avatar: string;
@@ -44,6 +45,7 @@ export interface MessagesContentProps {
   messages?: ChatMessage[];
   onSendMessage?: (content: string) => Promise<void>;
   isTyping?: boolean;
+  onTyping?: (typing: boolean) => void;
   isLoading?: boolean;
   error?: string | null;
   onStartConversation?: () => void;
@@ -87,6 +89,7 @@ export interface UseMessagesReturn {
   socket: Socket | null;
   searchMessages: (query: string) => void;
   refreshMessages: () => Promise<void>;
+  setActiveChatUserId: (userId: string | null) => void;
 }
 
 // TYPE FIX: Added fetchChatMessages to interface for TypeScript compatibility
@@ -96,5 +99,7 @@ export interface UseChatReturn {
   error: string | null;
   sendMessage: (content: string) => Promise<void>;
   fetchChatMessages: (userId: string) => Promise<void>;
+  isOtherTyping: boolean;
+  notifyTyping: (typing: boolean) => void;
   socket: Socket | null;
 }
