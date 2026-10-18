@@ -42,17 +42,23 @@ const Community = sequelize.define('Community', {
         type: DataTypes.BOOLEAN, 
         defaultValue: false 
     },
-    // Fix: Turned into VIRTUAL fields so they don't corrupt your AWS schema creation
+    // Fix: Turned into VIRTUAL fields so they don't corrupt your database schema creation
     isMember: {
         type: DataTypes.VIRTUAL,
         get() {
-            return this.setDataValue('isMember') || false;
+            return this.getDataValue('isMember') ?? false;
+        },
+        set(value) {
+            this.setDataValue('isMember', Boolean(value));
         }
     },
     isOwner: {
         type: DataTypes.VIRTUAL,
         get() {
-            return this.setDataValue('isOwner') || false;
+            return this.getDataValue('isOwner') ?? false;
+        },
+        set(value) {
+            this.setDataValue('isOwner', Boolean(value));
         }
     }
 }, {

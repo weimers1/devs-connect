@@ -41,7 +41,6 @@ export const getProfileSettings = async (req, res) => {
             githubUsername: user?.githubUsername || null,
             githubId: user?.githubId || null,
             githubProfileVisible: !!user?.githubProfileVisible,
-            githubUrl: user?.githubProfileVisible && user?.githubUsername ? `https://github.com/${encodeURIComponent(user.githubUsername)}` : '',
             githubUrl:
                 user?.githubProfileVisible && user?.githubUsername
                     ? `https://github.com/${encodeURIComponent(user.githubUsername)}`
@@ -59,6 +58,7 @@ export const getProfileSettings = async (req, res) => {
             credentialURL: certification?.credentialURL || null,
         });
     } catch (error) {
+        console.error('Failed to get profile settings:', error);
         res.status(500).json({ error: 'Failed to get profile settings' });
     }
 };
@@ -197,6 +197,7 @@ export const updateProfileSettings = async (req, res) => {
 
         res.json({ message: 'Profile updated successfully' });
     } catch (error) {
+        console.error('Failed to update profile settings:', error);
         res.status(500).json({ error: 'Failed to update profile settings' });
     }
 };

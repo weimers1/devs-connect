@@ -16,8 +16,8 @@ export const authMiddleware = async (req, res, next) => {
             where: { stytchUserId: session.user_id },
         });
 
-        if (!user) {
-            return res.status(401).json({ error: 'User not found' });
+        if (!user || user.isDeleted || user.banned) {
+            return res.status(401).json({ error: 'User not found or account inaccessible' });
         }
 
         req.user = { userId: user.id };
