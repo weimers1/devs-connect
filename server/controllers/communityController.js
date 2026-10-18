@@ -59,7 +59,7 @@ const getPostCommunityAccess = async (postId, userId) => {
 
 export const createCommunity = async (req, res) => {
     try {
-        const { name, description, icon, color, isPrivate } = req.body;
+        const { name, description, icon, color, image, isPrivate } = req.body;
 
         if (!name || !description) {
             return res
@@ -74,8 +74,9 @@ export const createCommunity = async (req, res) => {
                 createdBy: req.user.userId,
                 icon: icon || null,
                 color: color || null,
+                image: image || null,
                 isPrivate: isPrivate || false,
-                isOwner: 1,
+                isOwner: true,
                 isMember: true,
                 id: randomUUID(),
             }, { transaction });

@@ -21,6 +21,24 @@ export const loginOrSignup = async (req, res) => {
 
         const message = 'If the email can receive a sign-in link, one will be sent.';
         let user = await User.findOne({ where: { email: normalizedEmail } });
+        if (user) {
+            if (user.isDeleted) {
+                return res.status(403).json({
+                    error: {
+                        status_code: 403,
+                        error_message: 'This account has been deleted.',
+                    },
+                });
+            }
+            if (user.banned) {
+                return res.status(403).json({
+                    error: {
+                        status_code: 403,
+                        error_message: 'This account has been suspended.',
+                    },
+                });
+            }
+        }
         if (!user) {
             user = await User.create({
                 email: normalizedEmail,
@@ -94,6 +112,25 @@ export const verifyMagicLink = async (req, res) => {
         // find or create the user with that email in the database
         let user = await User.findOne({ where: { email } });
 
+        if (user) {
+            if (user.isDeleted) {
+                return res.status(403).json({
+                    error: {
+                        status_code: 403,
+                        error_message: 'This account has been deleted.',
+                    },
+                });
+            }
+            if (user.banned) {
+                return res.status(403).json({
+                    error: {
+                        status_code: 403,
+                        error_message: 'This account has been suspended.',
+                    },
+                });
+            }
+        }
+
         if (!user) {
             verificationStage = 'creating user in database';
             // Create user if they don't exist (Stytch created them)
@@ -101,6 +138,7 @@ export const verifyMagicLink = async (req, res) => {
                 email,
                 firstName: 'User',
                 lastName: uuidv4(),
+                stytchUserId: session.user_id,
             });
         }
 

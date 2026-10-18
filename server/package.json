@@ -16,7 +16,8 @@
     "migrate:project-community": "node scripts/MigrateProjectCommunity.js",
     "migrate:saved-posts": "node scripts/MigrateSavedPosts.js",
     "migrate:connection-foreign-keys": "node scripts/MigrateConnectionForeignKeys.js",
-    "migrate:message-foreign-keys": "node scripts/MigrateConnectionForeignKeys.js"
+    "migrate:message-foreign-keys": "node scripts/MigrateConnectionForeignKeys.js",
+    "migrate:community-columns": "node scripts/MigrateCommunityColumns.js"
   },
   "keywords": [],
   "author": "",

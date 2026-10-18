@@ -395,6 +395,20 @@ app.use(errorHandler);
 // Create missing tables locally without altering existing production-like schemas.
 async function syncDatabase() {
     await sequelize.sync();
+    try {
+        const queryInterface = sequelize.getQueryInterface();
+        const columns = await queryInterface.describeTable('communities');
+        if (columns.isMember) {
+            await queryInterface.removeColumn('communities', 'isMember');
+            console.log('Removed legacy isMember column from communities.');
+        }
+        if (columns.isOwner) {
+            await queryInterface.removeColumn('communities', 'isOwner');
+            console.log('Removed legacy isOwner column from communities.');
+        }
+    } catch (error) {
+        console.warn('Could not inspect/clean legacy community columns:', error.message);
+    }
     console.log('Missing database tables synchronized; existing tables were not altered.');
 }
 
