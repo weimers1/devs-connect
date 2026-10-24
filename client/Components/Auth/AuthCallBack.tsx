@@ -9,6 +9,7 @@ import { useAuth } from './AuthContext';
 
 // BUG FIX: Define baseUrl that was missing and causing ReferenceError
 const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:6969';
+const TERMS_URL = '/devs-connect-legal-suite.pdf';
 
 const Authenticate: React.FC = () => {
     const [params] = useSearchParams();
@@ -27,6 +28,9 @@ const Authenticate: React.FC = () => {
 
     const [isNewUser, setIsNewUser] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
+    const [termsRequired, setTermsRequired] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
+    const [isAcceptingTerms, setIsAcceptingTerms] = useState(false);
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [careerId, setCareerId] = useState(-1);
@@ -163,6 +167,11 @@ const Authenticate: React.FC = () => {
                 return;
             }
 
+            if (data.terms_required) {
+                setTermsRequired(true);
+                return;
+            }
+
             login();
 
             // Load user's theme preference after successful authentication
@@ -195,13 +204,110 @@ const Authenticate: React.FC = () => {
         }
     };
 
+    const handleAcceptTerms = async () => {
+        if (!termsAccepted) return;
+        setIsAcceptingTerms(true);
+        try {
+            const res = await fetch(`${baseUrl}/auth/terms/accept`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ age_confirmed: true }),
+            });
+            const acceptData = await res.json();
+            if (!res.ok || acceptData.error) {
+                throw new Error(
+                    acceptData.error || 'Failed to record terms acceptance'
+                );
+            }
+            login();
+            setTermsRequired(false);
+            if (isNewUser) {
+                showModal({
+                    icon: 'mdi-emoticon-smile-outline',
+                    title: 'Welcome New User!',
+                    message:
+                        'Please take a few seconds to finish filling out some details.',
+                    allowClose: true,
+                });
+            } else {
+                navigate('/');
+            }
+        } catch (err) {
+            console.error('Accept terms failed:', err);
+            showModal({
+                icon: 'mdi-emoticon-frown-outline',
+                title: 'Error',
+                message:
+                    err instanceof Error
+                        ? err.message
+                        : 'Failed to record acceptance. Please try again.',
+                allowClose: true,
+            });
+        } finally {
+            setIsAcceptingTerms(false);
+        }
+    };
+
     useEffect(() => {
         if (!token) navigate('/login');
     }, [token, navigate]);
 
     return (
         <Layout>
-            {token && !isNewUser && !modalInfo && (
+            {token && termsRequired && !modalInfo && (
+                <section className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
+                    <div className="rounded-lg border border-blue-200 bg-white p-8 shadow-lg max-w-[500px] w-full text-left">
+                        <h1 className="mb-3 text-2xl font-bold text-blue-700 text-center">
+                            Terms Acceptance Required
+                        </h1>
+                        <p className="mb-6 text-slate-700 text-center text-sm">
+                            Please confirm your age and agree to our updated policies to access devs-connect.
+                        </p>
+                        <div className="mb-6">
+                            <label className="flex items-start gap-2.5 text-sm text-slate-700 select-none cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={termsAccepted}
+                                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                                    required
+                                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                />
+                                <span className="leading-snug">
+                                    I'm at least 18 years of age and agree to the{' '}
+                                    <a
+                                        href={`${TERMS_URL}#terms`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 font-medium underline hover:text-blue-800"
+                                    >
+                                        Terms of Service
+                                    </a>{' '}
+                                    and{' '}
+                                    <a
+                                        href={`${TERMS_URL}#privacy`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 font-medium underline hover:text-blue-800"
+                                    >
+                                        Privacy Policy
+                                    </a>
+                                    .
+                                </span>
+                            </label>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleAcceptTerms}
+                            disabled={!termsAccepted || isAcceptingTerms}
+                            className="w-full rounded-md bg-blue-700 px-5 py-2.5 text-white font-medium transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {isAcceptingTerms ? 'Saving...' : 'Accept and Continue'}
+                        </button>
+                    </div>
+                </section>
+            )}
+            {token && !termsRequired && !isNewUser && !modalInfo && (
                 <section className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
                     <div className="rounded-lg border border-blue-200 bg-white p-8 shadow-lg">
                         <h1 className="mb-3 text-2xl font-bold text-blue-700">

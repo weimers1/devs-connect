@@ -10,6 +10,8 @@ export default function LoginForm() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
+    const TERMS_URL = '/devs-connect-legal-suite.pdf';
     // const [sessionToken, setSessionToken] = useState('');
     // const original_Token = localStorage.getItem('session_token');
             // useEffect(() => {
@@ -27,18 +29,7 @@ export default function LoginForm() {
         e.preventDefault();
         setError('');
         setLoading(true);
-        //   const token  =  localStorage.getItem('session_token');
-        //         if(token == '' || token == null) {
-        //             navigate('/login')
-        //         } else  {
-        //             setSessionToken(token);
-        //         }
-            // const userCredential = await signInWithEmailAndPassword(
-            //     auth,
-            //     email,
-            //     password,
-            // );    
-            // console.log('Logged in successfully:', userCredential.user);
+        try {
             console.log('Firebase disabled');
             navigate('/admin');
             // Route user to dashboard or home page here
@@ -116,10 +107,43 @@ export default function LoginForm() {
                         />
                     </div>
 
+                    <div style={{ marginBottom: '15px' }}>
+                        <label className="flex items-start gap-2 text-xs text-white select-none cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={termsAccepted}
+                                onChange={(e) => setTermsAccepted(e.target.checked)}
+                                required
+                                className="mt-0.5"
+                            />
+                            <span>
+                                I'm at least 18 years of age and agree to the{' '}
+                                <a
+                                    href={`${TERMS_URL}#terms`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-300 underline"
+                                >
+                                    Terms of Service
+                                </a>{' '}
+                                and{' '}
+                                <a
+                                    href={`${TERMS_URL}#privacy`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-300 underline"
+                                >
+                                    Privacy Policy
+                                </a>
+                                .
+                            </span>
+                        </label>
+                    </div>
+
                     <button
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || !termsAccepted}
                         style={{ width: '100%', padding: '10px' }}
                     >
                         {loading ? 'Logging in...' : 'Log In'}

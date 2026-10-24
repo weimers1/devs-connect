@@ -35,6 +35,8 @@ import './models/Project.js';
 import './models/ProjectCollaborator.js';
 import './models/Connections.js';
 import './models/BlockedUser.js';
+import TermsAcceptance from './models/TermsAcceptance.js';
+import { CURRENT_TERMS_VERSION } from './constants/terms.js';
 
 // Route Handlers & Utilities
 import messageRoutes from './Routes/MessageRoutes.js';
@@ -340,9 +342,21 @@ io.use(async (socket, next) => {
         const user = await User.findOne({
             where: { stytchUserId: session.user_id },
         });
-        if (!user) {
+        if (!user || user.isDeleted || user.banned) {
             return next(new Error('Authentication failed'));
         }
+
+        const acceptance = await TermsAcceptance.findOne({
+            where: {
+                userId: user.id,
+                terms_version: CURRENT_TERMS_VERSION,
+                age_confirmed: true,
+            },
+        });
+        if (!acceptance) {
+            return next(new Error('Terms acceptance required'));
+        }
+
         socket.data.userId = user.id;
         return next();
     } catch {
