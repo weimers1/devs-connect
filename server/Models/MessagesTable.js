@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
-import User from '../models/User.js';
+import User from './User.js';
 //Message Table
 const Message = sequelize.define('Message', {
     id: {

@@ -1,9 +1,9 @@
-import Community from '../Models/Communites.js';
-import UserCommunity from '../Models/UserCommunity.js';
-import Post from '../Models/Post.js';
-import PostLike from '../Models/PostLike.js';
-import PostComment from '../Models/PostComment.js';
-import SavedPost from '../Models/SavedPost.js';
+import Community from '../models/Communites.js';
+import UserCommunity from '../models/UserCommunity.js';
+import Post from '../models/Post.js';
+import PostLike from '../models/PostLike.js';
+import PostComment from '../models/PostComment.js';
+import SavedPost from '../models/SavedPost.js';
 import sequelize from '../config/database.js';
 import { getFeedProjects } from './projectController.js';
 import User from '../models/User.js';

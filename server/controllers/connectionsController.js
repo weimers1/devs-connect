@@ -1,4 +1,4 @@
-import Connections from "../Models/Connections.js"
+import Connections from "../models/Connections.js"
 import sequelize from '../config/database.js';
 import User from '../models/User.js';
 import { canViewUserSetting, isBlockedBetweenUsers } from '../utils/userVisibility.js';

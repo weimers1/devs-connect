@@ -1,6 +1,6 @@
 import sequelize from '../config/database.js';
-import BlockedUser from '../Models/BlockedUser.js';
-import VisibilitySettings from '../Models/VisibilitySettings.js';
+import BlockedUser from '../models/BlockedUser.js';
+import VisibilitySettings from '../models/VisibilitySettings.js';
 import { Op } from 'sequelize';
 
 export const isBlockedBetweenUsers = async (firstUserId, secondUserId) => {

@@ -53,7 +53,7 @@ import searchRoutes from './Routes/searchRoutes.js';
 import projectRoutes from './Routes/projectRoutes.js';
 
 const PORT = process.env.PORT || '6969';
-const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:5173';
+const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:80';
 const CLIENT_URL =
     process.env.CLIENT_URL ||
     (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:80');

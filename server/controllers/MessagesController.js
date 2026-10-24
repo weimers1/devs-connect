@@ -1,6 +1,6 @@
 import sequelize from '../config/database.js';
 import { Op } from 'sequelize';
-import Messages from '../Models/MessagesTable.js';
+import Messages from '../models/MessagesTable.js';
 import User from '../models/User.js';
 import { isBlockedBetweenUsers } from '../utils/userVisibility.js';
 

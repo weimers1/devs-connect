@@ -4,7 +4,7 @@ import sequelize from '../config/database.js'; // Ensure correct database config
 const Community = sequelize.define('Community', {
     id: {
         type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4, //  Fix: Safely auto-generates string keys for AWS
+        defaultValue: DataTypes.UUIDV4, // 
         primaryKey: true,
     },
     name: { 
@@ -15,7 +15,7 @@ const Community = sequelize.define('Community', {
         type: DataTypes.TEXT 
     },
     createdBy: { 
-        type: DataTypes.STRING, // Changed from INTEGER to match Stytch user UUID configurations
+        type: DataTypes.STRING, // 
         allowNull: false 
     },
     rules: { 
@@ -62,7 +62,7 @@ const Community = sequelize.define('Community', {
         }
     }
 }, {
-    tableName: 'communities', //  Fix: Forces your AWS database table name to align with your controller query
+    tableName: 'communities', //
     timestamps: true
 });
 

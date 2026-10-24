@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-import UserProfile from '../Models/UserProfile.js';
+import UserProfile from '../models/UserProfile.js';
 import sequelize from '../config/database.js';
 import { canViewUserSetting } from '../utils/userVisibility.js';
 export const getUserProfile = async (req, res) => {

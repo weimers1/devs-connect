@@ -1,7 +1,7 @@
 import multer from 'multer';
 import { randomUUID } from 'node:crypto';
 import { uploadToS3 } from '../config/aws.js';
-import UserProfile from '../Models/UserProfile.js';
+import UserProfile from '../models/UserProfile.js';
 
 const imageTypes = new Map([
     ['image/jpeg', { extension: 'jpg', signature: (buffer) =>

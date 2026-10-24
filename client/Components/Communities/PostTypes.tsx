@@ -57,9 +57,7 @@ interface PostComment {
 
 
 const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate, onPostDelete }) => {
-    // Source - https://stackoverflow.com/a/63440872
-// Posted by Volobot Advanced Systems, modified by community. See post 'Timeline' for change history
-// Retrieved 2026-03-20, License - CC BY-SA 4.0
+
 
 const [width, setWidth] = useState<number>(window.innerWidth);
 

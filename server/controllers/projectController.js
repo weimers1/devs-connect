@@ -1,9 +1,9 @@
 import { Op } from 'sequelize';
 import sequelize from '../config/database.js';
-import Project, { PROJECT_STATUSES } from '../Models/Project.js';
-import ProjectCollaborator from '../Models/ProjectCollaborator.js';
+import Project, { PROJECT_STATUSES } from '../models/Project.js';
+import ProjectCollaborator from '../models/ProjectCollaborator.js';
 import User from '../models/User.js';
-import UserProfile from '../Models/UserProfile.js';
+import UserProfile from '../models/UserProfile.js';
 
 const UUID_PATTERN =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

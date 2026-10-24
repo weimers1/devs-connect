@@ -1,6 +1,6 @@
 import sequelize from '../config/database.js';
-import BlockedUser from '../Models/BlockedUser.js';
-import Connections from '../Models/Connections.js';
+import BlockedUser from '../models/BlockedUser.js';
+import Connections from '../models/Connections.js';
 import User from '../models/User.js';
 
 const getConnectionId = (firstUserId, secondUserId) =>
