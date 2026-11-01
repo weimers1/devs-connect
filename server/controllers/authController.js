@@ -8,7 +8,6 @@ import {
     storeConsent,
     verifyAndConsumeConsent,
 } from '../utils/consentStore.js';
-import { v4 as uuidv4 } from 'uuid';
 
 export const registerConsent = async (req, res) => {
     try {
@@ -245,7 +244,7 @@ export const verifyMagicLink = async (req, res) => {
                     {
                         email,
                         firstName: 'User',
-                        lastName: uuidv4(),
+                        lastName: '',
                         stytchUserId: session.user_id,
                         verifiedAt: new Date(),
                     },

@@ -43,7 +43,7 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community }) => {
                         <Icon icon={community.icon} className="w-8 h-8 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{community.name}</h1>
+                        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">{community.name}</h1>
                         <div className="flex items-center space-x-4 text-white/90">
                             <span className="flex items-center">
                                 <Icon icon="mdi:account-group" className="w-4 h-4 mr-1" />

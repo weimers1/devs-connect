@@ -197,7 +197,8 @@ export const getCommunityById = async (req, res) => {
             return res.status(403).json({ error: 'Private community' });
         }
 
-        const [memberCount, userMembership] = await Promise.all([
+        const [fullCommunity, memberCount, userMembership] = await Promise.all([
+            Community.findByPk(id),
             UserCommunity.count({ where: { communityId: id } }),
             req.user?.userId
                 ? UserCommunity.findOne({
@@ -207,7 +208,7 @@ export const getCommunityById = async (req, res) => {
         ]);
 
         res.json({
-            ...community.toJSON(),
+            ...(fullCommunity || community).toJSON(),
             memberCount,
             isOwner,
             isMember,
