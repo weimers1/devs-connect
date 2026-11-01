@@ -5,7 +5,6 @@ import User from '../models/User.js';
 import DisplaySettings from '../models/DisplaySettings.js';
 import GeneralPreferences from '../models/GeneralPreferences.js';
 import Privacy_Security from '../models/Privacy-Security.js';
-import stytch from '../config/stytch.js';
 import VisibilitySettings from '../models/VisibilitySettings.js';
 import Certifications from '../models/Certifications.js';
 
@@ -70,7 +69,6 @@ export const updateProfileSettings = async (req, res) => {
         const {
             firstName,
             lastName,
-            email,
             location,
             age,
             gender,
@@ -93,13 +91,6 @@ export const updateProfileSettings = async (req, res) => {
                 .json({ error: 'First name and last name are required' });
         }
 
-        // Validate email format using literal regex
-        if (
-            email &&
-            !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)
-        ) {
-            return res.status(400).json({ error: 'Invalid email format' });
-        }
         if (
             bannerImageUrl !== undefined &&
             bannerImageUrl !== null &&
@@ -134,7 +125,6 @@ export const updateProfileSettings = async (req, res) => {
         const sanitizedData = {
             firstName: firstName.trim().substring(0, 50),
             lastName: lastName.trim().substring(0, 50),
-            email: email?.trim(),
             location: location?.trim().substring(0, 100),
             gender: gender?.trim().substring(0, 20),
             career: career?.trim().substring(0, 100),
@@ -164,7 +154,6 @@ export const updateProfileSettings = async (req, res) => {
             await user.update({
                 firstName: sanitizedData.firstName,
                 lastName: sanitizedData.lastName,
-                email: sanitizedData.email,
             }, { transaction });
             await profile.update({
                 location: sanitizedData.location,
@@ -375,59 +364,6 @@ export const updatePrivacySecuritySettings = async (req, res) => {
         res.status(500).json({
             error: 'Failed to get privacy/security settings',
         });
-    }
-};
-//Stytch EMAIL REQUEST EMAIL CHANGE
-export const requestEmailChange = async (req, res) => {
-    try {
-        const { newEmail } = req.body;
-        const user = await User.findOne({ where: { id: req.user.userId } });
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Send magic link to new email for verification
-        const response = await stytchClient.magicLinks.email.send({
-            user_id: user.stytchUserId, // Your stored Stytch user ID
-            email: newEmail,
-            magic_link_url: `${process.env.CLIENT_URL}/verify-email-change`,
-        });
-
-        res.json({
-            message: 'Verification email sent to new address',
-            request_id: response.request_id,
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to send verification' });
-    }
-};
-//STYTcH EMAIL confirmEmailChange
-export const confirmEmailChange = async (req, res) => {
-    try {
-        const { token } = req.body; // From magic link
-
-        // Authenticate the magic link
-        const response = await stytchClient.magicLinks.authenticate({
-            token: token,
-        });
-
-        // Get the new email from Stytch response
-        const newEmail = response.user.emails[0].email;
-        const stytchUserId = response.user.user_id;
-
-        // Update your database to match Stytch
-        await User.update(
-            { email: newEmail },
-            { where: { stytchUserId: stytchUserId } }
-        );
-
-        res.json({
-            message: 'Email updated successfully',
-            newEmail: newEmail,
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Invalid verification token' });
     }
 };
 //Get Visibility Settings

@@ -11,11 +11,6 @@ const sanitizeInput = (input: string): string => {
     return input.trim().slice(0, 500);
 };
 
-const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email) && email.length <= 254;
-};
-
 const validateAge = (age: string): boolean => {
    // if (!age || age.trim() === '') return false;
     const ageNum = Number(age);
@@ -109,9 +104,6 @@ function ProfileInfo() {
             case 'age':
                 isValid = validateAge(sanitizedValue);
                 break;
-            case 'email':
-                isValid = validateEmail(sanitizedValue);
-                break;
             case 'githubUsername':
                 isValid = validateGitHubUsername(sanitizedValue);
                 break;
@@ -184,9 +176,9 @@ function ProfileInfo() {
                 lastName: sanitizeInput(profileSettings.lastName),
                 location: sanitizeInput(profileSettings.location),
                 bio: sanitizeInput(profileSettings.bio),
-                email: sanitizeInput(profileSettings.email),
                 gender: sanitizeInput(profileSettings.gender),
             };
+            const { email, ...profileUpdate } = validatedData;
 
             // Validate required fields
             if (
@@ -197,8 +189,8 @@ function ProfileInfo() {
                 return;
             }
 
-            await API.updateProfileSettings(validatedData);
-            setOriginalData(validatedData);
+            await API.updateProfileSettings(profileUpdate);
+            setOriginalData({ ...profileUpdate, email });
             setHasChanges(false);
             setSaveStatus('success');
 

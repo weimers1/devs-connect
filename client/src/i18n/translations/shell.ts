@@ -39,12 +39,12 @@ const shell: AreaTranslations = {
         'home.discoverMore': 'Discover More',
         'home.feedError': 'Your feed could not be loaded. Please try again later.',
         'help.title': 'Help & Support',
-        'help.portal.title': 'Feedback & roadmap',
+        'help.portal.title': 'Send feedback',
         'help.portal.description':
-            'Vote on ideas, request features and follow what we are building.',
-        'help.portal.open': 'Use the feedback button in the bottom-right corner.',
+            'Share an idea, report a problem, or ask for help.',
+        'help.portal.open': 'Your feedback has been submitted.',
         'help.portal.unavailable':
-            'The feedback portal is unavailable right now. Please try again later.',
+            'Feedback is unavailable right now. Please try again later.',
         'help.portal.start': 'Give feedback',
         'help.intro':
             'Have a question, found a problem, or want to share an idea? Send a note to the Devs Connect team.',
@@ -106,12 +106,12 @@ const shell: AreaTranslations = {
         'home.discoverMore': 'Descubre más',
         'home.feedError': 'No se pudo cargar tu feed. Inténtalo de nuevo más tarde.',
         'help.title': 'Ayuda y soporte',
-        'help.portal.title': 'Comentarios y hoja de ruta',
+        'help.portal.title': 'Enviar comentarios',
         'help.portal.description':
-            'Vota ideas, solicita funciones y sigue lo que estamos construyendo.',
-        'help.portal.open': 'Usa el botón de comentarios en la esquina inferior derecha.',
+            'Comparte una idea, informa de un problema o pide ayuda.',
+        'help.portal.open': 'Tus comentarios se han enviado.',
         'help.portal.unavailable':
-            'El portal de comentarios no está disponible en este momento. Inténtalo de nuevo más tarde.',
+            'Los comentarios no están disponibles en este momento. Inténtalo de nuevo más tarde.',
         'help.portal.start': 'Enviar comentarios',
         'help.intro':
             '¿Tienes una pregunta, encontraste un problema o quieres compartir una idea? Envía un mensaje al equipo de Devs Connect.',
