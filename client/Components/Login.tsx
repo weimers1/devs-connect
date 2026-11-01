@@ -62,8 +62,21 @@ const Login = () => {
                 <h1 className="text-center mb-8 text-6xl text-bg-linear-to-tr from-blue-700 to-slate-950 font-mono select-none font-black tracking-tight text-shadow-sm mb-25">
                     {t('login.tagline')}
                 </h1>
-
-                <div className="w-full max-w-[600px] px-4 mb-4">
+            
+                            <div
+                                className={`shadow-xl transition-all duration-200 ${
+                                    !termsAccepted
+                                        ? 'pointer-events-none opacity-40 select-none cursor-not-allowed filter grayscale'
+                                        : ''
+                                }`}
+                                aria-disabled={!termsAccepted}
+                            >
+                                <StytchLogin
+                                    config={stytchConfig}
+                                    presentation={stytchPresentation}
+                                />
+                            </div>
+                <div className="w-full max-w-[600px] px-4 mt-23 mb-4">
                     <label className="flex items-start gap-2.5 text-sm text-slate-700 select-none cursor-pointer p-3 bg-white/80 backdrop-blur-xs rounded-lg border border-slate-200 shadow-xs">
                         <input
                             type="checkbox"
@@ -96,19 +109,6 @@ const Login = () => {
                     </label>
                 </div>
 
-                <div
-                    className={`shadow-xl transition-all duration-200 ${
-                        !termsAccepted
-                            ? 'pointer-events-none opacity-40 select-none cursor-not-allowed filter grayscale'
-                            : ''
-                    }`}
-                    aria-disabled={!termsAccepted}
-                >
-                    <StytchLogin
-                        config={stytchConfig}
-                        presentation={stytchPresentation}
-                    />
-                </div>
             </section>
         </Layout>
     );

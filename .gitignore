@@ -28,3 +28,4 @@ test-db.js
 AdminDash
 server/firebase-admin-key.json
 firebase-admin-key.json
+.env
