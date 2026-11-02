@@ -39,21 +39,21 @@ import TermsAcceptance from './models/TermsAcceptance.js';
 import { CURRENT_TERMS_VERSION } from './constants/terms.js';
 
 // Route Handlers & Utilities
-import messageRoutes from './Routes/MessageRoutes.js';
+import messageRoutes from './routes/MessageRoutes.js';
 import errorHandler from './utils/errorHandler.js';
-import authRouter from './Routes/authRoutes.js';
-import utilsRouter from './Routes/utilRoutes.js';
-import userRouter from './Routes/userRoutes.js';
-import sessionRouter from './Routes/sessionRoutes.js';
-import settingsRouter from './Routes/settingsRoutes.js';
-import uploadRoutes from './Routes/uploadRoutes.js';
-import githubRoutes from './Routes/github.js';
-import connectionsRoutes from './Routes/connectionsRoutes.js';
-import blockRoutes from './Routes/blockRoutes.js';
-import communityRoutes from './Routes/communityRoutes.js';
-import searchRoutes from './Routes/searchRoutes.js';
-import projectRoutes from './Routes/projectRoutes.js';
-import feedbackRoutes from './Routes/feedbackRoutes.js';
+import authRouter from './routes/authRoutes.js';
+import utilsRouter from './routes/utilRoutes.js';
+import userRouter from './routes/userRoutes.js';
+import sessionRouter from './routes/sessionRoutes.js';
+import settingsRouter from './routes/settingsRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+import githubRoutes from './routes/github.js';
+import connectionsRoutes from './routes/connectionsRoutes.js';
+import blockRoutes from './routes/blockRoutes.js';
+import communityRoutes from './routes/communityRoutes.js';
+import searchRoutes from './routes/searchRoutes.js';
+import projectRoutes from './routes/projectRoutes.js';
+import feedbackRoutes from './routes/feedbackRoutes.js';
 
 const PORT = process.env.PORT || '6969';
 const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:80';
