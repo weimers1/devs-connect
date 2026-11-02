@@ -1,5 +1,5 @@
 import sequelize from '../config/database.js';
-import Project from '../Models/Project.js';
+import Project from '../models/Project.js';
 
 const queryInterface = sequelize.getQueryInterface();
 const projectTable = Project.getTableName();

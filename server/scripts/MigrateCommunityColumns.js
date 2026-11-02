@@ -1,5 +1,5 @@
 import sequelize from '../config/database.js';
-import Community from '../Models/Communites.js';
+import Community from '../models/Communites.js';
 
 const queryInterface = sequelize.getQueryInterface();
 const communityTable = Community.getTableName();

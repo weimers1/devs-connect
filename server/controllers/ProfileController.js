@@ -1,12 +1,12 @@
-import UserProfile from '../Models/UserProfile.js';
+import UserProfile from '../models/UserProfile.js';
 import Session from '../models/Session.js';
 import User from '../models/User.js';
-import DisplaySettings from '../Models/DisplaySettings.js';
-import GeneralPreferences from '../Models/GeneralPreferences.js';
-import Privacy_Security from '../Models/Privacy-Security.js';
+import DisplaySettings from '../models/DisplaySettings.js';
+import GeneralPreferences from '../models/GeneralPreferences.js';
+import Privacy_Security from '../models/Privacy-Security.js';
 import stytch from '../config/stytch.js';
-import VisibilitySettings from '../Models/VisibilitySettings.js';
-import Certifications from '../Models/Certifications.js';
+import VisibilitySettings from '../models/VisibilitySettings.js';
+import Certifications from '../models/Certifications.js';
 
 export const addCertification = async (req, res) => {
     try {

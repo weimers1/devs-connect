@@ -1,5 +1,5 @@
 import sequelize from '../config/database.js';
-import SavedPost from '../Models/SavedPost.js';
+import SavedPost from '../models/SavedPost.js';
 
 try {
     await sequelize.authenticate();

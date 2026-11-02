@@ -1,5 +1,5 @@
 import sequelize from '../config/database.js';
-import UserProfile from '../Models/UserProfile.js';
+import UserProfile from '../models/UserProfile.js';
 
 const queryInterface = sequelize.getQueryInterface();
 const profileTable = UserProfile.getTableName();
