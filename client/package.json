@@ -15,7 +15,6 @@
   "dependencies": {
     "@stytch/react": "^20.3.0",
     "@stytch/vanilla-js": "^6.3.0",
-    "featurebase-js": "^1.0.3",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "react": "^19.1.0",

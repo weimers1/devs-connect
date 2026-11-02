@@ -8,8 +8,6 @@ import {
     updateGeneralPreferences,
     updatePrivacySecuritySettings,
     getPrivacySecuritySettings,
-    requestEmailChange,
-    confirmEmailChange,
     updateVisibilitySettings,
     getVisibilitySettings,
     getGitHubConnection,
@@ -49,10 +47,6 @@ router.put('/general', updateGeneralPreferences);
 router.put('/privacy-security', updatePrivacySecuritySettings);
 //Get Privacy and Security Settings
 router.get('/privacy-security', getPrivacySecuritySettings);
-//Request Email Change
-router.post('/request-email-change', requestEmailChange);
-//Confirm Email Change
-router.post('/confirm-email-change', confirmEmailChange);
 //get Visibility Settings
 router.get('/visibility', getVisibilitySettings);
 //Update Visibility Settings

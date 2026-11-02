@@ -53,6 +53,7 @@ import blockRoutes from './Routes/blockRoutes.js';
 import communityRoutes from './Routes/communityRoutes.js';
 import searchRoutes from './Routes/searchRoutes.js';
 import projectRoutes from './Routes/projectRoutes.js';
+import feedbackRoutes from './Routes/feedbackRoutes.js';
 
 const PORT = process.env.PORT || '6969';
 const URL_CLIENT = process.env.URL_CLIENT || 'http://localhost:80';
@@ -428,6 +429,7 @@ app.use('/api/connections', connectionsRoutes);
 app.use('/api/blocks', blockRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // Global Application Error Interceptor Middleware Fallback
 app.use(errorHandler);

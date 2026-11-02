@@ -26,6 +26,7 @@ if (!validateUrl(rawBaseUrl)) {
 const BASE_URL = rawBaseUrl;
 const API_BASE = `${BASE_URL}/api/messages`;
 const API_SETTINGS = `${BASE_URL}/api/settings`;
+const API_FEEDBACK = `${BASE_URL}/api/feedback`;
 const fetch: typeof globalThis.fetch = (input, init = {}) =>
     globalThis.fetch(input, { ...init, credentials: 'include' });
 
@@ -645,19 +646,24 @@ const API = {
         if (!response.ok) throw new Error('Failed to get current user');
         return response.json();
     },
-    getFeaturebaseToken: async (): Promise<{ featurebaseJwt: string }> => {
-        const response = await fetch(`${BASE_URL}/api/users/featurebase-token`, {
-            headers: getAuthHeaders(),
+    sendFeedback: async (feedback: {
+        category: 'Feedback' | 'Bug report' | 'Feature request' | 'Account help' | 'Other';
+        contactEmail: string;
+        message: string;
+    }): Promise<void> => {
+        const response = await fetch(API_FEEDBACK, {
+            method: 'POST',
+            headers: getAuthHeaders(true),
+            body: JSON.stringify(feedback),
         });
         if (!response.ok) {
             const result = await response.json().catch(() => null);
             throw new Error(
                 typeof result?.error === 'string'
                     ? result.error
-                    : 'Failed to get feedback portal token',
+                    : 'Failed to send feedback',
             );
         }
-        return response.json();
     },
     //Get Data from the communities a user is in. 
     getCommunitiesDataFromUser: async (userId : string) => {

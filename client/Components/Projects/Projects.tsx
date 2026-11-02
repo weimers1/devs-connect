@@ -65,8 +65,15 @@ const Projects: React.FC = () => {
     const [tagResults, setTagResults] = useState<UserSearchResult[]>([]);
     const [communities, setCommunities] = useState<{ id: string; name: string }[]>([]);
 
+    const [communityQuery, setCommunityQuery] = useState('');
+    const [communityOpen, setCommunityOpen] = useState(false);
+    const filteredCommunities = communities
+        .filter((c) => c.name.toLowerCase().includes(communityQuery.trim().toLowerCase()))
+        .slice(0, 20);
+
     useEffect(() => {
         if (!formOpen) return;
+        setCommunityQuery('');
         let active = true;
         API.getProjectCommunities()
             .then((list) => {
@@ -533,24 +540,70 @@ const Projects: React.FC = () => {
                                 <label htmlFor="project-community" className="mb-1 block text-sm font-medium text-gray-700">
                                     {t('projects.form.community')}
                                 </label>
-                                <select
-                                    id="project-community"
-                                    value={form.communityId}
-                                    onChange={(event) => updateForm('communityId', event.target.value)}
-                                    className={inputClass}
-                                >
-                                    <option value="">{t('projects.form.communityNone')}</option>
-                                    {communities.map((community) => (
-                                        <option key={community.id} value={community.id}>
-                                            {community.name}
-                                        </option>
-                                    ))}
-                                    {form.communityId &&
-                                        !communities.some((community) => community.id === form.communityId) &&
-                                        editing?.community && (
-                                            <option value={form.communityId}>{editing.community.name}</option>
+                                {form.communityId ? (
+                                    <div className="flex items-center justify-between rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900">
+                                        <span>
+                                            {communities.find((c) => c.id === form.communityId)?.name ||
+                                                editing?.community?.name ||
+                                                ''}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                updateForm('communityId', '');
+                                                setCommunityQuery('');
+                                            }}
+                                            className="text-sm text-gray-500 hover:text-gray-800"
+                                            aria-label={t('projects.form.communityNone')}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <input
+                                            id="project-community"
+                                            type="text"
+                                            autoComplete="off"
+                                            role="combobox"
+                                            aria-expanded={communityOpen}
+                                            aria-controls="project-community-list"
+                                            value={communityQuery}
+                                            placeholder={t('projects.form.communityNone')}
+                                            onChange={(event) => {
+                                                setCommunityQuery(event.target.value);
+                                                setCommunityOpen(true);
+                                            }}
+                                            onFocus={() => setCommunityOpen(true)}
+                                            onBlur={() => setTimeout(() => setCommunityOpen(false), 150)}
+                                            className={inputClass}
+                                        />
+                                        {communityOpen && filteredCommunities.length > 0 && (
+                                            <ul
+                                                id="project-community-list"
+                                                role="listbox"
+                                                className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+                                            >
+                                                {filteredCommunities.map((community) => (
+                                                    <li key={community.id} role="option" aria-selected={false}>
+                                                        <button
+                                                            type="button"
+                                                            onMouseDown={(event) => event.preventDefault()}
+                                                            onClick={() => {
+                                                                updateForm('communityId', community.id);
+                                                                setCommunityQuery('');
+                                                                setCommunityOpen(false);
+                                                            }}
+                                                            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                                                        >
+                                                            {community.name}
+                                                        </button>
+                                                    </li>
+                                                ))}
+                                            </ul>
                                         )}
-                                </select>
+                                    </div>
+                                )}
                                 <p className="mt-1 text-xs text-gray-500">{t('projects.form.communityHint')}</p>
                             </div>
 

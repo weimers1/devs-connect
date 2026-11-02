@@ -64,7 +64,7 @@ const CommunityActionBar: React.FC<CommunityActionBarProps> = ({
         setIsUpdatingMembership(true);
         setMembershipError('');
         try {
-            const user = await API.getCurrentUser();
+            const user = await API.getCurrentUser().catch(() => null);
             if (!user?.userId) {
                 navigate('/login');
                 return;
@@ -96,7 +96,7 @@ const CommunityActionBar: React.FC<CommunityActionBarProps> = ({
         setIsUpdatingMembership(true);
         setMembershipError('');
         try {
-            const user = await API.getCurrentUser();
+            const user = await API.getCurrentUser().catch(() => null);
             if (!user?.userId) {
                 navigate('/login');
                 return;

@@ -17,13 +17,13 @@ Before deploying saved-post support to an existing production database, run `npm
 
 ## Feedback email
 
-The public Help & Support page sends feedback directly through Gmail SMTP and does not require an account. Configure these values in `server/.env`:
+The public Help & Support page submits feedback to `POST /api/feedback`, which sends it by Gmail SMTP and does not require an account. Configure these values in `server/.env`:
 
 - `SUPPORT_EMAILS`: comma-separated feedback recipients.
 - `SMTP_USER`: the Gmail account that will send the feedback.
 - `SMTP_APP_PASSWORD`: an app password generated for that Gmail account (not its normal sign-in password).
 
-The sender account must have Google 2-Step Verification enabled to create an app password. Restart the server after setting these values. Feedback submissions are rate-limited.
+The sender account must have Google 2-Step Verification enabled to create an app password. Restart or recreate the server after setting these values. Feedback submissions are limited to three per IP address every 15 minutes.
 
 ## Production security configuration
 

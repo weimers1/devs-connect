@@ -1,48 +1,54 @@
-import React, { useEffect, useState } from 'react';
-import Featurebase, { initFeedback, destroyFeedback } from 'featurebase-js';
+import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
 import Layout from './Layout';
 import API from '../Service/service';
 import { useLanguage } from '../src/i18n/LanguageContext';
 
+const feedbackCategories = [
+    'Feedback',
+    'Bug report',
+    'Feature request',
+    'Account help',
+    'Other',
+] as const;
+
+type FeedbackCategory = (typeof feedbackCategories)[number];
+
 const HelpAndSupport: React.FC = () => {
-    const { t, language } = useLanguage();
-    const featurebaseAppId = import.meta.env.VITE_FEATURES_APP_ID;
-    const [portalReady, setPortalReady] = useState(false);
+    const { t } = useLanguage();
+    const [category, setCategory] = useState<FeedbackCategory>('Feedback');
+    const [contactEmail, setContactEmail] = useState('');
+    const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
-    const [portalError, setPortalError] = useState<string | null>(null);
+    const [submissionStatus, setSubmissionStatus] = useState<{
+        type: 'success' | 'error';
+        message: string;
+    } | null>(null);
 
-    useEffect(() => () => destroyFeedback(), []);
-
-    const openFeedback = async () => {
-        if (!featurebaseAppId) {
-            setPortalError(t('help.portal.unavailable'));
-            return;
-        }
+    const submitFeedback = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
         setLoading(true);
-        setPortalError(null);
+        setSubmissionStatus(null);
         try {
-            const { featurebaseJwt } = await API.getFeaturebaseToken();
-            destroyFeedback();
-            // Messenger stays off: only the feedback widget is loaded.
-            Featurebase({
-                appId: featurebaseAppId,
-                featurebaseJwt,
-                messenger: false,
+            await API.sendFeedback({
+                category,
+                contactEmail: contactEmail.trim(),
+                message: message.trim(),
             });
-            initFeedback({
-                theme: 'light',
-                placement: 'bottom-right',
-                locale: language === 'es' ? 'es' : 'en',
+            setMessage('');
+            setSubmissionStatus({
+                type: 'success',
+                message: t('help.success'),
             });
-            setPortalReady(true);
         } catch (error) {
-            console.error('Feedback portal unavailable:', error);
-            setPortalError(
-                error instanceof Error && error.message
-                    ? error.message
-                    : t('help.portal.unavailable'),
-            );
+            console.error('Failed to submit feedback:', error);
+            setSubmissionStatus({
+                type: 'error',
+                message:
+                    error instanceof Error && error.message
+                        ? error.message
+                        : t('help.failure'),
+            });
         } finally {
             setLoading(false);
         }
@@ -59,35 +65,99 @@ const HelpAndSupport: React.FC = () => {
                     <p className="max-w-2xl text-blue-100">{t('help.intro')}</p>
                 </header>
 
-                <section className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
-                    <div>
+                <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+                    <div className="mb-6">
                         <h2 className="text-xl font-semibold text-gray-900">
-                            {t('help.portal.title')}
+                            {t('help.sendTitle')}
                         </h2>
                         <p className="mt-1 text-sm text-gray-600">
-                            {t('help.portal.description')}
+                            {t('help.sendDescription')}
                         </p>
-                        {portalError && (
-                            <p className="mt-2 text-sm text-red-700" role="alert">
-                                {portalError}
+                        {submissionStatus && (
+                            <p
+                                className={`mt-3 text-sm ${
+                                    submissionStatus.type === 'success'
+                                        ? 'text-green-700'
+                                        : 'text-red-700'
+                                }`}
+                                role={submissionStatus.type === 'error' ? 'alert' : 'status'}
+                            >
+                                {submissionStatus.message}
                             </p>
                         )}
                     </div>
-                    {portalReady ? (
-                        <p className="flex items-center gap-2 text-sm font-semibold text-indigo-700">
-                            <Icon icon="mdi:arrow-bottom-right" className="h-5 w-5" />
-                            {t('help.portal.open')}
-                        </p>
-                    ) : (
-                        <button
-                            type="button"
-                            disabled={loading}
-                            onClick={() => void openFeedback()}
-                            className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60"
-                        >
-                            {t('help.portal.start')}
-                        </button>
-                    )}
+                    <form className="space-y-5" onSubmit={(event) => void submitFeedback(event)}>
+                        <div>
+                            <label
+                                htmlFor="feedback-category"
+                                className="mb-1 block text-sm font-medium text-gray-700"
+                            >
+                                {t('help.category')}
+                            </label>
+                            <select
+                                id="feedback-category"
+                                value={category}
+                                onChange={(event) =>
+                                    setCategory(event.target.value as FeedbackCategory)
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                            >
+                                {feedbackCategories.map((option) => (
+                                    <option key={option} value={option}>
+                                        {t(`help.category.${option}`)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label
+                                htmlFor="feedback-email"
+                                className="mb-1 block text-sm font-medium text-gray-700"
+                            >
+                                {t('help.email')} <span className="font-normal text-gray-500">{t('help.optional')}</span>
+                            </label>
+                            <input
+                                id="feedback-email"
+                                type="email"
+                                maxLength={254}
+                                value={contactEmail}
+                                onChange={(event) => setContactEmail(event.target.value)}
+                                autoComplete="email"
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                            />
+                        </div>
+                        <div>
+                            <label
+                                htmlFor="feedback-message"
+                                className="mb-1 block text-sm font-medium text-gray-700"
+                            >
+                                {t('help.message')}
+                            </label>
+                            <textarea
+                                id="feedback-message"
+                                required
+                                minLength={5}
+                                maxLength={5000}
+                                rows={6}
+                                value={message}
+                                onChange={(event) => setMessage(event.target.value)}
+                                placeholder={t('help.messagePlaceholder')}
+                                className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                            />
+                        </div>
+                        <div className="flex justify-end">
+                            <button
+                                type="submit"
+                                disabled={loading || message.trim().length < 5}
+                                className="inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {loading && (
+                                    <Icon icon="mdi:loading" className="mr-2 h-4 w-4 animate-spin" />
+                                )}
+                                {loading ? t('help.sending') : t('help.send')}
+                            </button>
+                        </div>
+                    </form>
                 </section>
             </main>
         </Layout>
