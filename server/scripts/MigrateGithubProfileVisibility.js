@@ -1,5 +1,5 @@
 import sequelize from '../config/database.js';
-import User from '../Models/User.js';
+import User from '../models/User.js';
 
 const queryInterface = sequelize.getQueryInterface();
 const userTable = User.getTableName();
