@@ -18,6 +18,8 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - devs_network
+    volumes:
+      - ./certs:/app/certs:ro
 
   # ============================================================================
   # 2. Vite React Frontend (Served by Nginx Reverse Proxy)

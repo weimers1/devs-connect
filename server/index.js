@@ -220,7 +220,11 @@ app.use((req, res, next) => {
             'Strict-Transport-Security',
             'max-age=31536000; includeSubDomains'
         );
-        if (!req.secure) {
+        const isHttps =
+            req.secure ||
+            req.get('x-forwarded-proto') === 'https' ||
+            req.get('cf-visitor')?.includes('https');
+        if (!isHttps) {
             return res.redirect(
                 308,
                 `${new URL(SERVER_URL).origin}${req.originalUrl}`
