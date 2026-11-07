@@ -62,8 +62,8 @@ export const sendFeedback = async (req, res) => {
 
     const invalidSettings = [];
     if (!isValidEmail(smtpUser)) invalidSettings.push('SMTP_USER');
-    if (!/^[A-Za-z0-9]{16}$/.test(smtpAppPassword)) {
-        invalidSettings.push('SMTP_APP_PASSWORD (must be a 16-character Google App Password)');
+    if (!/^[A-Za-z0-9]{15,}$/.test(smtpAppPassword)) {
+        invalidSettings.push('SMTP_APP_PASSWORD (must be a valid Google App Password)');
     }
     if (invalidSettings.length) {
         console.error('Feedback email configuration is invalid:', {
