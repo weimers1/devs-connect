@@ -11,15 +11,17 @@ type ProfileDropdownProps = {
         email: string;
         avatar: string;
     };
+    onClose: () => void;
 };
 
-function ProfileDropdown({ profile }: ProfileDropdownProps) {
+function ProfileDropdown({ profile, onClose }: ProfileDropdownProps) {
     const navigate = useNavigate();
     const { logout } = useAuth();
     const { t } = useLanguage();
 
     const handleLogout = async () => {
         await logout();
+        onClose();
         navigate('/');
     };
 
@@ -47,9 +49,8 @@ function ProfileDropdown({ profile }: ProfileDropdownProps) {
     ];
     return (
         <div
-            className={`absolute -right-1 bg-stone-200 top-20 mr-1 w-70  shadow-xl border z-50 
-             
-            `}
+            id="profile-menu"
+            className="absolute right-0 top-full z-50 mt-2 w-70 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900 shadow-xl"
         >
             {/* User Info Section */}
             <div
@@ -93,9 +94,8 @@ function ProfileDropdown({ profile }: ProfileDropdownProps) {
                     <Link
                         key={item.to}
                         to={item.to}
-                        className={` hover:bg-gray-700 flex items-center px-4 py-2 text-me transition-colors 
-                           
-                        `}
+                        onClick={onClose}
+                        className="flex items-center px-4 py-3 text-sm transition-colors hover:bg-gray-100"
                     >
                         <Icon
                             icon={item.icon}
@@ -117,9 +117,7 @@ function ProfileDropdown({ profile }: ProfileDropdownProps) {
             <div className="py-1">
                 <button
                     onClick={handleLogout}
-                    className={`w-full  hover:bg-gray-700 flex items-center px-4 py-2 text-me text-left transition-colors 
-                        
-                    `}
+                    className="flex w-full items-center px-4 py-3 text-left text-sm transition-colors hover:bg-gray-100"
                 >
                     <Icon
                         icon="mdi:logout"

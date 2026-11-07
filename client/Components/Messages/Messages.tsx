@@ -202,7 +202,7 @@ const Messages = () => {
                         <span className="hidden sm:inline">{t('social.messages.refresh')}</span>
                     </button>
                 </div>
-                <div className="flex h-[calc(100dvh-11rem)] min-h-[22rem] min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-900/5 sm:h-[calc(100dvh-10rem)] sm:min-h-[28rem] sm:rounded-2xl">
+                <div className="flex h-[calc(100dvh-15rem)] min-h-[22rem] min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-900/5 sm:h-[calc(100dvh-14rem)] sm:min-h-[28rem] sm:rounded-2xl md:h-[calc(100dvh-10rem)]">
                     <MessageSidebar
                         onMessageSelect={handleMessageSelect}
                         selectedMessage={selectedMessage}

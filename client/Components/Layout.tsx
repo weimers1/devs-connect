@@ -22,7 +22,7 @@ const Layout: React.FC<React.PropsWithChildren> = ({ children }) => {
             <DropdownProvider>
                 <Navbar />
                 <main
-                    className={`flex items-center justify-center min-h-screen `}
+                    className={`flex items-center justify-center min-h-screen pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0`}
                 >
                     <div className={`min-h-screen ${containerWidthClass}`}>
                         {children}
