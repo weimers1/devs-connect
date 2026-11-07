@@ -193,8 +193,8 @@ export const writeLimiter = rateLimit({
 });
 
 // Configure CORS
-const corsOrigins = isProduction
-    ? [...new Set([URL_CLIENT, CLIENT_URL])]
+const baseCorsOrigins = isProduction
+    ? [...new Set([URL_CLIENT, CLIENT_URL].filter(Boolean))]
     : [
         URL_CLIENT,
         CLIENT_URL,
@@ -203,7 +203,21 @@ const corsOrigins = isProduction
         'http://localhost',
         'http://localhost:80',
         'http://localhost:6969',
-    ];
+    ].filter(Boolean);
+
+if (isProduction) {
+    for (const item of [...baseCorsOrigins]) {
+        try {
+            const parsed = new URL(item);
+            if (parsed.hostname.startsWith('www.')) {
+                baseCorsOrigins.push(`${parsed.protocol}//${parsed.hostname.slice(4)}${parsed.port ? `:${parsed.port}` : ''}`);
+            } else if (!parsed.hostname.includes('localhost') && !parsed.hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+                baseCorsOrigins.push(`${parsed.protocol}//www.${parsed.hostname}${parsed.port ? `:${parsed.port}` : ''}`);
+            }
+        } catch {}
+    }
+}
+const corsOrigins = [...new Set(baseCorsOrigins)];
 const corsOptions = {
     origin: corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -304,20 +318,29 @@ app.use(passport.initialize());
 // ============================================================================
 const io = new Server(httpServer, {
     cors: {
-        origin: [
-            URL_CLIENT,
-            'http://localhost:5173',
-            'http://localhost:3000',
-            'http://localhost',
-            'http://localhost:80',
-            'http://localhost:6969',
-        ],
+        origin: corsOrigins,
         methods: ['GET', 'POST'],
         credentials: true,
     },
     allowRequest: (req, callback) => {
         const origin = req.headers.origin;
-        callback(null, typeof origin === 'string' && trustedOrigins.has(origin));
+        // Same-origin GET requests (e.g. polling handshakes) omit the Origin header.
+        if (!origin) {
+            const referer = req.headers.referer;
+            if (referer) {
+                try {
+                    const refererOrigin = new URL(referer).origin;
+                    if (trustedOrigins.has(refererOrigin)) {
+                        return callback(null, true);
+                    }
+                } catch {
+                    return callback(null, false);
+                }
+            }
+            // Allow same-origin / non-browser requests
+            return callback(null, true);
+        }
+        callback(null, trustedOrigins.has(origin));
     },
 });
 app.set('io', io);
