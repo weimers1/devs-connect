@@ -84,7 +84,7 @@ if (isProduction) {
     } catch {
         throw new Error('REDIS_URL must be a valid rediss:// URL in production');
     }
-    if (redisUrlParsed.protocol !== 'rediss:') {
+    if (redisUrlParsed.protocol !== 'rediss:' && redisUrlParsed.protocol !== 'redis:') {
         throw new Error('REDIS_URL must use TLS (rediss://) in production');
     }
     if (trustProxyHops < 1) {
@@ -115,6 +115,7 @@ const redisClient = isProduction
     ? createClient({
           url: redisUrl,
           socket: {
+		...(redisUrl.startsWith('rediss:') ? {tls: true} : {}),
               reconnectStrategy: (retries) =>
                   retries > 5
                       ? new Error('Redis connection retry limit reached')
@@ -137,7 +138,6 @@ const createRateLimitStore = (prefix) =>
         ? new RedisRateLimitStore({
               prefix: `devs-connect:rate-limit:${prefix}:`,
               sendCommand: async (...args) => {
-                  await redisConnection;
                   return redisClient.sendCommand(args);
               },
           })
