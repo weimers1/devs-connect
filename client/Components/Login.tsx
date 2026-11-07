@@ -59,7 +59,7 @@ const Login = () => {
     return (
         <Layout>
             <section className="h-175 lg:h-[100vh] flex flex-col items-center justify-center">
-                <h1 className="text-center mb-8 text-6xl text-bg-linear-to-tr from-blue-700 to-slate-950 font-mono select-none font-black tracking-tight text-shadow-sm mb-25">
+                <h1 className="relative top-8 sm:top-0 text-center mb-8 text-6xl text-bg-linear-to-tr from-blue-700 to-slate-950 font-mono select-none font-black tracking-tight text-shadow-sm mb-25">
                     {t('login.tagline')}
                 </h1>
             
