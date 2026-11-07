@@ -84,7 +84,7 @@ if (isProduction) {
     } catch {
         throw new Error('REDIS_URL must be a valid rediss:// URL in production');
     }
-    if (redisUrlParsed.protocol !== 'rediss:') {
+    if (redisUrlParsed.protocol !== 'rediss:' && redisUrlParsed.protocol !== 'redis:') {
         throw new Error('REDIS_URL must use TLS (rediss://) in production');
     }
     if (trustProxyHops < 1) {
@@ -115,6 +115,7 @@ const redisClient = isProduction
     ? createClient({
           url: redisUrl,
           socket: {
+		...(redisUrl.startsWith('rediss:') ? {tls: true} : {}),
               reconnectStrategy: (retries) =>
                   retries > 5
                       ? new Error('Redis connection retry limit reached')
@@ -137,7 +138,6 @@ const createRateLimitStore = (prefix) =>
         ? new RedisRateLimitStore({
               prefix: `devs-connect:rate-limit:${prefix}:`,
               sendCommand: async (...args) => {
-                  await redisConnection;
                   return redisClient.sendCommand(args);
               },
           })
@@ -193,8 +193,8 @@ export const writeLimiter = rateLimit({
 });
 
 // Configure CORS
-const corsOrigins = isProduction
-    ? [...new Set([URL_CLIENT, CLIENT_URL])]
+const baseCorsOrigins = isProduction
+    ? [...new Set([URL_CLIENT, CLIENT_URL].filter(Boolean))]
     : [
         URL_CLIENT,
         CLIENT_URL,
@@ -203,7 +203,21 @@ const corsOrigins = isProduction
         'http://localhost',
         'http://localhost:80',
         'http://localhost:6969',
-    ];
+    ].filter(Boolean);
+
+if (isProduction) {
+    for (const item of [...baseCorsOrigins]) {
+        try {
+            const parsed = new URL(item);
+            if (parsed.hostname.startsWith('www.')) {
+                baseCorsOrigins.push(`${parsed.protocol}//${parsed.hostname.slice(4)}${parsed.port ? `:${parsed.port}` : ''}`);
+            } else if (!parsed.hostname.includes('localhost') && !parsed.hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+                baseCorsOrigins.push(`${parsed.protocol}//www.${parsed.hostname}${parsed.port ? `:${parsed.port}` : ''}`);
+            }
+        } catch {}
+    }
+}
+const corsOrigins = [...new Set(baseCorsOrigins)];
 const corsOptions = {
     origin: corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -220,7 +234,11 @@ app.use((req, res, next) => {
             'Strict-Transport-Security',
             'max-age=31536000; includeSubDomains'
         );
-        if (!req.secure) {
+        const isHttps =
+            req.secure ||
+            req.get('x-forwarded-proto') === 'https' ||
+            req.get('cf-visitor')?.includes('https');
+        if (!isHttps) {
             return res.redirect(
                 308,
                 `${new URL(SERVER_URL).origin}${req.originalUrl}`
@@ -300,20 +318,29 @@ app.use(passport.initialize());
 // ============================================================================
 const io = new Server(httpServer, {
     cors: {
-        origin: [
-            URL_CLIENT,
-            'http://localhost:5173',
-            'http://localhost:3000',
-            'http://localhost',
-            'http://localhost:80',
-            'http://localhost:6969',
-        ],
+        origin: corsOrigins,
         methods: ['GET', 'POST'],
         credentials: true,
     },
     allowRequest: (req, callback) => {
         const origin = req.headers.origin;
-        callback(null, typeof origin === 'string' && trustedOrigins.has(origin));
+        // Same-origin GET requests (e.g. polling handshakes) omit the Origin header.
+        if (!origin) {
+            const referer = req.headers.referer;
+            if (referer) {
+                try {
+                    const refererOrigin = new URL(referer).origin;
+                    if (trustedOrigins.has(refererOrigin)) {
+                        return callback(null, true);
+                    }
+                } catch {
+                    return callback(null, false);
+                }
+            }
+            // Allow same-origin / non-browser requests
+            return callback(null, true);
+        }
+        callback(null, trustedOrigins.has(origin));
     },
 });
 app.set('io', io);
