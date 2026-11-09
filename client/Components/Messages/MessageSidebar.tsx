@@ -45,7 +45,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     return (
         <aside className={`flex min-h-0 w-full min-w-0 flex-col bg-white lg:w-[21rem] lg:shrink-0 ${className}`}>
             <div className="border-b border-slate-200 px-4 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-6">
-                <div className="mb-5 flex items-center justify-between gap-3">
+                <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                             {t('social.messages.yourInbox')}
@@ -54,14 +54,25 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                             {t('social.messages.title')}
                         </h1>
                     </div>
-                    <button
-                        type="button"
-                        onClick={onStartConversation}
-                        aria-label={t('social.messages.findPeopleToMessage')}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                        <Icon icon="mdi:account-plus-outline" className="h-5 w-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={onRefresh}
+                            disabled={isLoading}
+                            aria-label={t('social.messages.refresh')}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 lg:hidden"
+                        >
+                            <Icon icon="mdi:refresh" className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onStartConversation}
+                            aria-label={t('social.messages.findPeopleToMessage')}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            <Icon icon="mdi:account-plus-outline" className="h-5 w-5" />
+                        </button>
+                    </div>
                 </div>
 
                 <label className="relative block">
@@ -75,7 +86,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                         value={searchQuery}
                         onChange={handleSearchChange}
                         placeholder={t('social.messages.searchConversations')}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 md:text-sm"
                     />
                 </label>
             </div>

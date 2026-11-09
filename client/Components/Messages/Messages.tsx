@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../Layout';
 import API from '../../Service/service';
@@ -12,6 +12,7 @@ const Messages = () => {
     const { t } = useLanguage();
     const [searchParams, setSearchParams] = useSearchParams();
     const targetUserId = searchParams.get('user');
+    const dismissedTarget = useRef<string | null>(null);
     const navigate = useNavigate();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -42,6 +43,8 @@ const Messages = () => {
     const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
     useEffect(() => {
+        if (!targetUserId) dismissedTarget.current = null;
+        if (targetUserId && targetUserId === dismissedTarget.current) return;
         if (!targetUserId || !currentUserId) return;
         const isUuid = UUID_PATTERN.test(targetUserId);
         // Old links used the numeric ID; they are upgraded to the UUID below.
@@ -136,6 +139,7 @@ const Messages = () => {
         if (!messagesSocket) return;
         const handleUserBlocked = (payload: { userId?: number | string }) => {
             if (!payload?.userId || String(payload.userId) !== selectedUserId) return;
+            dismissedTarget.current = targetUserId;
             setSelectedMessage(null);
             setSearchParams((current) => {
                 const next = new URLSearchParams(current);
@@ -147,9 +151,10 @@ const Messages = () => {
         return () => {
             messagesSocket.off('user-blocked', handleUserBlocked);
         };
-    }, [messagesSocket, selectedUserId, setSearchParams]);
+    }, [messagesSocket, selectedUserId, setSearchParams, targetUserId]);
 
     const handleMessageSelect = useCallback((message: Message) => {
+        dismissedTarget.current = null;
         setSelectedMessage(message);
         if (message.publicId) {
             setSearchParams({ user: message.publicId });
@@ -157,13 +162,14 @@ const Messages = () => {
     }, [setSearchParams]);
 
     const handleBackToList = useCallback(() => {
+        dismissedTarget.current = targetUserId;
         setSelectedMessage(null);
         setSearchParams((current) => {
             const next = new URLSearchParams(current);
             next.delete('user');
             return next;
         }, { replace: true });
-    }, [setSearchParams]);
+    }, [setSearchParams, targetUserId]);
 
     const handleSendMessage = useCallback(
         async (content: string) => {
@@ -178,9 +184,9 @@ const Messages = () => {
     );
 
     return (
-        <Layout>
-            <main className="mx-auto w-full min-w-0 max-w-7xl px-2 py-3 sm:px-5 sm:py-4 lg:px-8">
-                <div className="mb-3 flex items-end justify-between gap-4 sm:mb-4">
+        <Layout mobileFullWidth>
+            <main className="mx-auto w-full min-w-0 max-w-7xl lg:px-8 lg:py-4">
+                <div className="mb-4 hidden items-end justify-between gap-4 lg:flex">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                             {t('social.messages.brand')}
@@ -196,13 +202,14 @@ const Messages = () => {
                         type="button"
                         onClick={() => void refreshMessages()}
                         disabled={isLoading}
+                        aria-label={t('social.messages.refresh')}
                         className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
                     >
                         <span className={isLoading ? 'animate-spin' : ''} aria-hidden="true">↻</span>
                         <span className="hidden sm:inline">{t('social.messages.refresh')}</span>
                     </button>
                 </div>
-                <div className="flex h-[calc(100dvh-15rem)] min-h-[22rem] min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-900/5 sm:h-[calc(100dvh-14rem)] sm:min-h-[28rem] sm:rounded-2xl md:h-[calc(100dvh-10rem)]">
+                <div className="flex h-[max(18rem,calc(100dvh-9rem-env(safe-area-inset-bottom)))] min-w-0 overflow-hidden border-y border-slate-200 bg-white md:h-[max(18rem,calc(100dvh-5rem))] lg:h-[calc(100dvh-10rem)] lg:min-h-[28rem] lg:rounded-2xl lg:border lg:shadow-lg lg:shadow-slate-900/5">
                     <MessageSidebar
                         onMessageSelect={handleMessageSelect}
                         selectedMessage={selectedMessage}

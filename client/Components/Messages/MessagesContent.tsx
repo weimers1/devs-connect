@@ -126,7 +126,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                 <button
                     type="button"
                     onClick={onBackToList}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 lg:hidden"
                     aria-label={t('social.messages.backToConversations')}
                 >
                     <Icon icon="mdi:arrow-left" className="h-5 w-5" />
@@ -173,7 +173,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                         <div className="h-14 w-1/2 animate-pulse rounded-2xl bg-white shadow-sm" />
                     </div>
                 ) : messages.length === 0 ? (
-                    <div className="flex h-full min-h-56 flex-col items-center justify-center text-center">
+                    <div className="flex min-h-full flex-col items-center justify-center text-center">
                         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-blue-600 shadow-sm">
                             <Icon icon="mdi:hand-wave-outline" className="h-6 w-6" />
                         </div>
@@ -237,7 +237,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
                 <div ref={messagesEndRef} />
             </div>
 
-            <footer className="shrink-0 border-t border-slate-200 bg-white px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
+            <footer className="shrink-0 border-t border-slate-200 bg-white px-3 py-3 sm:px-6 sm:py-4">
                 {sendError && (
                     <p className="mb-2 text-xs text-red-600" role="alert">
                         {sendError}

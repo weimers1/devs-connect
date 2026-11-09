@@ -4,7 +4,10 @@ import { DropdownProvider } from './DropDown/DropDownContext';
 // import { useTheme } from '../src/ThemeContext';
 import React from 'react';
 
-const Layout: React.FC<React.PropsWithChildren> = ({ children }) => {
+const Layout: React.FC<React.PropsWithChildren<{ mobileFullWidth?: boolean }>> = ({
+    children,
+    mobileFullWidth = false,
+}) => {
     const location = useLocation();
     // const { theme } = useTheme();
     const isProfilePage = location.pathname === '/profile';
@@ -24,7 +27,7 @@ const Layout: React.FC<React.PropsWithChildren> = ({ children }) => {
                 <main
                     className={`flex items-center justify-center min-h-screen pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0`}
                 >
-                    <div className={`min-h-screen ${containerWidthClass}`}>
+                    <div className={`min-h-screen ${mobileFullWidth ? 'w-full md:w-auto' : ''} ${containerWidthClass}`}>
                         {children}
                     </div>
                 </main>
